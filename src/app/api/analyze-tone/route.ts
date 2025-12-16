@@ -9,7 +9,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No audio data' }, { status: 400 });
         }
 
-        const model = getModel('gemini-1.5-flash');
+        const model = getModel('gemini-2.0-flash');
 
         const prompt = `
       You are an affective listening AI. 

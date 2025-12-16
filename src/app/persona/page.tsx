@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Persona {
@@ -24,9 +24,23 @@ export default function PersonaPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [recordingStep, setRecordingStep] = useState<'idle' | 'recording' | 'processing' | 'done'>('idle');
 
+  // Chat State
+  const [isChatting, setIsChatting] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   const startCloneProcess = () => {
     setIsCreating(true);
     setRecordingStep('idle');
+    setIsChatting(false);
   };
 
   const handleStartRecord = () => {
@@ -51,6 +65,43 @@ export default function PersonaPage() {
   };
 
   const selectedPersona = personas.find(p => p.id === activePersona);
+
+  const startConversation = () => {
+    setIsChatting(true);
+    setChatMessages([]);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+
+    const userMsg = chatInput;
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setChatLoading(true);
+
+    try {
+      const res = await fetch('/api/persona', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          personaContext: selectedPersona?.description || 'A friendly assistant'
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      setChatMessages(prev => [...prev, { role: 'model', text: data.text }]);
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { role: 'model', text: "I'm having trouble connecting right now. Let's try again?" }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#FDF8F3' }}>
@@ -126,7 +177,7 @@ export default function PersonaPage() {
               {personas.map(p => (
                 <div
                   key={p.id}
-                  onClick={() => setActivePersona(p.id)}
+                  onClick={() => { setActivePersona(p.id); setIsChatting(false); }}
                   style={{
                     background: activePersona === p.id ? '#ECFDF5' : 'white',
                     border: activePersona === p.id ? '2px solid #10B981' : '1px solid #E5E7EB',
@@ -198,24 +249,26 @@ export default function PersonaPage() {
           <div style={{
             background: 'white',
             borderRadius: '20px',
-            padding: '32px',
+            padding: isChatting ? '0' : '32px',
             border: '1px solid #E5E7EB',
             minHeight: '400px',
+            height: isChatting ? '500px' : 'auto',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
+            alignItems: isChatting ? 'stretch' : 'center',
+            justifyContent: isChatting ? 'flex-start' : 'center',
+            overflow: 'hidden'
           }}>
-            {!isCreating ? (
+            {!isCreating && !isChatting && (
               <>
-                <div style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  background: '#ECFDF5', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  background: '#ECFDF5',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   fontSize: '36px',
                   marginBottom: '20px'
                 }}>
@@ -227,21 +280,147 @@ export default function PersonaPage() {
                 <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '24px', maxWidth: '280px' }}>
                   {selectedPersona?.description}
                 </p>
-                <button style={{
-                  padding: '14px 32px',
-                  background: '#10B981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: '600',
-                  fontSize: '15px',
-                  cursor: 'pointer'
-                }}>
+                <button
+                  onClick={startConversation}
+                  style={{
+                    padding: '14px 32px',
+                    background: '#10B981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontWeight: '600',
+                    fontSize: '15px',
+                    cursor: 'pointer'
+                  }}
+                >
                   Start Conversation
                 </button>
               </>
-            ) : (
-              <div style={{ width: '100%', textAlign: 'center' }}>
+            )}
+
+            {!isCreating && isChatting && (
+              <>
+                {/* Chat Header */}
+                <div style={{
+                  padding: '16px 20px',
+                  borderBottom: '1px solid #E5E7EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  background: 'white'
+                }}>
+                  <button
+                    onClick={() => setIsChatting(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
+                  >
+                    ←
+                  </button>
+                  <div style={{ fontSize: '16px', fontWeight: '600' }}>{selectedPersona?.name}</div>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ fontSize: '20px' }}>{selectedPersona?.icon}</div>
+                </div>
+
+                {/* Messages */}
+                <div
+                  ref={chatScrollRef}
+                  style={{
+                    flex: 1,
+                    padding: '20px',
+                    overflowY: 'auto',
+                    background: '#F9FAFB',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}
+                >
+                  {chatMessages.length === 0 && (
+                    <div style={{ textAlign: 'center', color: '#9CA3AF', marginTop: '40px', fontSize: '14px' }}>
+                      Start the conversation...
+                    </div>
+                  )}
+
+                  {chatMessages.map((msg, idx) => (
+                    <div key={idx} style={{
+                      display: 'flex',
+                      justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                    }}>
+                      <div style={{
+                        maxWidth: '80%',
+                        padding: '12px 16px',
+                        borderRadius: '16px',
+                        borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
+                        borderBottomLeftRadius: msg.role === 'model' ? '4px' : '16px',
+                        background: msg.role === 'user' ? '#10B981' : 'white',
+                        color: msg.role === 'user' ? 'white' : '#1F2937',
+                        border: msg.role === 'model' ? '1px solid #E5E7EB' : 'none',
+                        fontSize: '14px',
+                        lineHeight: '1.5'
+                      }}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+
+                  {chatLoading && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                      <div style={{
+                        padding: '12px 16px',
+                        background: 'white',
+                        borderRadius: '16px',
+                        borderBottomLeftRadius: '4px',
+                        border: '1px solid #E5E7EB'
+                      }}>
+                        <span style={{ fontSize: '12px', color: '#6B7280' }}>Typing...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <form onSubmit={handleSendMessage} style={{
+                  padding: '16px',
+                  borderTop: '1px solid #E5E7EB',
+                  background: 'white',
+                  display: 'flex',
+                  gap: '10px'
+                }}>
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Type a message..."
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      borderRadius: '24px',
+                      border: '1px solid #E5E7EB',
+                      outline: 'none',
+                      fontSize: '14px'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim() || chatLoading}
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    ➤
+                  </button>
+                </form>
+              </>
+            )}
+
+            {isCreating && (
+              <div style={{ width: '100%', textAlign: 'center', padding: '32px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1F2937', marginBottom: '24px' }}>
                   🎙️ Voice Cloning
                 </h3>
@@ -271,6 +450,7 @@ export default function PersonaPage() {
                     }}>
                       Start Recording
                     </button>
+                    <button onClick={() => setIsCreating(false)} style={{ marginTop: '16px', background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer' }}>Cancel</button>
                   </>
                 )}
 

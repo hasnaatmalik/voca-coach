@@ -6,7 +6,7 @@ export async function POST(req: Request) {
         const { message } = await req.json();
 
         // Using a more capable model for reasoning if available, else Flash
-        const model = getModel('gemini-1.5-pro');
+        const model = getModel('gemini-2.0-flash');
 
         const prompt = `
       You are an expert CBT (Cognitive Behavioral Therapy) therapist.

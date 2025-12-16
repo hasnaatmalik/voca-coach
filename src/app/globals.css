@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import "tailwindcss";
 
 * {
   box-sizing: border-box;
@@ -14,7 +14,7 @@
   --primary-dark: #059669;
   --primary-hover: #047857;
   --accent: #F59E0B;
-  
+
   /* Soft, calming backgrounds */
   --bg-cream: #FDF8F3;
   --bg-mint: #ECFDF5;
@@ -22,18 +22,18 @@
   --bg-lavender: #F3F0FF;
   --bg-white: #FFFFFF;
   --secondary: #dcfce7;
-  
+
   /* Text colors */
   --text-dark: #1F2937;
   --text-medium: #4B5563;
   --text-light: #9CA3AF;
   --foreground: #1F2937;
-  
+
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
-  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08);
+
   --radius: 16px;
   --radius-lg: 24px;
   --radius-full: 9999px;
@@ -160,13 +160,27 @@ body {
 
 /* Animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .animate-float {
@@ -231,13 +245,23 @@ a {
   font-size: 24px;
 }
 
-.icon-box-emerald { background: var(--bg-mint); }
-.icon-box-peach { background: var(--bg-peach); }
-.icon-box-lavender { background: var(--bg-lavender); }
+.icon-box-emerald {
+  background: var(--bg-mint);
+}
+
+.icon-box-peach {
+  background: var(--bg-peach);
+}
+
+.icon-box-lavender {
+  background: var(--bg-lavender);
+}
 
 /* Responsive helpers */
 @media (max-width: 768px) {
-  .hide-mobile { display: none !important; }
+  .hide-mobile {
+    display: none !important;
+  }
 }
 
 /* Tailwind theme extensions */

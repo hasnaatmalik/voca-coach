@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     try {
         const { history } = await req.json();
 
-        const model = getModel('gemini-1.5-flash');
+        const model = getModel('gemini-2.0-flash');
 
         const prompt = `
       You are an expert clinical AI monitoring voice biomarkers for mental health.

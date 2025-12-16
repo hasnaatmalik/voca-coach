@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 export default function DeEscalationPage() {
@@ -10,13 +10,18 @@ export default function DeEscalationPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
 
+  // Audio Recording Refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
   // Simulate session timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
       interval = setInterval(() => {
         setSessionTime(prev => prev + 1);
-        // Simulate arousal fluctuation
+        // Simulate arousal fluctuation for visualization only
         setArousalLevel(prev => {
           const change = (Math.random() - 0.5) * 0.1;
           return Math.max(0.1, Math.min(0.9, prev + change));
@@ -44,22 +49,82 @@ export default function DeEscalationPage() {
     return 'Calm';
   };
 
-  const handleAnalyze = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setAiResponse("Take a deep breath. I noticed your voice pitch increased during the last few moments. Try speaking more slowly and deliberately. Remember: you have time. There's no rush. Let's pause for three deep breaths together.");
-      setIsAnalyzing(false);
-    }, 2000);
-  };
+  const startSession = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-  const startSession = () => {
-    setIsRecording(true);
-    setSessionTime(0);
-    setAiResponse(null);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setSessionTime(0);
+      setAiResponse(null);
+      setAudioBlob(null);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please allow permissions.");
+    }
   };
 
   const stopSession = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      // Stop all tracks to release microphone
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
     setIsRecording(false);
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleAnalyze = async () => {
+    if (!audioBlob) return;
+
+    setIsAnalyzing(true);
+    try {
+      const base64Audio = await blobToBase64(audioBlob);
+
+      const res = await fetch('/api/analyze-tone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ audio: base64Audio }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      setAiResponse(data.text);
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      setAiResponse("I'm sorry, I couldn't process your audio right now. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -125,7 +190,7 @@ export default function DeEscalationPage() {
           <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
             🌬️ De-escalation Coach
           </h1>
-          <p style={{ color: '#6B7280' }}>Speak freely. I'll help you stay calm and grounded.</p>
+          <p style={{ color: '#6B7280' }}>Record your voice to receive real-time emotional feedback and grounded advice.</p>
         </div>
 
         {/* Recording Area */}
@@ -146,7 +211,7 @@ export default function DeEscalationPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isRecording 
+            background: isRecording
               ? `radial-gradient(circle, ${getArousalColor()}22 0%, ${getArousalColor()}11 100%)`
               : '#F9FAFB',
             border: `4px solid ${isRecording ? getArousalColor() : '#E5E7EB'}`,
@@ -166,10 +231,10 @@ export default function DeEscalationPage() {
           {isRecording && (
             <div style={{ marginBottom: '32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#6B7280' }}>Stress Level</span>
-                <span style={{ 
-                  fontSize: '13px', 
-                  fontWeight: '600', 
+                <span style={{ fontSize: '13px', color: '#6B7280' }}>Stress Level (Simulated)</span>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
                   color: getArousalColor(),
                   background: `${getArousalColor()}15`,
                   padding: '4px 10px',
@@ -206,7 +271,7 @@ export default function DeEscalationPage() {
                 fontSize: '16px',
                 cursor: 'pointer'
               }}>
-                Start Session
+                {audioBlob ? 'Record Again' : 'Start Session'}
               </button>
             ) : (
               <button onClick={stopSession} style={{
@@ -223,7 +288,7 @@ export default function DeEscalationPage() {
               </button>
             )}
 
-            {!isRecording && sessionTime > 0 && (
+            {!isRecording && audioBlob && (
               <button onClick={handleAnalyze} disabled={isAnalyzing} style={{
                 padding: '16px 40px',
                 background: 'white',
