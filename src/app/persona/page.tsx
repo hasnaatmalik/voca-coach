@@ -1,146 +1,361 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import ToneVisualizer from '@/components/ToneVisualizer';
+import { useState } from 'react';
 import Link from 'next/link';
 
 interface Persona {
-    id: string;
-    name: string;
-    type: 'preset' | 'cloned';
-    status: 'ready' | 'training';
+  id: string;
+  name: string;
+  type: 'preset' | 'custom';
+  description: string;
+  icon: string;
 }
 
-const PRESETS: Persona[] = [
-    { id: 'p1', name: 'Calm Mentor', type: 'preset', status: 'ready' },
-    { id: 'p2', name: 'Empathetic Friend', type: 'preset', status: 'ready' },
+const PERSONAS: Persona[] = [
+  { id: 'p1', name: 'Calm Mentor', type: 'preset', description: 'A patient and understanding guide who helps you stay grounded.', icon: '🧘' },
+  { id: 'p2', name: 'Supportive Friend', type: 'preset', description: 'An empathetic listener who validates your feelings.', icon: '💚' },
+  { id: 'p3', name: 'Difficult Boss', type: 'preset', description: 'Practice handling challenging workplace conversations.', icon: '💼' },
+  { id: 'p4', name: 'Anxious Client', type: 'preset', description: 'Learn to de-escalate and reassure worried individuals.', icon: '😰' },
 ];
 
 export default function PersonaPage() {
-    const [personas, setPersonas] = useState<Persona[]>(PRESETS);
-    const [activePersona, setActivePersona] = useState<string>('p1');
-    const [isCreating, setIsCreating] = useState(false);
+  const [personas, setPersonas] = useState<Persona[]>(PERSONAS);
+  const [activePersona, setActivePersona] = useState<string>('p1');
+  const [isCreating, setIsCreating] = useState(false);
+  const [recordingStep, setRecordingStep] = useState<'idle' | 'recording' | 'processing' | 'done'>('idle');
 
-    // Recorder for cloning
-    const { startRecording, stopRecording, isRecording, visualizerData, audioBase64 } = useAudioRecorder();
-    const [cloningStep, setCloningStep] = useState<'idle' | 'recording' | 'processing' | 'done'>('idle');
+  const startCloneProcess = () => {
+    setIsCreating(true);
+    setRecordingStep('idle');
+  };
 
-    const startCloneProcess = () => {
-        setIsCreating(true);
-        setCloningStep('idle');
-    };
+  const handleStartRecord = () => {
+    setRecordingStep('recording');
+  };
 
-    const handleStartRecord = () => {
-        startRecording();
-        setCloningStep('recording');
-    };
+  const handleStopRecord = () => {
+    setRecordingStep('processing');
+    setTimeout(() => {
+      const newPersona: Persona = {
+        id: `c-${Date.now()}`,
+        name: 'My Custom Voice',
+        type: 'custom',
+        description: 'Your personalized voice persona.',
+        icon: '✨'
+      };
+      setPersonas([...personas, newPersona]);
+      setActivePersona(newPersona.id);
+      setRecordingStep('done');
+      setTimeout(() => setIsCreating(false), 1500);
+    }, 2500);
+  };
 
-    const handleStopRecord = () => {
-        stopRecording();
-        setCloningStep('processing');
+  const selectedPersona = personas.find(p => p.id === activePersona);
 
-        // Simulate API "Training" call
-        setTimeout(() => {
-            const newPersona: Persona = {
-                id: `c-${Date.now()}`,
-                name: 'My Custom Voice',
-                type: 'cloned',
-                status: 'ready'
-            };
-            setPersonas([...personas, newPersona]);
-            setActivePersona(newPersona.id);
-            setCloningStep('done');
-            setIsCreating(false);
-        }, 3000);
-    };
+  return (
+    <div style={{ minHeight: '100vh', background: '#FDF8F3' }}>
+      {/* Header */}
+      <header style={{
+        background: 'white',
+        borderBottom: '1px solid #E5E7EB',
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            background: '#10B981',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ fontSize: '18px' }}>🎙️</span>
+          </div>
+          <span style={{ fontSize: '18px', fontWeight: '700', color: '#1F2937' }}>Voca-Coach</span>
+        </Link>
 
-    return (
-        <div className="min-h-screen p-8 max-w-4xl mx-auto">
-            <header className="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold mb-2">Persona Studio</h1>
-                    <p className="text-gray-400">Select or clone a comforting voice for your companion.</p>
-                </div>
-                <Link href="/" className="btn btn-secondary">Back to Home</Link>
-            </header>
+        <nav style={{ display: 'flex', gap: '24px' }}>
+          {[
+            { href: '/dashboard', label: 'Dashboard' },
+            { href: '/de-escalation', label: 'De-escalation' },
+            { href: '/biomarkers', label: 'Biomarkers' },
+            { href: '/journal', label: 'Journal' },
+            { href: '/persona', label: 'Persona', active: true }
+          ].map(item => (
+            <Link key={item.href} href={item.href} style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              color: item.active ? '#10B981' : '#6B7280',
+              padding: '8px 0',
+              borderBottom: item.active ? '2px solid #10B981' : 'none'
+            }}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* List */}
-                <div className="space-y-4">
-                    <h2 className="text-xl font-semibold mb-4">Available Voices</h2>
-                    {personas.map(p => (
-                        <div
-                            key={p.id}
-                            onClick={() => setActivePersona(p.id)}
-                            className={`
-                            p-4 rounded-xl border cursor-pointer transition-all flex justify-between items-center
-                            ${activePersona === p.id
-                                    ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(100,255,218,0.2)]'
-                                    : 'bg-white/5 border-white/5 hover:bg-white/10'}
-                        `}
-                        >
-                            <div>
-                                <div className="font-bold">{p.name}</div>
-                                <div className="text-xs text-gray-500 uppercase">{p.type}</div>
-                            </div>
-                            {activePersona === p.id && <div className="text-primary">● Active</div>}
-                        </div>
-                    ))}
+        <Link href="/" style={{
+          padding: '10px 20px',
+          background: '#F3F4F6',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#4B5563'
+        }}>Back to Home</Link>
+      </header>
 
-                    <button
-                        onClick={startCloneProcess}
-                        disabled={isCreating}
-                        className="w-full py-4 rounded-xl border border-dashed border-gray-600 text-gray-400 hover:border-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
-                    >
-                        + Clone New User Voice
-                    </button>
-                </div>
-
-                {/* Cloning / Details Area */}
-                <div className="glass-panel p-6 flex flex-col justify-center min-h-[400px]">
-                    {!isCreating ? (
-                        <div className="text-center opacity-50">
-                            <div className="text-6xl mb-4">🎙️</div>
-                            <p>Select a voice to preview or create a new one.</p>
-                        </div>
-                    ) : (
-                        <div className="animate-fade-in flex flex-col items-center w-full">
-                            <h3 className="text-lg font-bold mb-6">Voice Cloning</h3>
-
-                            {cloningStep === 'idle' && (
-                                <div className="text-center">
-                                    <p className="mb-6 text-gray-300">Please read the following sentence clearly:</p>
-                                    <blockquote className="p-4 bg-white/5 rounded-lg italic mb-8 border-l-2 border-primary">
-                                        "I am calm, grounded, and ready to face whatever comes my way with patience."
-                                    </blockquote>
-                                    <button onClick={handleStartRecord} className="btn btn-primary w-full">Start Recording</button>
-                                </div>
-                            )}
-
-                            {cloningStep === 'recording' && (
-                                <div className="w-full flex flex-col items-center">
-                                    <div className="w-full mb-4">
-                                        <ToneVisualizer data={visualizerData} />
-                                    </div>
-                                    <div className="flex items-center gap-2 text-red-400 mb-4 animate-pulse">
-                                        ● Recording...
-                                    </div>
-                                    <button onClick={handleStopRecord} className="btn btn-secondary w-full">Stop & Process</button>
-                                </div>
-                            )}
-
-                            {cloningStep === 'processing' && (
-                                <div className="text-center">
-                                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                                    <h4 className="text-xl font-bold mb-2">Fine-tuning Persona...</h4>
-                                    <p className="text-sm text-gray-400">Analyzing timbre, pitch, and cadence.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
+      {/* Main Content */}
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px' }}>
+        {/* Page Header */}
+        <div style={{ marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+            🎭 Persona Studio
+          </h1>
+          <p style={{ color: '#6B7280' }}>Practice conversations with AI personas or create your own.</p>
         </div>
-    );
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+          {/* Persona List */}
+          <div>
+            <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>Available Personas</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {personas.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => setActivePersona(p.id)}
+                  style={{
+                    background: activePersona === p.id ? '#ECFDF5' : 'white',
+                    border: activePersona === p.id ? '2px solid #10B981' : '1px solid #E5E7EB',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}
+                >
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    background: activePersona === p.id ? '#10B981' : '#F3F4F6',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px'
+                  }}>{p.icon}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>{p.name}</div>
+                    <div style={{ fontSize: '13px', color: '#6B7280' }}>{p.description}</div>
+                  </div>
+                  {activePersona === p.id && (
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      background: '#10B981',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: '14px'
+                    }}>✓</div>
+                  )}
+                </div>
+              ))}
+
+              {/* Create New Button */}
+              <button
+                onClick={startCloneProcess}
+                disabled={isCreating}
+                style={{
+                  background: 'transparent',
+                  border: '2px dashed #D1D5DB',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  color: '#6B7280',
+                  fontWeight: '500',
+                  fontSize: '15px'
+                }}
+              >
+                <span style={{ fontSize: '20px' }}>+</span>
+                Clone Your Voice
+              </button>
+            </div>
+          </div>
+
+          {/* Main Panel */}
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '32px',
+            border: '1px solid #E5E7EB',
+            minHeight: '400px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {!isCreating ? (
+              <>
+                <div style={{ 
+                  width: '80px', 
+                  height: '80px', 
+                  background: '#ECFDF5', 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '36px',
+                  marginBottom: '20px'
+                }}>
+                  {selectedPersona?.icon}
+                </div>
+                <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
+                  {selectedPersona?.name}
+                </h3>
+                <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '24px', maxWidth: '280px' }}>
+                  {selectedPersona?.description}
+                </p>
+                <button style={{
+                  padding: '14px 32px',
+                  background: '#10B981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  fontSize: '15px',
+                  cursor: 'pointer'
+                }}>
+                  Start Conversation
+                </button>
+              </>
+            ) : (
+              <div style={{ width: '100%', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1F2937', marginBottom: '24px' }}>
+                  🎙️ Voice Cloning
+                </h3>
+
+                {recordingStep === 'idle' && (
+                  <>
+                    <p style={{ color: '#6B7280', marginBottom: '20px' }}>Please read the following sentence clearly:</p>
+                    <div style={{
+                      background: '#F9FAFB',
+                      padding: '20px',
+                      borderRadius: '12px',
+                      marginBottom: '24px',
+                      borderLeft: '4px solid #10B981'
+                    }}>
+                      <p style={{ fontStyle: 'italic', color: '#4B5563', lineHeight: '1.6' }}>
+                        "I am calm, grounded, and ready to face whatever comes my way with patience and understanding."
+                      </p>
+                    </div>
+                    <button onClick={handleStartRecord} style={{
+                      padding: '14px 32px',
+                      background: '#10B981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}>
+                      Start Recording
+                    </button>
+                  </>
+                )}
+
+                {recordingStep === 'recording' && (
+                  <>
+                    <div style={{
+                      width: '100px',
+                      height: '100px',
+                      background: '#FEF2F2',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px',
+                      animation: 'pulse 1.5s ease-in-out infinite'
+                    }}>
+                      <span style={{ fontSize: '40px' }}>🔴</span>
+                    </div>
+                    <p style={{ color: '#EF4444', fontWeight: '600', marginBottom: '20px' }}>Recording...</p>
+                    <button onClick={handleStopRecord} style={{
+                      padding: '14px 32px',
+                      background: '#EF4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}>
+                      Stop Recording
+                    </button>
+                  </>
+                )}
+
+                {recordingStep === 'processing' && (
+                  <>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      border: '4px solid #E5E7EB',
+                      borderTopColor: '#10B981',
+                      borderRadius: '50%',
+                      margin: '0 auto 20px',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
+                      Processing Voice...
+                    </h4>
+                    <p style={{ color: '#6B7280' }}>Analyzing pitch, timbre, and cadence.</p>
+                  </>
+                )}
+
+                {recordingStep === 'done' && (
+                  <>
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      background: '#ECFDF5',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 20px'
+                    }}>
+                      <span style={{ fontSize: '36px' }}>✅</span>
+                    </div>
+                    <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937' }}>
+                      Voice Clone Created!
+                    </h4>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <style jsx>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+        }
+      `}</style>
+    </div>
+  );
 }
