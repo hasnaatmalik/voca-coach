@@ -4,109 +4,239 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Message {
-    role: 'user' | 'assistant';
-    content: string;
-    distortion?: string;
+  role: 'user' | 'assistant';
+  content: string;
+  distortion?: string;
 }
 
 export default function JournalPage() {
-    const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: "Hello. I'm here to listen. What's on your mind today?" }
-    ]);
-    const [loading, setLoading] = useState(false);
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'assistant', content: "Hello 👋 I'm here to listen and help you reflect. What's on your mind today?" }
+  ]);
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages]);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || loading) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
-        const userMsg = input;
-        setInput('');
-        setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-        setLoading(true);
+    const userMsg = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setLoading(true);
 
-        try {
-            const res = await fetch('/api/journal-insight', {
-                method: 'POST',
-                body: JSON.stringify({ message: userMsg, context: messages.slice(-3) }), // Send limited context
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await res.json();
+    try {
+      const res = await fetch('/api/journal-insight', {
+        method: 'POST',
+        body: JSON.stringify({ message: userMsg, context: messages.slice(-3) }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
 
-            setMessages(prev => [...prev, {
-                role: 'assistant',
-                content: data.socraticPrompt,
-                distortion: data.distortion
-            }]);
-        } catch (err) {
-            console.error(err);
-            setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble thinking right now. Could you say that again?" }]);
-        } finally {
-            setLoading(false);
-        }
-    };
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.socraticPrompt,
+        distortion: data.distortion
+      }]);
+    } catch {
+      // Fallback response if API fails
+      const fallbackResponses = [
+        "That's interesting. Can you tell me more about what led you to feel this way?",
+        "I hear you. What do you think might be underlying these feelings?",
+        "Thank you for sharing. How does this situation make you feel about yourself?",
+        "That sounds challenging. What would you tell a friend in the same situation?"
+      ];
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen flex flex-col p-6 max-w-3xl mx-auto">
-            <header className="mb-6 flex justify-between items-center">
-                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-secondary to-primary">Socratic Journal</h1>
-                <Link href="/" className="text-sm opacity-50 hover:opacity-100">Exit</Link>
-            </header>
+  return (
+    <div style={{ minHeight: '100vh', background: '#FDF8F3', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <header style={{
+        background: 'white',
+        borderBottom: '1px solid #E5E7EB',
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            background: '#10B981',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{ fontSize: '18px' }}>🎙️</span>
+          </div>
+          <span style={{ fontSize: '18px', fontWeight: '700', color: '#1F2937' }}>Voca-Coach</span>
+        </Link>
 
-            <div className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2" ref={scrollRef}>
-                {messages.map((m, i) => (
-                    <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                        {m.distortion && (
-                            <span className="text-xs text-secondary mb-1 uppercase tracking-wider font-bold animate-fade-in">
-                                DETECTED: {m.distortion}
-                            </span>
-                        )}
-                        <div
-                            className={`
-                        max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm
-                        ${m.role === 'user'
-                                    ? 'bg-[#15803d] text-white rounded-tr-none'
-                                    : 'bg-white border border-green-100 text-green-900 rounded-tl-none'}
-                    `}
-                        >
-                            {m.content}
-                        </div>
-                    </div>
-                ))}
-                {loading && (
-                    <div className="flex justify-start">
-                        <div className="bg-white p-4 rounded-2xl rounded-tl-none flex gap-2 border border-green-100">
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></span>
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-100"></span>
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-bounce delay-200"></span>
-                        </div>
-                    </div>
-                )}
+        <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937' }}>📓 Socratic Journal</h1>
+
+        <Link href="/dashboard" style={{
+          padding: '10px 20px',
+          background: '#F3F4F6',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#4B5563'
+        }}>Exit</Link>
+      </header>
+
+      {/* Chat Area */}
+      <div 
+        ref={scrollRef}
+        style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          padding: '24px',
+          maxWidth: '700px',
+          width: '100%',
+          margin: '0 auto'
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {messages.map((m, i) => (
+            <div key={i} style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: m.role === 'user' ? 'flex-end' : 'flex-start'
+            }}>
+              {m.distortion && (
+                <span style={{
+                  fontSize: '11px',
+                  color: '#F59E0B',
+                  marginBottom: '6px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  fontWeight: '600',
+                  background: '#FEF3E7',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}>
+                  🔍 Detected: {m.distortion}
+                </span>
+              )}
+              <div style={{
+                maxWidth: '80%',
+                padding: '16px 20px',
+                borderRadius: '20px',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                ...(m.role === 'user' ? {
+                  background: '#10B981',
+                  color: 'white',
+                  borderBottomRightRadius: '4px'
+                } : {
+                  background: 'white',
+                  color: '#1F2937',
+                  borderBottomLeftRadius: '4px',
+                  border: '1px solid #E5E7EB'
+                })
+              }}>
+                {m.content}
+              </div>
             </div>
-
-            <form onSubmit={handleSubmit} className="relative">
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type your thoughts..."
-                    className="w-full bg-white border border-green-200 rounded-full py-4 px-6 focus:outline-none focus:border-[#15803d] transition-colors text-[#064e3b] placeholder-green-700/40 shadow-sm"
-                    autoFocus
-                />
-                <button
-                    type="submit"
-                    disabled={!input || loading}
-                    className="absolute right-2 top-2 bottom-2 aspect-square rounded-full bg-[#15803d] text-white flex items-center justify-center disabled:opacity-50 disabled:grayscale transition-all hover:scale-105 shadow-md"
-                >
-                    →
-                </button>
-            </form>
+          ))}
+          
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+              <div style={{
+                background: 'white',
+                padding: '16px 20px',
+                borderRadius: '20px',
+                borderBottomLeftRadius: '4px',
+                border: '1px solid #E5E7EB',
+                display: 'flex',
+                gap: '6px'
+              }}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{
+                    width: '8px',
+                    height: '8px',
+                    background: '#10B981',
+                    borderRadius: '50%',
+                    animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`
+                  }} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-    );
+      </div>
+
+      {/* Input Area */}
+      <div style={{
+        background: 'white',
+        borderTop: '1px solid #E5E7EB',
+        padding: '20px 24px'
+      }}>
+        <form onSubmit={handleSubmit} style={{
+          maxWidth: '700px',
+          margin: '0 auto',
+          display: 'flex',
+          gap: '12px'
+        }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Share your thoughts..."
+            autoFocus
+            style={{
+              flex: 1,
+              padding: '16px 20px',
+              border: '1px solid #E5E7EB',
+              borderRadius: '999px',
+              fontSize: '15px',
+              outline: 'none',
+              background: '#F9FAFB'
+            }}
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || loading}
+            style={{
+              width: '52px',
+              height: '52px',
+              background: input.trim() && !loading ? '#10B981' : '#E5E7EB',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px'
+            }}
+          >
+            →
+          </button>
+        </form>
+      </div>
+
+      <style jsx>{`
+        @keyframes bounce {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-6px); }
+        }
+      `}</style>
+    </div>
+  );
 }
