@@ -298,7 +298,7 @@ export default function DeEscalationPage() {
           <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
             🌬️ De-escalation Coach
           </h1>
-          <p style={{ color: '#6B7280' }}>Speak freely. I'll help you stay calm and grounded.</p>
+          <p style={{ color: '#6B7280' }}>Record your voice to receive real-time emotional feedback and grounded advice.</p>
         </div>
 
         {/* Recording Area */}
@@ -319,7 +319,7 @@ export default function DeEscalationPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: isRecording 
+            background: isRecording
               ? `radial-gradient(circle, ${getArousalColor()}22 0%, ${getArousalColor()}11 100%)`
               : '#F9FAFB',
             border: `4px solid ${isRecording ? getArousalColor() : '#E5E7EB'}`,
@@ -339,10 +339,10 @@ export default function DeEscalationPage() {
           {isRecording && (
             <div style={{ marginBottom: '32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#6B7280' }}>Stress Level</span>
-                <span style={{ 
-                  fontSize: '13px', 
-                  fontWeight: '600', 
+                <span style={{ fontSize: '13px', color: '#6B7280' }}>Stress Level (Simulated)</span>
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
                   color: getArousalColor(),
                   background: `${getArousalColor()}15`,
                   padding: '4px 10px',

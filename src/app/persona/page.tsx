@@ -329,16 +329,17 @@ export default function PersonaPage() {
           <div style={{
             background: 'white',
             borderRadius: '20px',
-            padding: '32px',
+            padding: isChatting ? '0' : '32px',
             border: '1px solid #E5E7EB',
             minHeight: '400px',
+            height: isChatting ? '500px' : 'auto',
             display: 'flex',
             flexDirection: 'column',
           }}>
             {isChatting ? (
               // Chat Interface
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', padding: '20px 20px 0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{ fontSize: '24px' }}>{selectedPersona?.icon}</span>
                     <div>
@@ -359,7 +360,7 @@ export default function PersonaPage() {
                   </button>
                 </div>
 
-                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px', padding: '0 20px' }}>
                   {chatMessages.map((msg, i) => (
                     <div key={i} style={{
                       display: 'flex',
@@ -394,7 +395,7 @@ export default function PersonaPage() {
                   )}
                 </div>
 
-                <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} style={{ display: 'flex', gap: '12px' }}>
+                <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} style={{ display: 'flex', gap: '12px', padding: '0 20px 20px' }}>
                   <input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}

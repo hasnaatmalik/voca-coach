@@ -3,7 +3,7 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
 
 if (!API_KEY) {
-    console.warn('Missing NEXT_PUBLIC_GEMINI_API_KEY in environment variables.');
+    console.warn('Missing NEXT_PUBLIC_GEMINI_API_KEY. AI features will not work.');
 }
 
 // Initialize Google Generative AI
