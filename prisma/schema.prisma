@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  sessions      Session[]
+  journalEntries JournalEntry[]
+  biomarkers    Biomarker[]
+  personas      CustomPersona[]
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  duration    Int      // in seconds
+  calmScore   Float    // 0-100
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JournalEntry {
+  id              String   @id @default(cuid())
+  userId          String
+  content         String
+  distortion      String?
+  socraticPrompt  String?
+  userResponse    String?
+  createdAt       DateTime @default(now())
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Biomarker {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime @default(now())
+  pitch           Float    // Hz
+  clarity         Float    // 0-100
+  stress          Float    // 0-100
+  pauseDuration   Float?   // seconds
+  articulationRate Float?  // words per second
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+}
+
+model CustomPersona {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String
+  icon        String   @default("✨")
+  voiceId     String?  // ElevenLabs voice ID
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
