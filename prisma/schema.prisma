@@ -22,14 +22,18 @@ model User {
 }
 
 model Session {
-  id          String   @id @default(cuid())
-  userId      String
-  duration    Int      // in seconds
-  calmScore   Float    // 0-100
-  notes       String?
-  createdAt   DateTime @default(now())
+  id              String              @id @default(cuid())
+  userId          String
+  duration        Int                 // in seconds
+  calmScore       Float               // 0-100
+  notes           String?
+  dominantMood    String?             // Overall session mood
+  moodChanges     Int?                // Number of significant mood shifts
+  emotionalScore  Float?              // 0-100, emotional stability
+  createdAt       DateTime            @default(now())
   
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sentiments      SentimentSnapshot[]
 }
 
 model JournalEntry {
@@ -69,4 +73,17 @@ model CustomPersona {
   createdAt   DateTime @default(now())
   
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SentimentSnapshot {
+  id          String   @id @default(cuid())
+  sessionId   String
+  timestamp   Int      // seconds into session
+  sentiment   String   // "positive", "neutral", "negative", "anxious", "calm"
+  intensity   Float    // 0-1
+  emotions    String   // JSON string: {"happy": 0.2, "sad": 0.1, ...}
+  aiInsight   String?  // Optional AI comment
+  createdAt   DateTime @default(now())
+  
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
