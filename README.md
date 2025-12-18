@@ -96,7 +96,7 @@ Comprehensive overview of progress and statistics.
 
 1. **Clone the repository**
    ```bash
-   git clone [https://github.com/cemeiq12/voca-coach]
+   git clone https://github.com/cemeiq12/voca-coach
    cd voca-coach
    ```
 
