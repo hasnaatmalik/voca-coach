@@ -81,6 +81,72 @@ export async function GET() {
       select: { name: true },
     });
 
+    // Aggregate sentiment data from sessions with sentiment snapshots
+    const sessionsWithSentiments = await prisma.session.findMany({
+      where: { userId: authUser.userId },
+      include: {
+        sentiments: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10 // Last 10 sessions for trends
+    });
+
+    let sentimentData = null;
+    const sessionsWithData = sessionsWithSentiments.filter(s => s.sentiments.length > 0);
+
+    if (sessionsWithData.length > 0) {
+      // Calculate average emotions across all sentiment snapshots
+      const allEmotions: any = { happy: 0, sad: 0, anxious: 0, calm: 0, neutral: 0, frustrated: 0 };
+      let totalSnapshots = 0;
+
+      sessionsWithData.forEach(session => {
+        session.sentiments.forEach(snapshot => {
+          const emotions = JSON.parse(snapshot.emotions);
+          Object.keys(allEmotions).forEach(key => {
+            allEmotions[key] += emotions[key] || 0;
+          });
+          totalSnapshots++;
+        });
+      });
+
+      // Average the emotions
+      const avgEmotions = Object.keys(allEmotions).reduce((acc: any, key) => {
+        acc[key] = totalSnapshots > 0 ? allEmotions[key] / totalSnapshots : 0;
+        return acc;
+      }, {});
+
+      // Calculate dominant mood (most common across sessions)
+      const moodCounts: { [key: string]: number } = {};
+      sessionsWithData.forEach(session => {
+        if (session.dominantMood) {
+          moodCounts[session.dominantMood] = (moodCounts[session.dominantMood] || 0) + 1;
+        }
+      });
+      const dominantMood = Object.keys(moodCounts).length > 0
+        ? Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b)
+        : 'neutral';
+
+      // Calculate emotional stability (average emotional score)
+      const avgEmotionalStability = sessionsWithData
+        .filter(s => s.emotionalScore !== null)
+        .reduce((sum, s) => sum + (s.emotionalScore || 0), 0) / sessionsWithData.filter(s => s.emotionalScore !== null).length || 50;
+
+      // Get recent sessions with mood data
+      const recentSessions = sessionsWithData.slice(0, 7).map(s => ({
+        date: s.createdAt,
+        dominantMood: s.dominantMood || 'neutral',
+        emotionalScore: s.emotionalScore || 0,
+        moodChanges: s.moodChanges || 0
+      }));
+
+      sentimentData = {
+        avgEmotions,
+        dominantMood,
+        emotionalStability: Math.round(avgEmotionalStability),
+        recentSessions
+      };
+    }
+
     return NextResponse.json({
       stats: {
         sessionCount,
@@ -88,6 +154,7 @@ export async function GET() {
         journalCount,
         streak,
       },
+      sentimentData,
       activity,
       userName: user?.name || 'User',
     });
