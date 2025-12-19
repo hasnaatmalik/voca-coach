@@ -37,7 +37,13 @@ export async function POST(req: Request) {
     }
 
     // Create token and set cookie
-    const token = createToken({ userId: user.id, email: user.email });
+    const token = createToken({ 
+      userId: user.id, 
+      email: user.email,
+      role: user.role,
+      isTherapist: user.isTherapist,
+      isAdmin: user.isAdmin
+    });
     await setAuthCookie(token);
 
     return NextResponse.json({
@@ -46,6 +52,9 @@ export async function POST(req: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        isTherapist: user.isTherapist,
+        isAdmin: user.isAdmin,
       },
     });
   } catch (error) {

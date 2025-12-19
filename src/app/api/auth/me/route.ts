@@ -19,6 +19,9 @@ export async function GET() {
         id: true,
         email: true,
         name: true,
+        role: true,
+        isTherapist: true,
+        isAdmin: true,
         createdAt: true,
       },
     });

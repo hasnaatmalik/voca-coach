@@ -6,6 +6,9 @@ interface User {
   id: string;
   email: string;
   name: string;
+  role: string;
+  isTherapist: boolean;
+  isAdmin: boolean;
   createdAt?: string;
 }
 

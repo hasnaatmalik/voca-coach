@@ -8,6 +8,9 @@ const COOKIE_NAME = 'voca-coach-auth';
 interface JWTPayload {
   userId: string;
   email: string;
+  role: string;
+  isTherapist: boolean;
+  isAdmin: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -56,4 +59,38 @@ export async function getCurrentUser(): Promise<JWTPayload | null> {
   const token = await getAuthToken();
   if (!token) return null;
   return verifyToken(token);
+}
+
+export async function checkIsAdmin(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return user?.isAdmin || false;
+}
+
+export async function checkIsTherapist(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return user?.isTherapist || false;
+}
+
+export async function requireAuth(): Promise<JWTPayload> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+  return user;
+}
+
+export async function requireAdmin(): Promise<JWTPayload> {
+  const user = await requireAuth();
+  if (!user.isAdmin) {
+    throw new Error('Admin access required');
+  }
+  return user;
+}
+
+export async function requireTherapist(): Promise<JWTPayload> {
+  const user = await requireAuth();
+  if (!user.isTherapist) {
+    throw new Error('Therapist access required');
+  }
+  return user;
 }
