@@ -7,7 +7,7 @@ async function main() {
   console.log('🌱 Creating admin user...');
 
   const adminEmail = 'hasnaatmalik2003@gmail.com';
-  const adminPassword = 'Hasnaat@123';
+  const adminPassword = '123456';
   const adminName = 'Hasnaat Malik';
 
   try {
