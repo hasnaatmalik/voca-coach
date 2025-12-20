@@ -46,7 +46,44 @@ Practice conversations with customizable AI personas.
 - 🔊 Voice synthesis for persona responses
 - 📝 Conversation history tracking
 
-### 5. **User Dashboard**
+### 5. **Multi-Role System**
+Comprehensive role-based access control for users, therapists, and administrators.
+
+- 👤 User roles: `user`, `therapist`, `admin`
+- 🔒 Role-based page protection
+- 🎭 Multiple role assignment support
+- 🔄 Dynamic navigation based on user roles
+
+### 6. **Therapy Booking System**
+Connect with professional therapists for one-on-one sessions.
+
+- 🔍 Browse approved therapist profiles
+- 📅 Book therapy sessions with preferred therapists
+- ⏰ View upcoming and past appointments
+- 💬 Add session notes and preferences
+- ❌ Cancel upcoming sessions
+- 💰 View therapist hourly rates and specializations
+
+### 7. **Therapist Dashboard**
+Professional dashboard for therapists to manage their practice.
+
+- 📊 Session statistics and overview
+- 📅 Manage upcoming appointments
+- 📝 Add session notes after appointments
+- ✅ Mark sessions as completed
+- 👥 View client information
+- 🎯 Track session history
+
+### 8. **Admin Panel**
+Powerful administrative tools for platform management.
+
+- 📈 Platform statistics (users, therapists, sessions)
+- 👥 User management and role assignment
+- 🧑‍⚕️ Therapist approval system
+- 📊 Recent user activity monitoring
+- 🔧 Multi-role functionality control
+
+### 9. **User Dashboard**
 Comprehensive overview of progress and statistics.
 
 - 📊 Session count and average calm score
@@ -77,11 +114,14 @@ Comprehensive overview of progress and statistics.
 - **Voice Analysis**: Custom tone analysis with AI
 
 ### Database Schema
-- **Users**: Authentication and user profiles
+- **Users**: Authentication, user profiles, and role management
 - **Sessions**: De-escalation session records
 - **JournalEntries**: Reflective journal logs
 - **Biomarkers**: Vocal health metrics
 - **CustomPersonas**: User-created AI personas
+- **SentimentSnapshot**: Emotional data from sessions
+- **TherapistProfile**: Therapist professional information
+- **TherapySession**: Therapy appointment records
 
 ---
 
@@ -128,7 +168,15 @@ Comprehensive overview of progress and statistics.
    npx prisma db push
    ```
 
-5. **Run the development server**
+5. **Create admin user (Optional)**
+   ```bash
+   npx tsx prisma/seed.ts
+   ```
+   Default admin credentials:
+   - Email: `hasnaatmalik2003@gmail.com`
+   - Password: `Hasnaat@123`
+
+6. **Run the development server**
    ```bash
    npm run dev
    ```
@@ -143,7 +191,8 @@ Comprehensive overview of progress and statistics.
 ```
 voca-coach/
 ├── prisma/
-│   └── schema.prisma          # Database schema
+│   ├── schema.prisma          # Database schema
+│   └── seed.ts                # Admin user seed script
 ├── public/
 │   └── voca-coach-logo.png    # App logo
 ├── src/
@@ -158,12 +207,28 @@ voca-coach/
 │   │   │   ├── analyze-trends/# Trend analysis
 │   │   │   ├── journal-insight/# Socratic prompting
 │   │   │   ├── persona-chat/  # Persona conversations
-│   │   │   └── tts/           # Text-to-speech
+│   │   │   ├── tts/           # Text-to-speech
+│   │   │   ├── therapy/       # Therapy endpoints
+│   │   │   │   ├── therapists/# Get therapists
+│   │   │   │   └── sessions/  # Therapy sessions
+│   │   │   ├── therapist/     # Therapist endpoints
+│   │   │   │   ├── profile/   # Therapist profile
+│   │   │   │   └── sessions/  # Therapist's sessions
+│   │   │   └── admin/         # Admin endpoints
+│   │   │       ├── stats/     # Platform statistics
+│   │   │       ├── users/     # User management
+│   │   │       └── therapists/# Therapist approval
 │   │   ├── dashboard/         # User dashboard
 │   │   ├── de-escalation/     # Live session page
 │   │   ├── biomarkers/        # Analytics page
 │   │   ├── journal/           # Journaling page
 │   │   ├── persona/           # Persona practice page
+│   │   ├── therapy/           # Therapy features
+│   │   │   ├── book/          # Book therapy sessions
+│   │   │   └── sessions/      # User's therapy sessions
+│   │   ├── therapist/         # Therapist dashboard
+│   │   ├── admin/             # Admin panel
+│   │   │   └── users/         # User management page
 │   │   ├── login/             # Login page
 │   │   ├── signup/            # Signup page
 │   │   ├── globals.css        # Global styles
@@ -172,6 +237,7 @@ voca-coach/
 │   │   ├── Navbar.tsx         # Navigation bar
 │   │   ├── ProfileDropdown.tsx# User profile menu
 │   │   ├── ProfilePictureUpload.tsx # Profile pic handler
+│   │   ├── RoleGuard.tsx      # Role-based access control
 │   │   ├── StatusBadge.tsx    # Status indicators
 │   │   ├── CircularProgress.tsx # Progress charts
 │   │   ├── EmotionScale.tsx   # Emotion visualization
@@ -257,6 +323,25 @@ JWT-based authentication with:
 ### Statistics
 - `GET /api/stats` - Get user dashboard statistics
 
+### Therapy (User)
+- `GET /api/therapy/therapists` - Get all approved therapists
+- `GET /api/therapy/sessions` - Get user's therapy sessions
+- `POST /api/therapy/sessions` - Book a therapy session
+- `PUT /api/therapy/sessions` - Update session status (cancel)
+
+### Therapist
+- `GET /api/therapist/profile` - Get therapist profile
+- `POST /api/therapist/profile` - Create/update therapist profile
+- `GET /api/therapist/sessions` - Get therapist's sessions
+- `PUT /api/therapist/sessions` - Update session notes/status
+
+### Admin
+- `GET /api/admin/stats` - Get platform statistics
+- `GET /api/admin/users` - Get all users with filtering
+- `PUT /api/admin/users` - Update user roles
+- `GET /api/admin/therapists` - Get therapist approval requests
+- `PUT /api/admin/therapists` - Approve/reject therapists
+
 ---
 
 ## 🧪 Usage Examples
@@ -284,12 +369,35 @@ JWT-based authentication with:
 5. Review detected cognitive distortions
 
 ### Practicing with Personas
-1. Navigate  to "Persona" from the navbar
+1. Navigate to "Persona" from the navbar
 2. Select a preset persona or create a custom one
 3. Click "Start Conversation"
 4. Chat with the AI persona
 5. Listen to voice responses
 6. End the conversation when finished
+
+### Booking Therapy Sessions
+1. Navigate to "Therapy" from the navbar
+2. Browse available therapist profiles
+3. Select a therapist and review their specializations
+4. Choose a date and time for your session
+5. Add any notes or concerns (optional)
+6. Confirm your booking
+7. View your sessions in "My Therapy Sessions"
+
+### Using the Therapist Dashboard
+1. Navigate to "Therapist" from the navbar (therapists only)
+2. View your upcoming and past sessions
+3. Click on a session to add notes
+4. Mark sessions as completed after they finish
+5. Manage your profile and availability
+
+### Using the Admin Panel
+1. Navigate to "Admin" from the navbar (admins only)
+2. View platform statistics and user metrics
+3. Manage user accounts and assign roles
+4. Approve or reject therapist applications
+5. Monitor recent user activity
 
 ---
 
