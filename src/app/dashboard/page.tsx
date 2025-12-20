@@ -122,6 +122,8 @@ export default function DashboardPage() {
         onProfilePicChange={handleProfilePicChange}
         onLogout={handleLogout}
         currentPage="/dashboard"
+        isAdmin={user.isAdmin}
+        isTherapist={user.isTherapist}
       />
 
       {/* Main Content */}

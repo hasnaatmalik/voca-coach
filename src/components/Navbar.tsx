@@ -13,6 +13,8 @@ interface NavbarProps {
   onProfilePicChange?: (imageUrl: string) => void;
   onLogout?: () => void;
   currentPage?: string;
+  isAdmin?: boolean;
+  isTherapist?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -22,15 +24,26 @@ const Navbar: React.FC<NavbarProps> = ({
   profilePic,
   onProfilePicChange,
   onLogout,
-  currentPage = ''
+  currentPage = '',
+  isAdmin = false,
+  isTherapist = false
 }) => {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/de-escalation', label: 'Live Session' },
     { href: '/biomarkers', label: 'Analytics' },
     { href: '/journal', label: 'Journal' },
-    { href: '/persona', label: 'Practice' }
+    { href: '/persona', label: 'Practice' },
+    { href: '/therapy/book', label: 'Therapy' }
   ];
+
+  const roleNavItems = [];
+  if (isTherapist) {
+    roleNavItems.push({ href: '/therapist', label: '🧑‍⚕️ Therapist' });
+  }
+  if (isAdmin) {
+    roleNavItems.push({ href: '/admin', label: '⚙️ Admin' });
+  }
 
   return (
     <nav style={{
@@ -98,6 +111,23 @@ const Navbar: React.FC<NavbarProps> = ({
                   padding: '8px 0',
                   borderBottom: currentPage === item.href ? '2px solid #7C3AED' : 'none',
                   transition: 'color 0.2s ease'
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {roleNavItems.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: currentPage === item.href ? '#10B981' : '#059669',
+                  padding: '8px 12px',
+                  background: currentPage === item.href ? 'rgba(16, 185, 129, 0.1)' : 'rgba(5, 150, 105, 0.05)',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {item.label}
