@@ -8,6 +8,7 @@ import EmotionScale from '@/components/EmotionScale';
 import LiveStatsPanel from '@/components/LiveStatsPanel';
 import StatusBadge from '@/components/StatusBadge';
 import Navbar from '@/components/Navbar';
+import AvailableTherapistsModal from '@/components/AvailableTherapistsModal';
 
 interface Stats {
   sessionCount: number;
@@ -51,6 +52,8 @@ export default function DashboardPage() {
   const [loadingData, setLoadingData] = useState(true);
   const [profilePic, setProfilePic] = useState<string | undefined>();
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
+  const [showTherapistModal, setShowTherapistModal] = useState(false);
+  const [availableTherapistCount, setAvailableTherapistCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -61,9 +64,22 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchStats();
+      fetchAvailableCount();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const fetchAvailableCount = async () => {
+    try {
+      const res = await fetch('/api/therapists/available');
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableTherapistCount(data.count);
+      }
+    } catch (error) {
+      console.error('Failed to fetch available count:', error);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -123,6 +139,7 @@ export default function DashboardPage() {
         onLogout={handleLogout}
         currentPage="/dashboard"
         isAdmin={user.isAdmin}
+        isSuperAdmin={user.isSuperAdmin}
         isTherapist={user.isTherapist}
       />
 
@@ -165,6 +182,35 @@ export default function DashboardPage() {
               }}>
                 Start Session
               </a>
+              <button
+                onClick={() => setShowTherapistModal(true)}
+                style={{
+                  padding: '10px 20px',
+                  background: availableTherapistCount > 0 
+                    ? 'linear-gradient(135deg, #10B981 0%, #34D399 100%)' 
+                    : 'white',
+                  border: availableTherapistCount > 0 ? 'none' : '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: availableTherapistCount > 0 ? 'white' : '#4B5563',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: availableTherapistCount > 0 ? '#10B981' : '#9CA3AF',
+                  boxShadow: availableTherapistCount > 0 ? '0 0 8px #10B981' : 'none',
+                }} />
+                {availableTherapistCount > 0 
+                  ? `${availableTherapistCount} Therapist${availableTherapistCount > 1 ? 's' : ''} Online`
+                  : 'Talk to Therapist'}
+              </button>
             </div>
           </div>
         </div>
@@ -255,6 +301,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Available Therapists Modal */}
+      <AvailableTherapistsModal
+        isOpen={showTherapistModal}
+        onClose={() => setShowTherapistModal(false)}
+      />
     </div>
   );
 }
