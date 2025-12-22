@@ -39,6 +39,7 @@ export async function GET(req: Request) {
           role: true,
           isTherapist: true,
           isAdmin: true,
+          isSuperAdmin: true,
           createdAt: true,
           _count: {
             select: {
@@ -97,6 +98,13 @@ export async function PUT(req: Request) {
         allowedUpdates.role = 'admin';
       }
     }
+    if (typeof updates.isSuperAdmin !== 'undefined') {
+      allowedUpdates.isSuperAdmin = updates.isSuperAdmin;
+      if (updates.isSuperAdmin) {
+        allowedUpdates.isAdmin = true; // Superadmins are also admins
+        allowedUpdates.role = 'superadmin';
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: userId },
@@ -108,6 +116,7 @@ export async function PUT(req: Request) {
         role: true,
         isTherapist: true,
         isAdmin: true,
+        isSuperAdmin: true,
       },
     });
 

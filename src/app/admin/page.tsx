@@ -64,15 +64,18 @@ export default function AdminDashboard() {
             onLogout={handleLogout}
             currentPage="/admin"
             isAdmin={user.isAdmin}
+            isSuperAdmin={user.isSuperAdmin}
             isTherapist={user.isTherapist}
           />
         )}
         
-        <div style={{ minHeight: 'calc(100vh - 72px)', padding: '32px 24px' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage users, therapists, and platform statistics</p>
+        <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
+          {/* Welcome Section */}
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+              Admin Dashboard
+            </h1>
+            <p style={{ color: '#6B7280' }}>Manage users, therapists, and platform statistics</p>
           </div>
 
           {loading ? (
@@ -81,97 +84,167 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <>
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatCard
-                  title="Total Users"
-                  value={stats?.totalUsers || 0}
-                  icon="👥"
-                  color="var(--primary)"
-                />
-                <StatCard
-                  title="Therapists"
-                  value={stats?.totalTherapists || 0}
-                  icon="🧑‍⚕️"
-                  color="var(--accent)"
-                />
-                <StatCard
-                  title="Practice Sessions"
-                  value={stats?.totalSessions || 0}
-                  icon="🎯"
-                  color="var(--secondary)"
-                />
-                <StatCard
-                  title="Therapy Sessions"
-                  value={stats?.totalTherapySessions || 0}
-                  icon="💬"
-                  color="var(--tertiary)"
-                />
+              {/* Platform Statistics */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '32px',
+                marginBottom: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+                  Platform Statistics
+                </h2>
+                <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+                  Overview of all platform activity
+                </p>
+
+                {/* Stat Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  <StatCard
+                    title="Total Users"
+                    value={stats?.totalUsers || 0}
+                    icon="👥"
+                    gradient="linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)"
+                  />
+                  <StatCard
+                    title="Therapists"
+                    value={stats?.totalTherapists || 0}
+                    icon="🧑‍⚕️"
+                    gradient="linear-gradient(135deg, #EC4899 0%, #F472B6 100%)"
+                  />
+                  <StatCard
+                    title="Practice Sessions"
+                    value={stats?.totalSessions || 0}
+                    icon="🎯"
+                    gradient="linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%)"
+                  />
+                  <StatCard
+                    title="Therapy Sessions"
+                    value={stats?.totalTherapySessions || 0}
+                    icon="💬"
+                    gradient="linear-gradient(135deg, #10B981 0%, #34D399 100%)"
+                  />
+                </div>
               </div>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Link href="/admin/users">
-                  <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer border" style={{ borderColor: '#f3f4f6' }}>
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 rounded-xl p-4" style={{ backgroundColor: 'var(--bg-purple-light)' }}>
-                        <span className="text-3xl">👥</span>
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-bold text-gray-900">Manage Users</h3>
-                        <p className="text-gray-600">View, search, and manage user accounts</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '32px',
+                marginBottom: '24px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '20px' }}>
+                  Quick Actions
+                </h2>
 
-                <Link href="/admin/therapists">
-                  <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer border" style={{ borderColor: '#f3f4f6' }}>
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 rounded-xl p-4" style={{ backgroundColor: 'var(--bg-green-light)' }}>
-                        <span className="text-3xl">🧑‍⚕️</span>
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-bold text-gray-900">Manage Therapists</h3>
-                        <p className="text-gray-600">Approve and manage therapist profiles</p>
-                      </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <Link href="/admin/users" style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%)',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.2)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(124, 58, 237, 0.2)';
+                    }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>👥</div>
+                      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>Manage Users</h3>
+                      <p style={{ fontSize: '14px', opacity: 0.9 }}>View, search, and manage user accounts</p>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+
+                  <Link href="/admin/therapists" style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      color: 'white',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.2)';
+                    }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>🧑‍⚕️</div>
+                      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '4px' }}>Manage Therapists</h3>
+                      <p style={{ fontSize: '14px', opacity: 0.9 }}>Approve and manage therapist profiles</p>
+                    </div>
+                  </Link>
+                </div>
               </div>
 
               {/* Recent Users */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border" style={{ borderColor: '#f3f4f6' }}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Users</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '32px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '20px' }}>
+                  Recent Users
+                </h2>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Joined</th>
+                      <tr style={{ borderBottom: '2px solid #E5E7EB' }}>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '14px', fontWeight: '600', color: '#6B7280' }}>Name</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '14px', fontWeight: '600', color: '#6B7280' }}>Email</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '14px', fontWeight: '600', color: '#6B7280' }}>Role</th>
+                        <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '14px', fontWeight: '600', color: '#6B7280' }}>Joined</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentUsers.map((user) => (
-                        <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-3 px-4">{user.name}</td>
-                          <td className="py-3 px-4 text-gray-600">{user.email}</td>
-                          <td className="py-3 px-4">
-                            <span className="px-3 py-1 rounded-full text-sm font-medium" style={{
-                              backgroundColor: user.role === 'admin' ? 'var(--bg-pink-light)' :
-                                             user.role === 'therapist' ? 'var(--bg-green-light)' :
-                                             'var(--bg-purple-light)',
-                              color: user.role === 'admin' ? 'var(--secondary)' :
-                                    user.role === 'therapist' ? 'var(--accent)' :
-                                    'var(--primary)'
+                      {recentUsers.map((recentUser, index) => (
+                        <tr key={recentUser.id} style={{ borderBottom: index < recentUsers.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
+                          <td style={{ padding: '16px', fontSize: '14px', fontWeight: '500', color: '#1F2937' }}>{recentUser.name}</td>
+                          <td style={{ padding: '16px', fontSize: '14px', color: '#6B7280' }}>{recentUser.email}</td>
+                          <td style={{ padding: '16px' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '4px 12px',
+                              borderRadius: '12px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              background: recentUser.role === 'superadmin' ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' :
+                                         recentUser.role === 'admin' ? 'rgba(236, 72, 153, 0.1)' :
+                                         recentUser.role === 'therapist' ? 'rgba(16, 185, 129, 0.1)' :
+                                         'rgba(124, 58, 237, 0.1)',
+                              color: recentUser.role === 'superadmin' ? 'white' :
+                                     recentUser.role === 'admin' ? '#DB2777' :
+                                     recentUser.role === 'therapist' ? '#059669' :
+                                     '#7C3AED'
                             }}>
-                              {user.role}
+                              {recentUser.role === 'superadmin' && '👑 '}
+                              {recentUser.role}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-gray-600">
-                            {new Date(user.createdAt).toLocaleDateString()}
+                          <td style={{ padding: '16px', fontSize: '14px', color: '#6B7280' }}>
+                            {new Date(recentUser.createdAt).toLocaleDateString()}
                           </td>
                         </tr>
                       ))}
@@ -181,23 +254,45 @@ export default function AdminDashboard() {
               </div>
             </>
           )}
-        </div>
-        </div>
+        </main>
       </div>
     </RoleGuard>
   );
 }
 
-function StatCard({ title, value, icon, color }: { title: string; value: number; icon: string; color: string }) {
+function StatCard({ title, value, icon, gradient }: { title: string; value: number; icon: string; gradient: string }) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border" style={{ borderColor: '#f3f4f6' }}>
-      <div className="flex items-center justify-between">
+    <div style={{
+      background: 'white',
+      borderRadius: '16px',
+      padding: '24px',
+      border: '1px solid #E5E7EB',
+      transition: 'all 0.2s ease'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-4px)';
+      e.currentTarget.style.boxShadow = '0 8px 24px rgba(124, 58, 237, 0.15)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = 'none';
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p className="text-gray-600 text-sm font-medium mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p style={{ fontSize: '14px', fontWeight: '500', color: '#6B7280', marginBottom: '8px' }}>{title}</p>
+          <p style={{ fontSize: '32px', fontWeight: '700', color: '#1F2937' }}>{value}</p>
         </div>
-        <div className="rounded-xl p-3" style={{ backgroundColor: color.startsWith('var') ? `rgba(124, 58, 237, 0.1)` : color }}>
-          <span className="text-3xl">{icon}</span>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '16px',
+          background: gradient,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '28px'
+        }}>
+          {icon}
         </div>
       </div>
     </div>

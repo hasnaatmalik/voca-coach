@@ -67,12 +67,25 @@ Connect with professional therapists for one-on-one sessions.
 ### 7. **Therapist Dashboard**
 Professional dashboard for therapists to manage their practice.
 
-- 📊 Session statistics and overview
+- 📊 Glassmorphism UI with session statistics
+- 🟢 **Go Online/Offline** toggle for availability
+- 💬 Real-time chat with students
 - 📅 Manage upcoming appointments
 - 📝 Add session notes after appointments
 - ✅ Mark sessions as completed
 - 👥 View client information
-- 🎯 Track session history
+- 🔔 Chat notification badge
+
+### 8. **Real-Time Chat System**
+Instant messaging between students and therapists.
+
+- 💬 Student-to-therapist messaging
+- 🟢 Online therapist status indicators
+- 🔔 Notification badges for unread messages
+- 📱 Chat page for both students (`/chat`) and therapists (`/therapist/chat`)
+- ⏰ Message timestamps
+- 👀 Read status tracking
+- 🔄 Real-time polling (3 second updates)
 
 ### 8. **Admin Panel**
 Powerful administrative tools for platform management.
@@ -83,7 +96,7 @@ Powerful administrative tools for platform management.
 - 📊 Recent user activity monitoring
 - 🔧 Multi-role functionality control
 
-### 9. **User Dashboard**
+### 10. **User Dashboard**
 Comprehensive overview of progress and statistics.
 
 - 📊 Session count and average calm score
@@ -92,6 +105,15 @@ Comprehensive overview of progress and statistics.
 - 🎯 Points of improvement analysis
 - 😊 Emotional analysis breakdown
 - 📈 Live statistics panel
+- 💬 "Talk to Therapist" button to connect with online therapists
+
+### 11. **Security Features**
+Robust authentication and session management.
+
+- 🔐 JWT-based authentication with bcrypt
+- ⏰ **12-hour auto-logout** for security
+- 🛡️ Protected API routes
+- 👮 Role-based access guards
 
 ---
 
@@ -173,15 +195,15 @@ Comprehensive overview of progress and statistics.
    npx tsx prisma/seed.ts
    ```
    Default admin credentials:
-   - Email: `hasnaatmalik2003@gmail.com`
-   - Password: `Hasnaat@123`
+   - Email: `admin@vocacoach.com`
+   - Password: `admin123`
 
 6. **Run the development server**
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ---
@@ -196,59 +218,66 @@ voca-coach/
 ├── public/
 │   └── voca-coach-logo.png    # App logo
 ├── src/
-│   ├── app/
-│   │   ├── api/               # API routes
-│   │   │   ├── auth/          # Authentication endpoints
-│   │   │   ├── sessions/      # Session management
-│   │   │   ├── biomarkers/    # Biomarker data
-│   │   │   ├── journal/       # Journal entries
-│   │   │   ├── personas/      # Persona management
-│   │   │   ├── analyze-tone/  # Voice analysis
-│   │   │   ├── analyze-trends/# Trend analysis
-│   │   │   ├── journal-insight/# Socratic prompting
-│   │   │   ├── persona-chat/  # Persona conversations
-│   │   │   ├── tts/           # Text-to-speech
-│   │   │   ├── therapy/       # Therapy endpoints
-│   │   │   │   ├── therapists/# Get therapists
-│   │   │   │   └── sessions/  # Therapy sessions
-│   │   │   ├── therapist/     # Therapist endpoints
-│   │   │   │   ├── profile/   # Therapist profile
-│   │   │   │   └── sessions/  # Therapist's sessions
-│   │   │   └── admin/         # Admin endpoints
-│   │   │       ├── stats/     # Platform statistics
-│   │   │       ├── users/     # User management
-│   │   │       └── therapists/# Therapist approval
-│   │   ├── dashboard/         # User dashboard
-│   │   ├── de-escalation/     # Live session page
-│   │   ├── biomarkers/        # Analytics page
-│   │   ├── journal/           # Journaling page
-│   │   ├── persona/           # Persona practice page
-│   │   ├── therapy/           # Therapy features
-│   │   │   ├── book/          # Book therapy sessions
-│   │   │   └── sessions/      # User's therapy sessions
-│   │   ├── therapist/         # Therapist dashboard
-│   │   ├── admin/             # Admin panel
-│   │   │   └── users/         # User management page
-│   │   ├── login/             # Login page
-│   │   ├── signup/            # Signup page
-│   │   ├── globals.css        # Global styles
-│   │   └── layout.tsx         # Root layout
-│   ├── components/
-│   │   ├── Navbar.tsx         # Navigation bar
-│   │   ├── ProfileDropdown.tsx# User profile menu
-│   │   ├── ProfilePictureUpload.tsx # Profile pic handler
-│   │   ├── RoleGuard.tsx      # Role-based access control
-│   │   ├── StatusBadge.tsx    # Status indicators
-│   │   ├── CircularProgress.tsx # Progress charts
-│   │   ├── EmotionScale.tsx   # Emotion visualization
-│   │   ├── LiveStatsPanel.tsx # Statistics panel
-│   │   └── UserProfileCard.tsx# User info card
-│   ├── hooks/
-│   │   └── useAuth.tsx        # Authentication hook
-│   └── lib/
-│       ├── prisma.ts          # Prisma client
-│       ├── auth.ts            # Auth utilities
-│       └── vertex.ts          # Google Gemini client
+│   │   ├── app/
+│   │   │   ├── api/               # API routes
+│   │   │   │   ├── auth/          # Authentication endpoints
+│   │   │   │   ├── sessions/      # Session management
+│   │   │   │   ├── biomarkers/    # Biomarker data
+│   │   │   │   ├── journal/       # Journal entries
+│   │   │   │   ├── personas/      # Persona management
+│   │   │   │   ├── analyze-tone/  # Voice analysis
+│   │   │   │   ├── analyze-trends/# Trend analysis
+│   │   │   │   ├── journal-insight/# Socratic prompting
+│   │   │   │   ├── persona-chat/  # Persona conversations
+│   │   │   │   ├── tts/           # Text-to-speech
+│   │   │   │   ├── chat/          # Real-time chat endpoints
+│   │   │   │   │   ├── messages/  # Message operations
+│   │   │   │   │   └── unread/    # Unread count
+│   │   │   │   ├── therapy/       # Therapy endpoints
+│   │   │   │   │   ├── therapists/# Get therapists
+│   │   │   │   │   └── sessions/  # Therapy sessions
+│   │   │   │   ├── therapist/     # Therapist endpoints
+│   │   │   │   │   ├── profile/   # Therapist profile
+│   │   │   │   │   ├── sessions/  # Therapist's sessions
+│   │   │   │   │   └── online/    # Online status toggle
+│   │   │   │   ├── therapists/    # Available therapists
+│   │   │   │   │   └── available/ # Online therapists list
+│   │   │   │   └── admin/         # Admin endpoints
+│   │   │   │       ├── stats/     # Platform statistics
+│   │   │   │       ├── users/     # User management
+│   │   │   │       └── therapists/# Therapist approval
+│   │   │   ├── dashboard/         # User dashboard
+│   │   │   ├── de-escalation/     # Live session page
+│   │   │   ├── biomarkers/        # Analytics page
+│   │   │   ├── journal/           # Journaling page
+│   │   │   ├── persona/           # Persona practice page
+│   │   │   ├── chat/              # Student chat page
+│   │   │   ├── therapy/           # Therapy features
+│   │   │   │   ├── book/          # Book therapy sessions
+│   │   │   │   └── sessions/      # User's therapy sessions
+│   │   │   ├── therapist/         # Therapist dashboard
+│   │   │   │   ├── chat/          # Therapist chat page
+│   │   │   │   └── profile/       # Therapist profile edit
+│   │   │   ├── admin/             # Admin panel
+│   │   │   │   ├── therapists/    # Therapist management
+│   │   │   │   └── users/         # User management page
+│   │   │   ├── login/             # Login page
+│   │   │   ├── signup/            # Signup page
+│   │   │   ├── globals.css        # Global styles
+│   │   │   └── layout.tsx         # Root layout
+│   │   ├── components/
+│   │   │   ├── Navbar.tsx         # Navigation bar
+│   │   │   ├── ProfileDropdown.tsx# User profile menu
+│   │   │   ├── ChatNotificationBadge.tsx # Unread message indicator
+│   │   │   ├── AvailableTherapistsModal.tsx # Online therapists
+│   │   │   ├── RoleGuard.tsx      # Role-based access control
+│   │   │   └── ...                # Other components
+│   │   ├── hooks/
+│   │   │   └── useAuth.tsx        # Authentication hook
+│   │   └── lib/
+│   │       ├── prisma.ts          # Prisma client
+│   │       ├── auth.ts            # Auth utilities (12hr expiry)
+│   │       └── vertex.ts          # Google Gemini client
 └── package.json
 ```
 
@@ -341,6 +370,19 @@ JWT-based authentication with:
 - `PUT /api/admin/users` - Update user roles
 - `GET /api/admin/therapists` - Get therapist approval requests
 - `PUT /api/admin/therapists` - Approve/reject therapists
+
+### Chat
+- `GET /api/chat` - Get all conversations for current user
+- `POST /api/chat` - Create or get conversation with therapist
+- `GET /api/chat/messages?conversationId=xxx` - Get messages in conversation
+- `POST /api/chat/messages` - Send a message
+- `GET /api/chat/unread` - Get unread message count
+
+### Therapist Online Status
+- `GET /api/therapist/online` - Check online status
+- `POST /api/therapist/online` - Go online
+- `DELETE /api/therapist/online` - Go offline
+- `GET /api/therapists/available` - Get all online therapists
 
 ---
 
