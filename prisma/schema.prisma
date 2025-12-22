@@ -12,9 +12,12 @@ model User {
   email         String    @unique
   password      String
   name          String
-  role          String    @default("user") // "user", "therapist", "admin"
+  role          String    @default("user") // "user", "therapist", "admin", "superadmin"
   isTherapist   Boolean   @default(false)
   isAdmin       Boolean   @default(false)
+  isSuperAdmin  Boolean   @default(false)
+  isOnline      Boolean   @default(false)
+  lastActiveAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -122,4 +125,27 @@ model TherapySession {
   
   user            User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
   therapist       User     @relation("TherapistSessions", fields: [therapistId], references: [id], onDelete: Cascade)
+}
+
+model ChatConversation {
+  id              String    @id @default(cuid())
+  studentId       String
+  therapistId     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  messages        ChatMessage[]
+  
+  @@unique([studentId, therapistId])
+}
+
+model ChatMessage {
+  id              String           @id @default(cuid())
+  conversationId  String
+  senderId        String
+  content         String
+  isRead          Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
