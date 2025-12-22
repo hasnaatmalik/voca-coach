@@ -9,6 +9,7 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userRole, setUserRole] = useState<'student' | 'therapist'>('student');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup, user, loading } = useAuth();
@@ -32,7 +33,7 @@ export default function SignupPage() {
       return;
     }
 
-    const result = await signup(email, password, name);
+    const result = await signup(email, password, name, userRole === 'therapist');
     
     if (result.success) {
       router.push('/dashboard');
@@ -105,8 +106,44 @@ export default function SignupPage() {
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
             <div style={{ flex: 1, height: '1px', background: '#E5E7EB' }} />
-            <span style={{ fontSize: '13px', color: '#9CA3AF' }}>Sign up with email</span>
+            <span style={{ fontSize: '13px', color: '#9CA3AF' }}>I am a...</span>
             <div style={{ flex: 1, height: '1px', background: '#E5E7EB' }} />
+          </div>
+
+          {/* Role Selection */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+            <button
+              type="button"
+              onClick={() => setUserRole('student')}
+              style={{
+                padding: '16px',
+                borderRadius: '12px',
+                border: userRole === 'student' ? '2px solid #7C3AED' : '2px solid #E5E7EB',
+                background: userRole === 'student' ? 'rgba(124, 58, 237, 0.05)' : 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>📚</div>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: userRole === 'student' ? '#7C3AED' : '#374151' }}>Student</div>
+              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Get support & guidance</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserRole('therapist')}
+              style={{
+                padding: '16px',
+                borderRadius: '12px',
+                border: userRole === 'therapist' ? '2px solid #10B981' : '2px solid #E5E7EB',
+                background: userRole === 'therapist' ? 'rgba(16, 185, 129, 0.05)' : 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>🧑‍⚕️</div>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: userRole === 'therapist' ? '#10B981' : '#374151' }}>Therapist</div>
+              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Help others grow</div>
+            </button>
           </div>
 
           {/* Form */}

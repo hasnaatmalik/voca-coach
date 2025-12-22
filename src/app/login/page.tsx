@@ -16,7 +16,11 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      if (user.isTherapist) {
+        router.push('/therapist');
+      } else {
+        router.push('/dashboard');
+      }
     }
   }, [user, loading, router]);
 
@@ -27,8 +31,12 @@ export default function LoginPage() {
 
     const result = await login(email, password);
     
-    if (result.success) {
-      router.push('/dashboard');
+    if (result.success && result.user) {
+      if (result.user.isTherapist) {
+        router.push('/therapist');
+      } else {
+        router.push('/dashboard');
+      }
     } else {
       setError(result.error || 'Login failed');
       setIsLoading(false);

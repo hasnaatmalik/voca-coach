@@ -42,7 +42,8 @@ export async function POST(req: Request) {
       email: user.email,
       role: user.role,
       isTherapist: user.isTherapist,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin
     });
     await setAuthCookie(token);
 
@@ -55,6 +56,7 @@ export async function POST(req: Request) {
         role: user.role,
         isTherapist: user.isTherapist,
         isAdmin: user.isAdmin,
+        isSuperAdmin: user.isSuperAdmin,
       },
     });
   } catch (error) {

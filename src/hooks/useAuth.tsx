@@ -9,6 +9,7 @@ interface User {
   role: string;
   isTherapist: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   createdAt?: string;
 }
 
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (res.ok && data.user) {
         setUser(data.user);
-        return { success: true };
+        return { success: true, user: data.user };
       }
       return { success: false, error: data.error || 'Login failed' };
     } catch {
@@ -62,12 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, isTherapist: boolean = false) => {
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, isTherapist }),
       });
       const data = await res.json();
       

@@ -4,7 +4,7 @@ import { hashPassword, createToken, setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name } = await req.json();
+    const { email, password, name, isTherapist: isTherapistParam } = await req.json();
 
     // Validate input
     if (!email || !password || !name) {
@@ -35,16 +35,29 @@ export async function POST(req: Request) {
 
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
+    const isTherapist = isTherapistParam === true;
+    
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
         password: hashedPassword,
         name,
-        role: 'user',
-        isTherapist: false,
+        role: isTherapist ? 'therapist' : 'user',
+        isTherapist: isTherapist,
         isAdmin: false,
+        isSuperAdmin: false,
       },
     });
+
+    // Create therapist profile if signing up as therapist
+    if (isTherapist) {
+      await prisma.therapistProfile.create({
+        data: {
+          userId: user.id,
+          isApproved: false,
+        },
+      });
+    }
 
     // Create token and set cookie
     const token = createToken({ 
@@ -52,7 +65,8 @@ export async function POST(req: Request) {
       email: user.email,
       role: user.role,
       isTherapist: user.isTherapist,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      isSuperAdmin: user.isSuperAdmin
     });
     await setAuthCookie(token);
 
@@ -65,6 +79,7 @@ export async function POST(req: Request) {
         role: user.role,
         isTherapist: user.isTherapist,
         isAdmin: user.isAdmin,
+        isSuperAdmin: user.isSuperAdmin,
       },
     });
   } catch (error) {

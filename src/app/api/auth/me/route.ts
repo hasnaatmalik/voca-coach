@@ -22,6 +22,7 @@ export async function GET() {
         role: true,
         isTherapist: true,
         isAdmin: true,
+        isSuperAdmin: true,
         createdAt: true,
       },
     });
