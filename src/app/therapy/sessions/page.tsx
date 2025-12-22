@@ -84,10 +84,35 @@ export default function UserTherapySessions() {
     router.push('/login');
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      day: date.getDate(),
+      month: date.toLocaleDateString('en-US', { month: 'short' }),
+      weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      full: date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric',
+        year: 'numeric'
+      }),
+    };
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled': return { bg: 'rgba(16, 185, 129, 0.1)', color: '#059669', text: '📅 Scheduled' };
+      case 'completed': return { bg: 'rgba(59, 130, 246, 0.1)', color: '#2563EB', text: '✅ Completed' };
+      case 'cancelled': return { bg: 'rgba(239, 68, 68, 0.1)', color: '#DC2626', text: '❌ Cancelled' };
+      default: return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6B7280', text: status };
+    }
+  };
+
   if (!user) return null;
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #F5F3FF 0%, #FDF8F3 100%)' }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name}
@@ -95,118 +120,353 @@ export default function UserTherapySessions() {
         onLogout={handleLogout}
         currentPage="/therapy/sessions"
         isAdmin={user.isAdmin}
+        isSuperAdmin={user.isSuperAdmin}
         isTherapist={user.isTherapist}
       />
       
-      <div style={{ minHeight: 'calc(100vh - 72px)', padding: '32px 24px' }}>
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Therapy Sessions</h1>
-          <p className="text-gray-600">View and manage your therapy appointments</p>
-          <Link href="/therapy/book" className="font-medium mt-2 inline-block" style={{ color: 'var(--primary)' }}>
-            Book New Session →
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: '32px',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}>
+          <div>
+            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+              My Sessions 📅
+            </h1>
+            <p style={{ color: '#6B7280' }}>Manage your therapy appointments</p>
+          </div>
+          <Link
+            href="/therapy/book"
+            style={{
+              padding: '14px 28px',
+              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+              color: 'white',
+              borderRadius: '14px',
+              textDecoration: 'none',
+              fontWeight: '600',
+              fontSize: '15px',
+              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.3)',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            ➕ Book New Session
           </Link>
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--primary)' }}></div>
+          <div style={{ textAlign: 'center', padding: '60px' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              border: '3px solid #E5E7EB',
+              borderTopColor: '#7C3AED',
+              borderRadius: '50%',
+              margin: '0 auto',
+              animation: 'spin 1s linear infinite',
+            }} />
           </div>
         ) : (
           <>
             {/* Upcoming Sessions */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Upcoming Sessions</h2>
+            <div style={{ marginBottom: '40px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                }}>
+                  🗓️
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1F2937' }}>
+                    Upcoming Sessions
+                  </h2>
+                  <p style={{ fontSize: '14px', color: '#6B7280' }}>
+                    {upcomingSessions.length} session{upcomingSessions.length !== 1 ? 's' : ''} scheduled
+                  </p>
+                </div>
+              </div>
+
               {upcomingSessions.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 mb-4">No upcoming sessions</p>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '20px',
+                  padding: '48px',
+                  textAlign: 'center',
+                  border: '1px solid rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
+                    No upcoming sessions
+                  </h3>
+                  <p style={{ color: '#6B7280', marginBottom: '20px' }}>
+                    Book a session with a therapist to get started
+                  </p>
                   <Link
                     href="/therapy/book"
-                    className="inline-block px-6 py-3 text-white rounded-xl font-semibold transition-colors"
-                    style={{ background: 'var(--bg-gradient-purple)' }}
+                    style={{
+                      display: 'inline-block',
+                      padding: '12px 24px',
+                      background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      fontWeight: '600',
+                    }}
                   >
-                    Book a Session
+                    Browse Therapists
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {upcomingSessions.map((session) => (
-                    <div key={session.id} className="border border-gray-200 rounded-xl p-5">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900">
-                            Session with {session.therapist.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">{session.therapist.email}</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            📅 {new Date(session.scheduledAt).toLocaleString()}
-                          </p>
-                          <p className="text-sm text-gray-600">⏱️ {session.duration} minutes</p>
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  {upcomingSessions.map((session) => {
+                    const dateInfo = formatDate(session.scheduledAt);
+                    const statusInfo = getStatusColor(session.status);
+                    
+                    return (
+                      <div
+                        key={session.id}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.95)',
+                          backdropFilter: 'blur(10px)',
+                          borderRadius: '20px',
+                          padding: '24px',
+                          border: '1px solid rgba(255, 255, 255, 0.5)',
+                          boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                          display: 'flex',
+                          gap: '24px',
+                          alignItems: 'center',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                        }}
+                      >
+                        {/* Date Card */}
+                        <div style={{
+                          width: '80px',
+                          height: '90px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}>
+                          <span style={{ fontSize: '12px', opacity: 0.9, textTransform: 'uppercase' }}>
+                            {dateInfo.month}
+                          </span>
+                          <span style={{ fontSize: '32px', fontWeight: '700', lineHeight: 1 }}>
+                            {dateInfo.day}
+                          </span>
+                          <span style={{ fontSize: '12px', opacity: 0.9 }}>
+                            {dateInfo.weekday}
+                          </span>
                         </div>
-                        <button
-                          onClick={() => cancelSession(session.id)}
-                          className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors"
-                          style={{ background: 'var(--secondary)' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
 
-                      {session.userNote && (
-                        <div className="bg-blue-50 rounded-lg p-3">
-                          <p className="text-sm font-medium text-gray-700">Your Note:</p>
-                          <p className="text-sm text-gray-600">{session.userNote}</p>
+                        {/* Session Details */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1F2937' }}>
+                              Session with {session.therapist.name}
+                            </h3>
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              background: statusInfo.bg,
+                              color: statusInfo.color,
+                            }}>
+                              {statusInfo.text}
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', color: '#6B7280', fontSize: '14px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              ⏰ {dateInfo.time}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              ⏱️ {session.duration} minutes
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              📧 {session.therapist.email}
+                            </span>
+                          </div>
+
+                          {session.userNote && (
+                            <p style={{
+                              marginTop: '12px',
+                              padding: '10px 14px',
+                              background: 'rgba(124, 58, 237, 0.05)',
+                              borderRadius: '10px',
+                              fontSize: '13px',
+                              color: '#6B7280',
+                              fontStyle: 'italic',
+                            }}>
+                              "{session.userNote}"
+                            </p>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <button
+                            onClick={() => cancelSession(session.id)}
+                            style={{
+                              padding: '10px 20px',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              color: '#DC2626',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontWeight: '600',
+                              fontSize: '13px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             {/* Past Sessions */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Past Sessions</h2>
+            <div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                }}>
+                  📜
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1F2937' }}>
+                    Past Sessions
+                  </h2>
+                  <p style={{ fontSize: '14px', color: '#6B7280' }}>
+                    Your session history
+                  </p>
+                </div>
+              </div>
+
               {pastSessions.length === 0 ? (
-                <p className="text-gray-600 py-8 text-center">No past sessions</p>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '20px',
+                  padding: '48px',
+                  textAlign: 'center',
+                  border: '1px solid rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌟</div>
+                  <p style={{ color: '#6B7280' }}>No past sessions yet</p>
+                </div>
               ) : (
-                <div className="space-y-4">
-                  {pastSessions.map((session) => (
-                    <div key={session.id} className="border border-gray-200 rounded-xl p-5 opacity-75">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900">
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(255, 255, 255, 0.5)',
+                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                  overflow: 'hidden',
+                }}>
+                  {pastSessions.map((session, index) => {
+                    const dateInfo = formatDate(session.scheduledAt);
+                    const statusInfo = getStatusColor(session.status);
+                    
+                    return (
+                      <div
+                        key={session.id}
+                        style={{
+                          padding: '20px 24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '20px',
+                          borderBottom: index < pastSessions.length - 1 ? '1px solid #F3F4F6' : 'none',
+                        }}
+                      >
+                        <div style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '12px',
+                          background: statusInfo.bg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '20px',
+                          flexShrink: 0,
+                        }}>
+                          {session.status === 'completed' ? '✅' : session.status === 'cancelled' ? '❌' : '📅'}
+                        </div>
+                        
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>
                             Session with {session.therapist.name}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(session.scheduledAt).toLocaleDateString()}
+                          </p>
+                          <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                            {dateInfo.full} at {dateInfo.time}
                           </p>
                         </div>
-                        <span className="px-3 py-1 rounded-full text-sm font-medium" style={{
-                          backgroundColor: session.status === 'completed' ? 'var(--bg-green-light)' : 
-                                         session.status === 'cancelled' ? 'var(--bg-pink-light)' : 'var(--bg-purple-light)',
-                          color: session.status === 'completed' ? 'var(--accent)' : 
-                                session.status === 'cancelled' ? 'var(--secondary)' : 'var(--primary)'
+                        
+                        <span style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          background: statusInfo.bg,
+                          color: statusInfo.color,
+                          textTransform: 'capitalize',
                         }}>
                           {session.status}
                         </span>
                       </div>
-
-                      {session.notes && (
-                        <div className="bg-gray-50 rounded-lg p-3 mt-3">
-                          <p className="text-sm font-medium text-gray-700">Therapist Notes:</p>
-                          <p className="text-sm text-gray-600">{session.notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </>
         )}
-      </div>
-      </div>
+      </main>
+
+      <style jsx global>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

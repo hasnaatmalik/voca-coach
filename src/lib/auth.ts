@@ -11,6 +11,7 @@ interface JWTPayload {
   role: string;
   isTherapist: boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -22,7 +23,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 export function createToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
@@ -39,7 +40,7 @@ export async function setAuthCookie(token: string) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 12, // 12 hours
     path: '/',
   });
 }
@@ -66,6 +67,11 @@ export async function checkIsAdmin(): Promise<boolean> {
   return user?.isAdmin || false;
 }
 
+export async function checkIsSuperAdmin(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return user?.isSuperAdmin || false;
+}
+
 export async function checkIsTherapist(): Promise<boolean> {
   const user = await getCurrentUser();
   return user?.isTherapist || false;
@@ -83,6 +89,14 @@ export async function requireAdmin(): Promise<JWTPayload> {
   const user = await requireAuth();
   if (!user.isAdmin) {
     throw new Error('Admin access required');
+  }
+  return user;
+}
+
+export async function requireSuperAdmin(): Promise<JWTPayload> {
+  const user = await requireAuth();
+  if (!user.isSuperAdmin) {
+    throw new Error('Superadmin access required');
   }
   return user;
 }

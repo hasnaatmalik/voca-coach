@@ -100,6 +100,7 @@ export default function TherapyBooking() {
         onLogout={handleLogout}
         currentPage="/therapy/book"
         isAdmin={user.isAdmin}
+        isSuperAdmin={user.isSuperAdmin}
         isTherapist={user.isTherapist}
       />
       
@@ -123,13 +124,27 @@ export default function TherapyBooking() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Therapist List */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Available Therapists</h2>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '32px',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+            }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '20px' }}>Available Therapists</h2>
               <div className="space-y-4">
                 {therapists.map((therapist) => {
-                  const specializations = therapist.therapistProfile?.specializations 
-                    ? JSON.parse(therapist.therapistProfile.specializations)
-                    : [];
+                  let specializations: string[] = [];
+                  try {
+                    const specs = therapist.therapistProfile?.specializations;
+                    if (typeof specs === 'string' && specs) {
+                      const parsed = JSON.parse(specs);
+                      specializations = Array.isArray(parsed) ? parsed : [];
+                    }
+                  } catch {
+                    specializations = [];
+                  }
                   
                   return (
                     <div
@@ -178,8 +193,10 @@ export default function TherapyBooking() {
                 })}
 
                 {therapists.length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-2xl">
-                    <p className="text-gray-600">No therapists available at the moment</p>
+                  <div style={{ textAlign: 'center', padding: '48px 0', color: '#6B7280' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧑‍⚕️</div>
+                    <p style={{ fontSize: '16px', fontWeight: '500' }}>No therapists available</p>
+                    <p style={{ fontSize: '14px', marginTop: '8px' }}>Check back later for available therapists</p>
                   </div>
                 )}
               </div>
@@ -187,8 +204,15 @@ export default function TherapyBooking() {
 
             {/* Booking Form */}
             <div className="sticky top-8 h-fit">
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Book Your Session</h2>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '32px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '24px' }}>Book Your Session</h2>
                 
                 <div className="space-y-4">
                   <div>
