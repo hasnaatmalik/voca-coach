@@ -42,6 +42,10 @@ model User {
   therapistPayments   Payment[] @relation("TherapistPayments")
   studentConversations  ChatConversation[] @relation("StudentConversations")
   therapistConversations ChatConversation[] @relation("TherapistConversations")
+
+  // Journal relations
+  journalSessions     JournalSession[]
+  journalStreak       JournalStreak?
 }
 
 model Session {
@@ -62,13 +66,63 @@ model Session {
 model JournalEntry {
   id              String   @id @default(cuid())
   userId          String
+  sessionId       String?
+  title           String?
   content         String
+  mood            Int?
+  moodAfter       Int?
   distortion      String?
+  distortions     String?
   socraticPrompt  String?
   userResponse    String?
+  tags            String?
+  isVoiceEntry    Boolean  @default(false)
+  audioUrl        String?
+  aiSummary       String?
+  gratitudeItems  String?
   createdAt       DateTime @default(now())
-  
+  updatedAt       DateTime @updatedAt
+
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session         JournalSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+}
+
+model JournalSession {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionType String
+  title       String?
+  summary     String?
+  moodStart   Int?
+  moodEnd     Int?
+  messages    String   @default("[]")
+  isComplete  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries     JournalEntry[]
+}
+
+model JournalStreak {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastEntryDate DateTime?
+  totalEntries  Int       @default(0)
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JournalPrompt {
+  id            String   @id @default(cuid())
+  category      String
+  prompt        String
+  isAIGenerated Boolean  @default(false)
+  usageCount    Int      @default(0)
+  createdAt     DateTime @default(now())
 }
 
 model Biomarker {

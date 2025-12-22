@@ -1,26 +1,29 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  distortion?: string;
-}
+import JournalSidebar from './components/JournalSidebar';
+import JournalChat from './components/JournalChat';
+import JournalEditor from './components/JournalEditor';
+import JournalHistory from './components/JournalHistory';
+import JournalAnalytics from './components/JournalAnalytics';
+import JournalPrompts from './components/JournalPrompts';
+import GratitudePrompt from './components/GratitudePrompt';
+import CBTExercise from './components/CBTExercise';
+import VoiceJournal from './components/VoiceJournal';
+import { ViewMode, JournalStreak } from './types';
 
 export default function JournalPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm here to listen and help you reflect. What's on your mind today?" }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('chat');
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [streak, setStreak] = useState<JournalStreak | null>(null);
+  const [currentMood, setCurrentMood] = useState<number | null>(null);
   const [profilePic, setProfilePic] = useState<string>();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,78 +31,87 @@ export default function JournalPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || chatLoading) return;
-
-    const userMsg = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-    setChatLoading(true);
-
+  const fetchStreak = useCallback(async () => {
     try {
-      const res = await fetch('/api/journal-insight', {
-        method: 'POST',
-        body: JSON.stringify({ message: userMsg, context: messages.slice(-3) }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const res = await fetch('/api/journal-analytics?range=all');
       const data = await res.json();
-
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.socraticPrompt || "That's interesting. Can you tell me more?",
-        distortion: data.distortion
-      }]);
-
-      await fetch('/api/journal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: userMsg,
-          distortion: data.distortion || null,
-          socraticPrompt: data.socraticPrompt || null,
-        }),
-      });
-    } catch {
-      const fallbackResponses = [
-        "That's interesting. Can you tell me more about what led you to feel this way?",
-        "I hear you. What do you think might be underlying these feelings?",
-        "Thank you for sharing. How does this situation make you feel about yourself?",
-        "That sounds challenging. What would you tell a friend in the same situation?"
-      ];
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
-      }]);
-    } finally {
-      setChatLoading(false);
+      if (data.streak) {
+        setStreak(data.streak);
+      }
+      if (data.averageMood) {
+        setCurrentMood(Math.round(data.averageMood));
+      }
+    } catch (err) {
+      console.error('Fetch streak error:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      // fetchStreak is an async function that fetches data - this is a valid pattern
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchStreak();
+    }
+  }, [user, fetchStreak]);
 
   const handleLogout = async () => {
     await logout();
     router.push('/login');
   };
 
+  const handleStreakUpdate = () => {
+    fetchStreak();
+  };
+
+  const handlePromptSelect = (prompt: string) => {
+    setSelectedPrompt(prompt);
+    setViewMode('write');
+  };
+
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    setSelectedPrompt(null);
+  };
+
   if (loading || !user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #F9FAFB 0%, #F3E8FF 50%, #FCE7F3 100%)',
+      }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #E5E7EB', borderTop: '4px solid #7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #E5E7EB',
+            borderTop: '4px solid #7C3AED',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px',
+          }} />
           <div style={{ color: '#6B7280' }}>Loading...</div>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
+  // Determine if sidebar should be shown
+  const showSidebar = !['analytics'].includes(viewMode);
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #F9FAFB 0%, #F3E8FF 50%, #FCE7F3 100%)',
+    }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name || 'User'}
@@ -108,147 +120,138 @@ export default function JournalPage() {
         onProfilePicChange={setProfilePic}
         onLogout={handleLogout}
         currentPage="/journal"
+        isAdmin={user.isAdmin}
+        isSuperAdmin={user.isSuperAdmin}
+        isTherapist={user.isTherapist}
       />
 
-      {/* Chat Area */}
-      <div 
-        ref={scrollRef}
-        style={{ 
-          flex: 1, 
-          overflowY: 'auto', 
-          padding: '24px',
-          maxWidth: '700px',
-          width: '100%',
-          margin: '0 auto'
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {messages.map((m, i) => (
-            <div key={i} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: m.role === 'user' ? 'flex-end' : 'flex-start'
-            }}>
-              {m.distortion && (
-                <span style={{
-                  fontSize: '11px',
-                  color: '#F59E0B',
-                  marginBottom: '6px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  fontWeight: '600',
-                  background: '#FEF3E7',
-                  padding: '4px 8px',
-                  borderRadius: '4px'
-                }}>
-                  🔍 Detected: {m.distortion}
-                </span>
-              )}
-              <div style={{
-                maxWidth: '80%',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                ...(m.role === 'user' ? {
-                  background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                  color: 'white',
-                  borderBottomRightRadius: '4px'
-                } : {
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  color: '#1F2937',
-                  borderBottomLeftRadius: '4px',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  boxShadow: '0 2px 8px rgba(124, 58, 237, 0.08)'
-                })
-              }}>
-                {m.content}
-              </div>
-            </div>
-          ))}
-          
-          {chatLoading && (
-            <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-              <div style={{
-                background: 'white',
-                padding: '16px 20px',
-                borderRadius: '20px',
-                borderBottomLeftRadius: '4px',
-                border: '1px solid #E5E7EB',
-                display: 'flex',
-                gap: '6px'
-              }}>
-                {[0, 1, 2].map(i => (
-                  <span key={i} style={{
-                    width: '8px',
-                    height: '8px',
-                    background: '#10B981',
-                    borderRadius: '50%',
-                    animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`
-                  }} />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Input Area */}
-      <div style={{
-        background: 'white',
-        borderTop: '1px solid #E5E7EB',
-        padding: '20px 24px'
+      <main style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
+        padding: '32px 24px',
       }}>
-        <form onSubmit={handleSubmit} style={{
-          maxWidth: '700px',
-          margin: '0 auto',
-          display: 'flex',
-          gap: '12px'
+        {/* Header */}
+        <div style={{
+          marginBottom: '32px',
         }}>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Share your thoughts..."
-            autoFocus
-            style={{
-              flex: 1,
-              padding: '16px 20px',
-              border: '1px solid #E5E7EB',
-              borderRadius: '999px',
-              fontSize: '15px',
-              outline: 'none',
-              background: '#F9FAFB'
-            }}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || chatLoading}
-            style={{
-              width: '52px',
-              height: '52px',
-              background: input.trim() && !chatLoading ? '#10B981' : '#E5E7EB',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              cursor: input.trim() && !chatLoading ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}
-          >
-            →
-          </button>
-        </form>
-      </div>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '700',
+            color: '#1F2937',
+            margin: '0 0 8px',
+          }}>
+            Journal
+          </h1>
+          <p style={{
+            fontSize: '15px',
+            color: '#6B7280',
+            margin: 0,
+          }}>
+            Reflect, grow, and understand yourself better
+          </p>
+        </div>
 
-      <style jsx>{`
-        @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-6px); }
-        }
-      `}</style>
+        {/* Main Content Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: showSidebar ? '280px 1fr' : '1fr',
+          gap: '24px',
+          alignItems: 'start',
+        }}>
+          {/* Sidebar */}
+          {showSidebar && (
+            <JournalSidebar
+              viewMode={viewMode}
+              onViewChange={handleViewChange}
+              streak={streak}
+              currentMood={currentMood}
+            />
+          )}
+
+          {/* Main Content */}
+          <div>
+            {viewMode === 'chat' && (
+              <JournalChat
+                sessionId={currentSessionId}
+                onSessionChange={setCurrentSessionId}
+                onStreakUpdate={handleStreakUpdate}
+              />
+            )}
+
+            {viewMode === 'write' && (
+              <JournalEditor
+                onSave={() => {
+                  handleStreakUpdate();
+                  if (selectedPrompt) {
+                    setSelectedPrompt(null);
+                  }
+                }}
+                onStreakUpdate={handleStreakUpdate}
+              />
+            )}
+
+            {viewMode === 'gratitude' && (
+              <GratitudePrompt
+                onSave={handleStreakUpdate}
+                onStreakUpdate={handleStreakUpdate}
+              />
+            )}
+
+            {viewMode === 'cbt' && (
+              <CBTExercise
+                onSave={handleStreakUpdate}
+                onStreakUpdate={handleStreakUpdate}
+              />
+            )}
+
+            {viewMode === 'voice' && (
+              <VoiceJournal
+                onStreakUpdate={handleStreakUpdate}
+              />
+            )}
+
+            {viewMode === 'history' && (
+              <JournalHistory
+                onEntrySelect={(entry) => {
+                  console.log('Selected entry:', entry);
+                }}
+              />
+            )}
+
+            {viewMode === 'analytics' && (
+              <div>
+                {/* Back button for analytics */}
+                <button
+                  onClick={() => setViewMode('chat')}
+                  style={{
+                    marginBottom: '16px',
+                    padding: '8px 16px',
+                    background: 'white',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#4B5563',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  ← Back to Journal
+                </button>
+                <JournalAnalytics />
+              </div>
+            )}
+
+            {viewMode === 'prompts' && (
+              <JournalPrompts
+                onSelectPrompt={handlePromptSelect}
+                onViewChange={(mode) => setViewMode(mode)}
+              />
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
