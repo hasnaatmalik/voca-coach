@@ -20,7 +20,11 @@ model User {
   lastActiveAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
+
+  // Stripe integration
+  stripeCustomerId  String?   @unique
+  stripeAccountId   String?   @unique
+
   sessions      Session[]
   journalEntries JournalEntry[]
   biomarkers    Biomarker[]
@@ -28,6 +32,15 @@ model User {
   therapistProfile TherapistProfile?
   therapySessions TherapySession[] @relation("UserSessions")
   therapistSessions TherapySession[] @relation("TherapistSessions")
+
+  // New relations
+  notifications       Notification[]
+  availabilitySlots   TherapistAvailability[]
+  aiTherapySessions   AITherapySession[]
+  userPayments        Payment[] @relation("UserPayments")
+  therapistPayments   Payment[] @relation("TherapistPayments")
+  studentConversations  ChatConversation[] @relation("StudentConversations")
+  therapistConversations ChatConversation[] @relation("TherapistConversations")
 }
 
 model Session {
@@ -117,14 +130,22 @@ model TherapySession {
   therapistId     String   // Therapist
   scheduledAt     DateTime
   duration        Int      @default(60) // minutes
-  status          String   @default("scheduled") // "scheduled", "completed", "cancelled"
+  status          String   @default("scheduled") // "scheduled", "in_progress", "completed", "cancelled"
   notes           String?  // Therapist notes
   userNote        String?  // User's initial note when booking
+  actualStartTime DateTime?
+  actualEndTime   DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   user            User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
   therapist       User     @relation("TherapistSessions", fields: [therapistId], references: [id], onDelete: Cascade)
+
+  // New relations
+  preSessionData      PreSessionData?
+  recordings          SessionRecording[]
+  postSessionSummary  PostSessionSummary?
+  payments            Payment[]
 }
 
 model ChatConversation {
@@ -133,9 +154,11 @@ model ChatConversation {
   therapistId     String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+
+  student         User      @relation("StudentConversations", fields: [studentId], references: [id], onDelete: Cascade)
+  therapist       User      @relation("TherapistConversations", fields: [therapistId], references: [id], onDelete: Cascade)
   messages        ChatMessage[]
-  
+
   @@unique([studentId, therapistId])
 }
 
@@ -146,6 +169,178 @@ model ChatMessage {
   content         String
   isRead          Boolean          @default(false)
   createdAt       DateTime         @default(now())
-  
+
   conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NEW MODELS FOR THERAPY SESSION SYSTEM
+// ============================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // session_reminder, therapist_joined, new_message, session_cancelled, session_starting
+  title     String
+  message   String
+  data      String?  // JSON for additional context (sessionId, etc.)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PreSessionData {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  moodRating      Int      // 1-10
+  concernText     String?  // "What's on your mind today?"
+  voiceNoteUrl    String?  // Path to pre-session voice note
+  sessionGoals    String?  // Goals for this session
+  techCheckPassed Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  session         TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model SessionRecording {
+  id               String   @id @default(cuid())
+  sessionId        String
+  filePath         String   // /uploads/recordings/{sessionId}/{filename}
+  duration         Int      // seconds
+  fileSize         Int?     // bytes
+  transcriptPath   String?  // Path to transcript JSON file
+  userConsent      Boolean  @default(false)
+  therapistConsent Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  session          TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model PostSessionSummary {
+  id               String   @id @default(cuid())
+  sessionId        String   @unique
+  aiHighlights     String?  // JSON array of highlights
+  keyTopics        String?  // JSON array of topics discussed
+  homework         String?  // JSON array of action items
+  moodBefore       Int?     // From PreSessionData
+  moodAfter        Int?     // Post-session mood rating
+  rating           Int?     // 1-5 star rating
+  feedbackCategories String? // JSON: {"helpfulness": true, "connection": true, ...}
+  feedbackText     String?  // Open-ended feedback
+  pdfUrl           String?  // Path to generated PDF
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  session          TherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model TherapistAvailability {
+  id              String    @id @default(cuid())
+  therapistId     String
+  dayOfWeek       Int       // 0-6 (Sunday-Saturday)
+  startTime       String    // "09:00" (24-hour format)
+  endTime         String    // "17:00"
+  isRecurring     Boolean   @default(true)
+  specificDate    DateTime? // For non-recurring (specific dates)
+  isBlocked       Boolean   @default(false) // For vacation/unavailable days
+  sessionDuration Int       @default(60) // 30, 45, 60 minutes
+  bufferTime      Int       @default(15) // minutes between sessions
+  maxSessionsPerDay Int?    // Optional limit
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  therapist       User      @relation(fields: [therapistId], references: [id], onDelete: Cascade)
+}
+
+model AITherapySession {
+  id               String    @id @default(cuid())
+  userId           String
+  personaType      String    // empathetic_listener, cbt_practitioner, mindfulness_guide, solution_focused
+  status           String    @default("active") // active, completed, interrupted
+  recordingConsent Boolean   @default(false)
+  audioRecordingUrl String?  // Optional path to full session recording
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  durationSeconds  Int?
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages         AITherapyMessage[]
+  summary          AISessionSummary?
+  crisisEvents     CrisisEvent[]
+}
+
+model AITherapyMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String   // user, assistant
+  content   String   // Transcript text
+  audioUrl  String?  // Optional audio storage path
+  timestamp Int      // Seconds into session
+  sentiment String?  // Detected sentiment
+  intensity Float?   // 0-1
+  createdAt DateTime @default(now())
+
+  session   AITherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model AISessionSummary {
+  id              String   @id @default(cuid())
+  sessionId       String   @unique
+  keyTopics       String   // JSON array of topics
+  insights        String   // JSON array of insights
+  homework        String?  // JSON array of suggested tasks
+  moodProgression String   // JSON: {start, middle, end, trend}
+  overallSentiment String? // positive, mixed, negative
+  therapeuticNotes String? // AI-generated professional notes
+  createdAt       DateTime @default(now())
+
+  session         AITherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model CrisisEvent {
+  id            String    @id @default(cuid())
+  sessionId     String
+  detectedAt    DateTime  @default(now())
+  triggerPhrase String    // The phrase that triggered detection
+  riskLevel     String    // low, medium, high, critical
+  category      String?   // suicidal_ideation, self_harm, harm_to_others, severe_distress
+  actionTaken   String    // helpline_displayed, therapist_alerted, session_paused
+  resolved      Boolean   @default(false)
+  resolvedAt    DateTime?
+  notes         String?   // Follow-up notes
+
+  session       AITherapySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  sessionId             String?  // Optional - can be subscription payment
+  userId                String   // Payer (client)
+  therapistId           String?  // Payee (therapist) - null for AI session subscriptions
+  amount                Float    // Amount in cents
+  currency              String   @default("usd")
+  status                String   // pending, succeeded, failed, refunded
+  stripePaymentIntentId String?  @unique
+  stripeTransferId      String?  // For therapist payout
+  type                  String   // session, subscription, refund
+  description           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation("UserPayments", fields: [userId], references: [id])
+  therapist             User?    @relation("TherapistPayments", fields: [therapistId], references: [id])
+  session               TherapySession? @relation(fields: [sessionId], references: [id])
+}
+
+model TherapistAISuggestion {
+  id               String   @id @default(cuid())
+  therapySessionId String   // References TherapySession (human therapist sessions)
+  timestamp        Int      // Seconds into session
+  suggestionType   String   // observation, technique, topic_exploration, warning
+  content          String
+  priority         String   @default("medium") // low, medium, high
+  isUsed           Boolean  @default(false)
+  createdAt        DateTime @default(now())
 }

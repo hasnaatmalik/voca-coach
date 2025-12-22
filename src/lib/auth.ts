@@ -5,14 +5,20 @@ import { cookies } from 'next/headers';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const COOKIE_NAME = 'voca-coach-auth';
 
-interface JWTPayload {
+export interface JWTPayload {
   userId: string;
   email: string;
   role: string;
   isTherapist: boolean;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  name?: string;
+  stripeCustomerId?: string | null;
+  stripeAccountId?: string | null;
 }
+
+// Type alias for convenience - allows using user.id or user.userId
+export type AuthUser = JWTPayload & { id: string };
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -56,10 +62,13 @@ export async function getAuthToken(): Promise<string | null> {
   return cookie?.value || null;
 }
 
-export async function getCurrentUser(): Promise<JWTPayload | null> {
+export async function getCurrentUser(): Promise<AuthUser | null> {
   const token = await getAuthToken();
   if (!token) return null;
-  return verifyToken(token);
+  const payload = verifyToken(token);
+  if (!payload) return null;
+  // Add id alias for userId for convenience
+  return { ...payload, id: payload.userId };
 }
 
 export async function checkIsAdmin(): Promise<boolean> {
@@ -77,7 +86,7 @@ export async function checkIsTherapist(): Promise<boolean> {
   return user?.isTherapist || false;
 }
 
-export async function requireAuth(): Promise<JWTPayload> {
+export async function requireAuth(): Promise<AuthUser> {
   const user = await getCurrentUser();
   if (!user) {
     throw new Error('Unauthorized');
@@ -85,7 +94,7 @@ export async function requireAuth(): Promise<JWTPayload> {
   return user;
 }
 
-export async function requireAdmin(): Promise<JWTPayload> {
+export async function requireAdmin(): Promise<AuthUser> {
   const user = await requireAuth();
   if (!user.isAdmin) {
     throw new Error('Admin access required');
@@ -93,7 +102,7 @@ export async function requireAdmin(): Promise<JWTPayload> {
   return user;
 }
 
-export async function requireSuperAdmin(): Promise<JWTPayload> {
+export async function requireSuperAdmin(): Promise<AuthUser> {
   const user = await requireAuth();
   if (!user.isSuperAdmin) {
     throw new Error('Superadmin access required');
@@ -101,7 +110,7 @@ export async function requireSuperAdmin(): Promise<JWTPayload> {
   return user;
 }
 
-export async function requireTherapist(): Promise<JWTPayload> {
+export async function requireTherapist(): Promise<AuthUser> {
   const user = await requireAuth();
   if (!user.isTherapist) {
     throw new Error('Therapist access required');

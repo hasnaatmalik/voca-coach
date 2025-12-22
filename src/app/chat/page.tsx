@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
@@ -20,7 +20,7 @@ interface Conversation {
   messages: Message[];
 }
 
-export default function StudentChatPage() {
+function StudentChatContent() {
   const { user, logout, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -395,5 +395,13 @@ export default function StudentChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StudentChatPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '100px', textAlign: 'center' }}>Loading...</div>}>
+      <StudentChatContent />
+    </Suspense>
   );
 }

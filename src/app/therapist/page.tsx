@@ -21,6 +21,34 @@ interface Session {
   };
 }
 
+interface ClientInsight {
+  clientId: string;
+  clientName: string;
+  sessionsCount: number;
+  nextSession: string | null;
+  preSessionNotes: string | null;
+  moodTrend: 'improving' | 'stable' | 'declining' | 'unknown';
+  aiSummary: string;
+  alerts: string[];
+}
+
+interface PreSessionNote {
+  sessionId: string;
+  clientName: string;
+  scheduledAt: string;
+  moodRating: number;
+  concerns: string;
+  goals: string;
+}
+
+interface CrisisAlert {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string;
+  data: string;
+}
+
 export default function TherapistDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -29,11 +57,16 @@ export default function TherapistDashboard() {
   const [isOnline, setIsOnline] = useState(false);
   const [togglingOnline, setTogglingOnline] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [clientInsights, setClientInsights] = useState<ClientInsight[]>([]);
+  const [preSessionNotes, setPreSessionNotes] = useState<PreSessionNote[]>([]);
+  const [crisisAlerts, setCrisisAlerts] = useState<CrisisAlert[]>([]);
+  const [loadingInsights, setLoadingInsights] = useState(true);
 
   useEffect(() => {
     fetchSessions();
     fetchOnlineStatus();
     fetchUnreadCount();
+    fetchAIInsights();
   }, []);
 
   const fetchOnlineStatus = async () => {
@@ -57,6 +90,53 @@ export default function TherapistDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error);
+    }
+  };
+
+  const fetchAIInsights = async () => {
+    try {
+      const res = await fetch('/api/therapist/insights');
+      if (res.ok) {
+        const data = await res.json();
+        setClientInsights(data.insights || []);
+        setPreSessionNotes(data.upcomingWithNotes || []);
+        setCrisisAlerts(data.crisisAlerts || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI insights:', error);
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
+  const dismissCrisisAlert = async (alertId: string) => {
+    try {
+      await fetch('/api/notifications/read', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId: alertId }),
+      });
+      setCrisisAlerts(crisisAlerts.filter(a => a.id !== alertId));
+    } catch (error) {
+      console.error('Failed to dismiss alert:', error);
+    }
+  };
+
+  const getMoodTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'improving': return '📈';
+      case 'declining': return '📉';
+      case 'stable': return '➡️';
+      default: return '❓';
+    }
+  };
+
+  const getMoodTrendColor = (trend: string) => {
+    switch (trend) {
+      case 'improving': return '#10B981';
+      case 'declining': return '#EF4444';
+      case 'stable': return '#6B7280';
+      default: return '#9CA3AF';
     }
   };
 
@@ -299,7 +379,149 @@ export default function TherapistDashboard() {
                 </div>
               </div>
             </Link>
+
+            <Link href="/therapist/availability" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #14B8A6 0%, #2DD4BF 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                  }}>
+                    🗓️
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '18px', fontWeight: '700', color: '#1F2937' }}>Availability</p>
+                    <p style={{ color: '#6B7280', fontSize: '14px' }}>Set your hours</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
+
+          {/* Crisis Alerts */}
+          {crisisAlerts.length > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+              borderRadius: '20px',
+              padding: '24px',
+              marginBottom: '24px',
+              color: 'white',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '24px' }}>🚨</span>
+                <h2 style={{ fontSize: '18px', fontWeight: '700' }}>Crisis Alerts</h2>
+              </div>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {crisisAlerts.map(alert => (
+                  <div key={alert.id} style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <p style={{ fontWeight: '600', marginBottom: '4px' }}>{alert.title}</p>
+                        <p style={{ fontSize: '14px', opacity: 0.9 }}>{alert.message}</p>
+                        <p style={{ fontSize: '12px', opacity: 0.7, marginTop: '8px' }}>
+                          {new Date(alert.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => dismissCrisisAlert(alert.id)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.2)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '8px 16px',
+                          color: 'white',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                        }}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pre-Session Notes from Clients */}
+          {preSessionNotes.length > 0 && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '28px',
+              marginBottom: '24px',
+              boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                <span style={{ fontSize: '24px' }}>📝</span>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937' }}>
+                  Client Pre-Session Notes
+                </h2>
+              </div>
+              <div style={{ display: 'grid', gap: '16px' }}>
+                {preSessionNotes.map(note => (
+                  <div key={note.sessionId} style={{
+                    background: 'rgba(124, 58, 237, 0.05)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    border: '1px solid rgba(124, 58, 237, 0.1)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div>
+                        <p style={{ fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>{note.clientName}</p>
+                        <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                          Session: {new Date(note.scheduledAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: '6px 12px',
+                        background: note.moodRating >= 7 ? '#ECFDF5' : note.moodRating >= 4 ? '#FFFBEB' : '#FEF2F2',
+                        color: note.moodRating >= 7 ? '#059669' : note.moodRating >= 4 ? '#D97706' : '#DC2626',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                      }}>
+                        Mood: {note.moodRating}/10
+                      </div>
+                    </div>
+                    {note.concerns && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Concerns:</p>
+                        <p style={{ fontSize: '14px', color: '#4B5563', fontStyle: 'italic' }}>"{note.concerns}"</p>
+                      </div>
+                    )}
+                    {note.goals && (
+                      <div>
+                        <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>Goals for session:</p>
+                        <p style={{ fontSize: '14px', color: '#4B5563' }}>{note.goals}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Two Column Layout */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
@@ -446,6 +668,125 @@ export default function TherapistDashboard() {
               )}
             </div>
           </div>
+
+          {/* AI Client Insights */}
+          {clientInsights.length > 0 && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '28px',
+              marginTop: '24px',
+              boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                <span style={{ fontSize: '24px' }}>🤖</span>
+                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937' }}>
+                  AI Client Briefings
+                </h2>
+                <span style={{
+                  padding: '4px 10px',
+                  background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                }}>
+                  BETA
+                </span>
+              </div>
+              <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '20px' }}>
+                AI-powered insights for your upcoming client sessions
+              </p>
+              <div style={{ display: 'grid', gap: '16px' }}>
+                {clientInsights.map(insight => (
+                  <div key={insight.clientId} style={{
+                    background: 'rgba(124, 58, 237, 0.03)',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    border: '1px solid rgba(124, 58, 237, 0.08)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div>
+                        <p style={{ fontWeight: '700', color: '#1F2937', fontSize: '16px', marginBottom: '4px' }}>
+                          {insight.clientName}
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                          {insight.sessionsCount} previous sessions
+                          {insight.nextSession && ` • Next: ${new Date(insight.nextSession).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                        </p>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        background: getMoodTrendColor(insight.moodTrend) + '15',
+                        borderRadius: '8px',
+                      }}>
+                        <span>{getMoodTrendIcon(insight.moodTrend)}</span>
+                        <span style={{
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: getMoodTrendColor(insight.moodTrend),
+                          textTransform: 'capitalize',
+                        }}>
+                          {insight.moodTrend}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* AI Summary */}
+                    <div style={{
+                      background: 'white',
+                      borderRadius: '10px',
+                      padding: '14px',
+                      marginBottom: '12px',
+                      border: '1px solid #E5E7EB',
+                    }}>
+                      <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: '1.6' }}>
+                        {insight.aiSummary}
+                      </p>
+                    </div>
+
+                    {/* Alerts */}
+                    {insight.alerts.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                        {insight.alerts.map((alert, i) => (
+                          <span key={i} style={{
+                            padding: '4px 10px',
+                            background: '#FEF2F2',
+                            color: '#DC2626',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: '500',
+                          }}>
+                            ⚠️ {alert}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading state for insights */}
+          {loadingInsights && clientInsights.length === 0 && (
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '20px',
+              padding: '40px',
+              marginTop: '24px',
+              textAlign: 'center',
+              color: '#6B7280',
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '12px' }}>🤖</div>
+              Loading AI insights...
+            </div>
+          )}
         </main>
 
         <style jsx global>{`
