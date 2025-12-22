@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProfileDropdown from './ProfileDropdown';
+import ChatNotificationBadge from './ChatNotificationBadge';
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -14,6 +15,7 @@ interface NavbarProps {
   onLogout?: () => void;
   currentPage?: string;
   isAdmin?: boolean;
+  isSuperAdmin?: boolean;
   isTherapist?: boolean;
 }
 
@@ -26,9 +28,21 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   currentPage = '',
   isAdmin = false,
+  isSuperAdmin = false,
   isTherapist = false
 }) => {
-  const navItems = [
+  // Show different nav items based on if viewing therapist pages
+  const isTherapistPage = currentPage.startsWith('/therapist');
+  
+  // Therapist-specific navigation
+  const therapistNavItems = [
+    { href: '/therapist', label: 'Dashboard' },
+    { href: '/therapist/chat', label: 'Chat' },
+    { href: '/therapist/profile', label: 'My Profile' },
+  ];
+
+  // Student/user navigation
+  const studentNavItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/de-escalation', label: 'Live Session' },
     { href: '/biomarkers', label: 'Analytics' },
@@ -37,12 +51,17 @@ const Navbar: React.FC<NavbarProps> = ({
     { href: '/therapy/book', label: 'Therapy' }
   ];
 
+  // Use therapist nav when on therapist pages
+  const navItems = isTherapistPage ? therapistNavItems : studentNavItems;
+
   const roleNavItems = [];
-  if (isTherapist) {
+  // Show therapist link if on student pages (for users who are also therapists)
+  if (isTherapist && !isTherapistPage) {
     roleNavItems.push({ href: '/therapist', label: '🧑‍⚕️ Therapist' });
   }
-  if (isAdmin) {
-    roleNavItems.push({ href: '/admin', label: '⚙️ Admin' });
+  if (isAdmin || isSuperAdmin) {
+    const adminLabel = isSuperAdmin ? '👑 Admin' : '⚙️ Admin';
+    roleNavItems.push({ href: '/admin', label: adminLabel });
   }
 
   return (
@@ -138,6 +157,8 @@ const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Side - Auth Buttons or Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Chat Notification Badge */}
+          {isAuthenticated && <ChatNotificationBadge isTherapist={isTherapist} />}
           {!isAuthenticated ? (
             <>
               <Link href="/login" className="hide-mobile" style={{

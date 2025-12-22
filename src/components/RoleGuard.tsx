@@ -7,6 +7,7 @@ import { useEffect, ReactNode } from 'react';
 interface RoleGuardProps {
   children: ReactNode;
   requireAdmin?: boolean;
+  requireSuperAdmin?: boolean;
   requireTherapist?: boolean;
   fallbackPath?: string;
 }
@@ -14,6 +15,7 @@ interface RoleGuardProps {
 export default function RoleGuard({
   children,
   requireAdmin = false,
+  requireSuperAdmin = false,
   requireTherapist = false,
   fallbackPath = '/dashboard',
 }: RoleGuardProps) {
@@ -27,6 +29,11 @@ export default function RoleGuard({
         return;
       }
 
+      if (requireSuperAdmin && !user.isSuperAdmin) {
+        router.push(fallbackPath);
+        return;
+      }
+
       if (requireAdmin && !user.isAdmin) {
         router.push(fallbackPath);
         return;
@@ -37,7 +44,7 @@ export default function RoleGuard({
         return;
       }
     }
-  }, [user, loading, requireAdmin, requireTherapist, router, fallbackPath]);
+  }, [user, loading, requireAdmin, requireSuperAdmin, requireTherapist, router, fallbackPath]);
 
   if (loading) {
     return (
@@ -51,6 +58,7 @@ export default function RoleGuard({
   }
 
   if (!user) return null;
+  if (requireSuperAdmin && !user.isSuperAdmin) return null;
   if (requireAdmin && !user.isAdmin) return null;
   if (requireTherapist && !user.isTherapist) return null;
 
