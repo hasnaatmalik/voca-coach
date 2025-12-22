@@ -28,6 +28,9 @@ model User {
   sessions      Session[]
   journalEntries JournalEntry[]
   biomarkers    Biomarker[]
+  biomarkerGoals BiomarkerGoal[]
+  biomarkerBaselines BiomarkerBaseline[]
+  biomarkerAlerts BiomarkerAlert[]
   personas      CustomPersona[]
   personaConversations PersonaConversation[]
   therapistProfile TherapistProfile?
@@ -126,18 +129,92 @@ model JournalPrompt {
 }
 
 model Biomarker {
-  id              String   @id @default(cuid())
-  userId          String
-  date            DateTime @default(now())
-  pitch           Float    // Hz
-  clarity         Float    // 0-100
-  stress          Float    // 0-100
-  pauseDuration   Float?   // seconds
-  articulationRate Float?  // words per second
-  
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, date])
+  id               String   @id @default(cuid())
+  userId           String
+  date             DateTime @default(now())
+
+  // Core metrics
+  pitch            Float    // Hz - fundamental frequency
+  clarity          Float    // 0-100 - articulation quality
+  stress           Float    // 0-100 - tension indicators
+
+  // Extended metrics
+  pauseDuration    Float?   // seconds - average pause length
+  articulationRate Float?   // words per second
+  jitter           Float?   // % - frequency variation (vocal cord health)
+  shimmer          Float?   // % - amplitude variation (breath support)
+  speechRate       Float?   // words per minute
+  hnr              Float?   // dB - harmonic-to-noise ratio (voice quality)
+
+  // Session metadata
+  duration         Int?     // recording duration in seconds
+  audioUrl         String?  // stored audio file URL/path
+  prompt           String?  // reading prompt or "free_speech"
+  notes            String?  // user notes
+
+  // Computed scores
+  overallScore     Float?   // AI-computed health score 0-100
+  observations     String?  // AI observations (JSON)
+  recommendations  String?  // AI recommendations (JSON array)
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model BiomarkerGoal {
+  id        String   @id @default(cuid())
+  userId    String
+  metric    String   // "pitch", "clarity", "stress", etc.
+  target    Float
+  direction String   @default("maintain") // "increase", "decrease", "maintain"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, metric])
+}
+
+model BiomarkerBaseline {
+  id               String   @id @default(cuid())
+  userId           String
+
+  // Baseline values for each metric
+  pitch            Float
+  pitchStdDev      Float?   // standard deviation
+  clarity          Float
+  clarityStdDev    Float?
+  stress           Float
+  stressStdDev     Float?
+  pauseDuration    Float?
+  articulationRate Float?
+  jitter           Float?
+  shimmer          Float?
+  speechRate       Float?
+  hnr              Float?
+
+  recordingCount   Int      // how many recordings used to calculate
+  calculatedAt     DateTime @default(now())
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model BiomarkerAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // "critical", "warning", "reminder", "achievement"
+  metric      String?  // which metric triggered (if applicable)
+  title       String
+  message     String
+  value       Float?   // the triggering value
+  threshold   Float?   // the threshold crossed
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model CustomPersona {
