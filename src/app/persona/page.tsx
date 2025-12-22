@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
+import PersonaList from './components/PersonaList';
+import PersonaCreator from './components/PersonaCreator';
+import PersonaChat from './components/PersonaChat';
+import ConversationHistory from './components/ConversationHistory';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import { ROLEPLAY_SCENARIOS, PERSONA_TEMPLATES, Scenario } from './scenarios';
 
 interface Persona {
   id: string;
@@ -12,11 +18,25 @@ interface Persona {
   description: string;
   icon: string;
   voiceId?: string;
+  voiceStability?: number;
+  voiceSimilarity?: number;
+  voiceStyle?: number;
+  voiceSpeakerBoost?: boolean;
+  speechRate?: number;
 }
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  timestamp?: number;
+}
+
+interface ConversationData {
+  id: string;
+  personaId: string;
+  personaName: string;
+  personaIcon: string;
+  messages: ChatMessage[];
 }
 
 const DEFAULT_PERSONAS: Persona[] = [
@@ -26,21 +46,21 @@ const DEFAULT_PERSONAS: Persona[] = [
   { id: 'p4', name: 'Anxious Client', type: 'preset', description: 'Learn to de-escalate and reassure worried individuals.', icon: '😰' },
 ];
 
+type ViewMode = 'preview' | 'chat' | 'create' | 'edit' | 'history' | 'analytics' | 'scenarios';
+
 export default function PersonaPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [personas, setPersonas] = useState<Persona[]>(DEFAULT_PERSONAS);
-  const [activePersona, setActivePersona] = useState<string>('p1');
-  const [isCreating, setIsCreating] = useState(false);
-  const [newPersonaName, setNewPersonaName] = useState('');
-  const [newPersonaDesc, setNewPersonaDesc] = useState('');
-  const [isChatting, setIsChatting] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [activePersonaId, setActivePersonaId] = useState<string>('p1');
+  const [viewMode, setViewMode] = useState<ViewMode>('preview');
+  const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [profilePic, setProfilePic] = useState<string>();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const selectedPersona = personas.find(p => p.id === activePersonaId);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -59,7 +79,7 @@ export default function PersonaPage() {
       const res = await fetch('/api/personas');
       if (res.ok) {
         const data = await res.json();
-        const customPersonas = (data.personas || []).map((p: { id: string; name: string; description: string; icon: string; voiceId?: string }) => ({
+        const customPersonas = (data.personas || []).map((p: Persona) => ({
           ...p,
           type: 'custom' as const,
         }));
@@ -70,113 +90,145 @@ export default function PersonaPage() {
     }
   };
 
-  const createPersona = async () => {
-    if (!newPersonaName.trim() || !newPersonaDesc.trim()) return;
-    
-    try {
-      const res = await fetch('/api/personas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newPersonaName,
-          description: newPersonaDesc,
-          icon: '✨',
-        }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        const newPersona: Persona = {
-          ...data.persona,
-          type: 'custom',
-        };
-        setPersonas([...personas, newPersona]);
-        setActivePersona(newPersona.id);
-        setIsCreating(false);
-        setNewPersonaName('');
-        setNewPersonaDesc('');
-      }
-    } catch (error) {
-      console.error('Failed to create persona:', error);
+  const handleCreatePersona = async (personaData: {
+    name: string;
+    description: string;
+    icon: string;
+    voiceId?: string;
+    voiceStability?: number;
+    voiceSimilarity?: number;
+    voiceStyle?: number;
+    voiceSpeakerBoost?: boolean;
+    speechRate?: number;
+  }) => {
+    const res = await fetch('/api/personas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(personaData),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const newPersona: Persona = { ...data.persona, type: 'custom' };
+      setPersonas(prev => [...prev, newPersona]);
+      setActivePersonaId(newPersona.id);
+      setViewMode('preview');
     }
   };
 
-  const startConversation = () => {
-    setIsChatting(true);
-    setChatMessages([{
-      role: 'assistant',
-      content: `Hello! I'm ${selectedPersona?.name}. ${selectedPersona?.description} How can I help you today?`
-    }]);
-  };
+  const handleEditPersona = async (personaData: {
+    id?: string;
+    name: string;
+    description: string;
+    icon: string;
+    voiceId?: string;
+    voiceStability?: number;
+    voiceSimilarity?: number;
+    voiceStyle?: number;
+    voiceSpeakerBoost?: boolean;
+    speechRate?: number;
+  }) => {
+    if (!personaData.id) return;
 
-  const sendMessage = async () => {
-    if (!chatInput.trim() || isSending) return;
+    const res = await fetch('/api/personas', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(personaData),
+    });
 
-    const userMessage = chatInput;
-    setChatInput('');
-    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setIsSending(true);
-
-    try {
-      const res = await fetch('/api/persona-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          personaId: activePersona,
-          conversationHistory: chatMessages.slice(-6),
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const assistantMessage = data.response;
-        setChatMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
-        
-        await playTTS(assistantMessage);
-      }
-    } catch (error) {
-      console.error('Chat failed:', error);
-      setChatMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I'm sorry, I'm having trouble responding right now. Let's try again."
-      }]);
-    } finally {
-      setIsSending(false);
+    if (res.ok) {
+      const data = await res.json();
+      setPersonas(prev =>
+        prev.map(p => p.id === personaData.id ? { ...data.persona, type: 'custom' as const } : p)
+      );
+      setEditingPersona(null);
+      setViewMode('preview');
     }
   };
 
-  const playTTS = async (text: string) => {
-    try {
-      setIsPlaying(true);
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voiceId: selectedPersona?.voiceId }),
-      });
+  const handleDeletePersona = async (personaId: string) => {
+    const res = await fetch(`/api/personas?id=${personaId}`, {
+      method: 'DELETE',
+    });
 
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        
-        if (audioRef.current) {
-          audioRef.current.src = url;
-          audioRef.current.play();
+    if (res.ok) {
+      setPersonas(prev => prev.filter(p => p.id !== personaId));
+      if (activePersonaId === personaId) {
+        setActivePersonaId('p1');
+      }
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const handleStartChat = () => {
+    setCurrentConversationId(null);
+    setActiveScenario(null);
+    setViewMode('chat');
+  };
+
+  const handleEndChat = () => {
+    setViewMode('preview');
+    setCurrentConversationId(null);
+    setActiveScenario(null);
+  };
+
+  const handleSaveConversation = useCallback(async (messages: ChatMessage[]) => {
+    if (!selectedPersona || messages.length < 2) return;
+
+    try {
+      if (currentConversationId) {
+        // Update existing conversation
+        await fetch('/api/persona-conversations', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: currentConversationId,
+            messages,
+          }),
+        });
+      } else {
+        // Create new conversation
+        const res = await fetch('/api/persona-conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            personaId: selectedPersona.id,
+            personaName: selectedPersona.name,
+            personaIcon: selectedPersona.icon,
+            messages,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentConversationId(data.conversation.id);
         }
       }
     } catch (error) {
-      console.error('TTS failed:', error);
-    } finally {
-      setIsPlaying(false);
+      console.error('Failed to save conversation:', error);
     }
+  }, [selectedPersona, currentConversationId]);
+
+  const handleLoadConversation = (conversation: ConversationData) => {
+    // Find or set the persona
+    const persona = personas.find(p => p.id === conversation.personaId);
+    if (persona) {
+      setActivePersonaId(persona.id);
+    }
+    setCurrentConversationId(conversation.id);
+    setViewMode('chat');
   };
 
-  const endConversation = () => {
-    setIsChatting(false);
-    setChatMessages([]);
-    if (audioRef.current) {
-      audioRef.current.pause();
+  const handleStartScenario = (scenario: Scenario) => {
+    // Find best matching persona for scenario
+    const matchingPersona = personas.find(p =>
+      p.name.toLowerCase().includes(scenario.personaHint?.toLowerCase() || '')
+    );
+    if (matchingPersona) {
+      setActivePersonaId(matchingPersona.id);
     }
+    setActiveScenario(scenario);
+    setViewMode('chat');
   };
 
   const handleLogout = async () => {
@@ -184,7 +236,14 @@ export default function PersonaPage() {
     router.push('/login');
   };
 
-  const selectedPersona = personas.find(p => p.id === activePersona);
+  const openEditMode = (persona: Persona) => {
+    setEditingPersona(persona);
+    setViewMode('edit');
+  };
+
+  const confirmDelete = (personaId: string) => {
+    setDeleteConfirmId(personaId);
+  };
 
   if (loading || !user) {
     return (
@@ -193,14 +252,18 @@ export default function PersonaPage() {
           <div style={{ width: '48px', height: '48px', border: '4px solid #E5E7EB', borderTop: '4px solid #7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <div style={{ color: '#6B7280' }}>Loading...</div>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <audio ref={audioRef} onEnded={() => setIsPlaying(false)} />
-      
+    <div style={{ minHeight: '100vh', background: '#F9FAFB' }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name || 'User'}
@@ -211,273 +274,383 @@ export default function PersonaPage() {
         currentPage="/persona"
       />
 
-      {/* Main Content */}
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px' }}>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
         {/* Page Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
-            🎭 Persona Studio
-          </h1>
-          <p style={{ color: '#6B7280' }}>Practice conversations with AI personas or create your own.</p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: isChatting ? '300px 1fr' : '1fr 1fr', gap: '32px' }}>
-          {/* Persona List */}
+        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>Available Personas</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {personas.map(p => (
-                <div
-                  key={p.id}
-                  onClick={() => !isChatting && setActivePersona(p.id)}
-                  style={{
-                    background: activePersona === p.id ? '#ECFDF5' : 'white',
-                    border: activePersona === p.id ? '2px solid #7C3AED' : '1px solid #E5E7EB',
-                    borderRadius: '16px',
-                    padding: isChatting ? '12px' : '20px',
-                    cursor: isChatting ? 'default' : 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    opacity: isChatting && activePersona !== p.id ? 0.5 : 1,
-                  }}
-                >
-                  <div style={{
-                    width: isChatting ? '36px' : '48px',
-                    height: isChatting ? '36px' : '48px',
-                    background: activePersona === p.id ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' : '#F3F4F6',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isChatting ? '18px' : '24px'
-                  }}>{p.icon}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: '600', color: '#1F2937', fontSize: isChatting ? '14px' : '16px' }}>{p.name}</div>
-                    {!isChatting && <div style={{ fontSize: '13px', color: '#6B7280' }}>{p.description}</div>}
-                  </div>
-                </div>
-              ))}
-
-              {/* Create New Button */}
-              {!isChatting && (
-                <button
-                  onClick={() => setIsCreating(true)}
-                  style={{
-                    background: 'transparent',
-                    border: '2px dashed #D1D5DB',
-                    borderRadius: '16px',
-                    padding: '20px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    color: '#6B7280',
-                    fontWeight: '500',
-                    fontSize: '15px'
-                  }}
-                >
-                  <span style={{ fontSize: '20px' }}>+</span>
-                  Create Custom Persona
-                </button>
-              )}
-            </div>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+              🎭 Persona Studio
+            </h1>
+            <p style={{ color: '#6B7280' }}>Practice conversations with AI personas or create your own.</p>
           </div>
 
-          {/* Main Panel */}
+          {/* Quick Actions */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setViewMode('scenarios')}
+              style={{
+                padding: '10px 16px',
+                background: viewMode === 'scenarios' ? '#7C3AED' : 'white',
+                color: viewMode === 'scenarios' ? 'white' : '#4B5563',
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                fontWeight: '500',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              🎯 Scenarios
+            </button>
+            <button
+              onClick={() => setViewMode('history')}
+              style={{
+                padding: '10px 16px',
+                background: viewMode === 'history' ? '#7C3AED' : 'white',
+                color: viewMode === 'history' ? 'white' : '#4B5563',
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                fontWeight: '500',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              📚 History
+            </button>
+            <button
+              onClick={() => setViewMode('analytics')}
+              style={{
+                padding: '10px 16px',
+                background: viewMode === 'analytics' ? '#7C3AED' : 'white',
+                color: viewMode === 'analytics' ? 'white' : '#4B5563',
+                border: '1px solid #E5E7EB',
+                borderRadius: '10px',
+                fontWeight: '500',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              📊 Analytics
+            </button>
+          </div>
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
+                Delete Persona?
+              </h3>
+              <p style={{ color: '#6B7280', marginBottom: '20px' }}>
+                This will permanently delete this persona and cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#F3F4F6',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeletePersona(deleteConfirmId)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#EF4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: viewMode === 'chat' ? '280px 1fr' : '1fr 1fr',
+          gap: '24px'
+        }}>
+          {/* Left Column - Persona List */}
+          <div>
+            <PersonaList
+              personas={personas}
+              activePersonaId={activePersonaId}
+              onSelect={(id) => {
+                setActivePersonaId(id);
+                if (viewMode !== 'chat') setViewMode('preview');
+              }}
+              onCreateNew={() => setViewMode('create')}
+              onEdit={openEditMode}
+              onDelete={confirmDelete}
+              isCompact={viewMode === 'chat'}
+              disabled={viewMode === 'chat'}
+            />
+
+            {/* Persona Templates Section */}
+            {viewMode !== 'chat' && (
+              <div style={{ marginTop: '24px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6B7280', marginBottom: '12px' }}>
+                  💡 Quick Templates
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {PERSONA_TEMPLATES.map((template) => (
+                    <button
+                      key={template.name}
+                      onClick={() => {
+                        setViewMode('create');
+                        // The PersonaCreator will handle using the template
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        background: 'white',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {template.icon} {template.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Main Panel */}
           <div style={{
             background: 'white',
             borderRadius: '20px',
-            padding: isChatting ? '0' : '32px',
             border: '1px solid #E5E7EB',
-            minHeight: '400px',
-            height: isChatting ? '500px' : 'auto',
-            display: 'flex',
-            flexDirection: 'column',
+            minHeight: '500px',
+            overflow: 'hidden'
           }}>
-            {isChatting ? (
-              // Chat Interface
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', padding: '20px 20px 0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '24px' }}>{selectedPersona?.icon}</span>
-                    <div>
-                      <div style={{ fontWeight: '600', color: '#1F2937' }}>{selectedPersona?.name}</div>
-                      {isPlaying && <span style={{ fontSize: '12px', color: '#7C3AED' }}>🔊 Speaking...</span>}
-                    </div>
-                  </div>
-                  <button onClick={endConversation} style={{
-                    padding: '8px 16px',
-                    background: '#FEF2F2',
-                    color: '#EF4444',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}>
-                    End Chat
+            {viewMode === 'chat' && selectedPersona ? (
+              <PersonaChat
+                persona={selectedPersona}
+                onEndChat={handleEndChat}
+                onSaveConversation={handleSaveConversation}
+              />
+            ) : viewMode === 'create' ? (
+              <div style={{ padding: '32px' }}>
+                <PersonaCreator
+                  onSave={handleCreatePersona}
+                  onCancel={() => setViewMode('preview')}
+                />
+              </div>
+            ) : viewMode === 'edit' && editingPersona ? (
+              <div style={{ padding: '32px' }}>
+                <PersonaCreator
+                  editingPersona={editingPersona}
+                  onSave={handleEditPersona}
+                  onCancel={() => {
+                    setEditingPersona(null);
+                    setViewMode('preview');
+                  }}
+                />
+              </div>
+            ) : viewMode === 'history' ? (
+              <ConversationHistory
+                onLoadConversation={handleLoadConversation}
+                onClose={() => setViewMode('preview')}
+              />
+            ) : viewMode === 'analytics' ? (
+              <AnalyticsDashboard
+                onClose={() => setViewMode('preview')}
+              />
+            ) : viewMode === 'scenarios' ? (
+              <div style={{ padding: '24px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ fontWeight: '600', color: '#1F2937' }}>
+                    🎯 Practice Scenarios
+                  </h3>
+                  <button
+                    onClick={() => setViewMode('preview')}
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      background: '#F3F4F6',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '18px'
+                    }}
+                  >
+                    ×
                   </button>
                 </div>
-
-                <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px', padding: '0 20px' }}>
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} style={{
-                      display: 'flex',
-                      justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                      marginBottom: '12px'
-                    }}>
-                      <div style={{
-                        maxWidth: '80%',
-                        padding: '12px 16px',
-                        borderRadius: '16px',
-                        background: msg.role === 'user' ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' : '#F3F4F6',
-                        color: msg.role === 'user' ? 'white' : '#1F2937',
-                        fontSize: '14px',
-                        lineHeight: '1.5'
-                      }}>
-                        {msg.content}
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {ROLEPLAY_SCENARIOS.map((scenario) => (
+                    <div
+                      key={scenario.id}
+                      style={{
+                        padding: '16px',
+                        background: '#F9FAFB',
+                        borderRadius: '12px',
+                        border: '1px solid #E5E7EB'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                        <span style={{ fontSize: '28px' }}>{scenario.icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: '4px'
+                          }}>
+                            <span style={{ fontWeight: '600', color: '#1F2937' }}>
+                              {scenario.name}
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              background: scenario.difficulty === 'easy' ? '#D1FAE5' :
+                                scenario.difficulty === 'medium' ? '#FEF3C7' : '#FEE2E2',
+                              color: scenario.difficulty === 'easy' ? '#065F46' :
+                                scenario.difficulty === 'medium' ? '#92400E' : '#991B1B'
+                            }}>
+                              {scenario.difficulty}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>
+                            {scenario.description}
+                          </p>
+                          <button
+                            onClick={() => handleStartScenario(scenario)}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Start Practice
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
-                  {isSending && (
-                    <div style={{ display: 'flex', gap: '6px', padding: '12px' }}>
-                      {[0, 1, 2].map(i => (
-                        <span key={i} style={{
-                          width: '8px',
-                          height: '8px',
-                          background: '#7C3AED',
-                          borderRadius: '50%',
-                          animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`
-                        }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} style={{ display: 'flex', gap: '12px', padding: '0 20px 20px' }}>
-                  <input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Type a message..."
-                    style={{
-                      flex: 1,
-                      padding: '14px 18px',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
-                  />
-                  <button type="submit" disabled={!chatInput.trim() || isSending} style={{
-                    padding: '14px 24px',
-                    background: chatInput.trim() && !isSending ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' : '#E5E7EB',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontWeight: '600',
-                    cursor: chatInput.trim() && !isSending ? 'pointer' : 'not-allowed'
-                  }}>
-                    Send
-                  </button>
-                </form>
-              </>
-            ) : isCreating ? (
-              // Create Persona Form
-              <div style={{ textAlign: 'center' }}>
-                <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1F2937', marginBottom: '24px' }}>
-                  ✨ Create Custom Persona
-                </h3>
-                <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-                  <input
-                    value={newPersonaName}
-                    onChange={(e) => setNewPersonaName(e.target.value)}
-                    placeholder="Persona name"
-                    style={{
-                      width: '100%',
-                      padding: '14px 18px',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '12px',
-                      fontSize: '15px',
-                      marginBottom: '12px',
-                      outline: 'none'
-                    }}
-                  />
-                  <textarea
-                    value={newPersonaDesc}
-                    onChange={(e) => setNewPersonaDesc(e.target.value)}
-                    placeholder="Describe this persona's personality and how they should interact..."
-                    rows={4}
-                    style={{
-                      width: '100%',
-                      padding: '14px 18px',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '12px',
-                      fontSize: '15px',
-                      marginBottom: '20px',
-                      outline: 'none',
-                      resize: 'none'
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button onClick={() => setIsCreating(false)} style={{
-                      padding: '14px 28px',
-                      background: '#F3F4F6',
-                      color: '#4B5563',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}>
-                      Cancel
-                    </button>
-                    <button onClick={createPersona} disabled={!newPersonaName.trim() || !newPersonaDesc.trim()} style={{
-                      padding: '14px 28px',
-                      background: newPersonaName.trim() && newPersonaDesc.trim() ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' : '#E5E7EB',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontWeight: '600',
-                      cursor: newPersonaName.trim() && newPersonaDesc.trim() ? 'pointer' : 'not-allowed'
-                    }}>
-                      Create Persona
-                    </button>
-                  </div>
                 </div>
               </div>
             ) : (
               // Persona Preview
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                <div style={{ 
-                  width: '80px', 
-                  height: '80px', 
-                  background: '#ECFDF5', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '36px',
-                  marginBottom: '20px'
+              <div style={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '32px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  background: '#ECFDF5',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px',
+                  marginBottom: '24px'
                 }}>
                   {selectedPersona?.icon}
                 </div>
-                <h3 style={{ fontSize: '22px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
                   {selectedPersona?.name}
                 </h3>
-                <p style={{ color: '#6B7280', textAlign: 'center', marginBottom: '24px', maxWidth: '280px' }}>
+                <p style={{
+                  color: '#6B7280',
+                  marginBottom: '24px',
+                  maxWidth: '320px',
+                  lineHeight: '1.5'
+                }}>
                   {selectedPersona?.description}
                 </p>
-                <button onClick={startConversation} style={{
-                  padding: '14px 32px',
-                  background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: '600',
-                  fontSize: '15px',
-                  cursor: 'pointer'
-                }}>
+                {selectedPersona?.type === 'custom' && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginBottom: '24px'
+                  }}>
+                    <button
+                      onClick={() => openEditMode(selectedPersona)}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#F3F4F6',
+                        color: '#4B5563',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✏️ Edit
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={handleStartChat}
+                  style={{
+                    padding: '16px 40px',
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '14px',
+                    fontWeight: '600',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)'
+                  }}
+                >
                   Start Conversation
                 </button>
               </div>
@@ -485,13 +658,6 @@ export default function PersonaPage() {
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-6px); }
-        }
-      `}</style>
     </div>
   );
 }

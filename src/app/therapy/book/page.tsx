@@ -5,6 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 interface Therapist {
   id: string;
@@ -28,6 +32,10 @@ export default function TherapyBooking() {
   const [scheduledAt, setScheduledAt] = useState('');
   const [userNote, setUserNote] = useState('');
   const [booking, setBooking] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -59,6 +67,7 @@ export default function TherapyBooking() {
 
     setBooking(true);
     try {
+      // Create pending session first
       const res = await fetch('/api/therapy/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,12 +75,14 @@ export default function TherapyBooking() {
           therapistId: selectedTherapist,
           scheduledAt,
           userNote,
+          status: 'pending_payment',
         }),
       });
-      
+
       if (res.ok) {
-        alert('Session booked successfully!');
-        router.push('/therapy/sessions');
+        const data = await res.json();
+        setSessionId(data.session.id);
+        setShowPayment(true);
       } else {
         const data = await res.json();
         alert(data.error || 'Failed to book session');
@@ -82,6 +93,85 @@ export default function TherapyBooking() {
     } finally {
       setBooking(false);
     }
+  };
+
+  const processPayment = async () => {
+    if (!sessionId) return;
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+
+    try {
+      // Create payment intent
+      const paymentRes = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, duration: 60 }),
+      });
+
+      if (!paymentRes.ok) {
+        throw new Error('Failed to create payment');
+      }
+
+      const { clientSecret, amount } = await paymentRes.json();
+
+      // Redirect to Stripe checkout
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe failed to load');
+      }
+
+      // Use Stripe's redirect to checkout for simplicity
+      // In production, you might use Stripe Elements inline
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: {
+            // For demo, we'll redirect to success page
+            // In real app, use Stripe Elements here
+          } as never,
+        },
+      }).catch(() => {
+        // Redirect to Stripe hosted page for easier implementation
+        window.location.href = `/therapy/checkout?session_id=${sessionId}&amount=${amount}`;
+        return { error: { message: 'Redirecting to checkout...' } };
+      });
+
+      if (result?.error) {
+        // If not redirecting, show error
+        if (result.error.message !== 'Redirecting to checkout...') {
+          setPaymentError(result.error.message || 'Payment failed');
+        }
+      } else {
+        // Payment succeeded
+        router.push('/therapy/sessions');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      setPaymentError('Payment processing failed. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const skipPayment = async () => {
+    // For development/demo: Allow skipping payment
+    if (!sessionId) return;
+
+    try {
+      await fetch(`/api/therapy/sessions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, status: 'scheduled' }),
+      });
+      router.push('/therapy/sessions');
+    } catch {
+      router.push('/therapy/sessions');
+    }
+  };
+
+  const getSelectedTherapistRate = () => {
+    const therapist = therapists.find(t => t.id === selectedTherapist);
+    return therapist?.therapistProfile?.hourlyRate || 90;
   };
 
   const handleLogout = async () => {
@@ -266,6 +356,164 @@ export default function TherapyBooking() {
         )}
       </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPayment && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+          padding: '20px',
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#1F2937',
+              marginBottom: '8px',
+            }}>
+              Complete Your Booking
+            </h2>
+            <p style={{ color: '#6B7280', marginBottom: '24px' }}>
+              Secure payment for your therapy session
+            </p>
+
+            {/* Session Summary */}
+            <div style={{
+              background: '#F9FAFB',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '24px',
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+              }}>
+                <span style={{ color: '#6B7280' }}>Session Duration</span>
+                <span style={{ fontWeight: '600', color: '#1F2937' }}>60 minutes</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '12px',
+              }}>
+                <span style={{ color: '#6B7280' }}>Therapist Rate</span>
+                <span style={{ fontWeight: '600', color: '#1F2937' }}>
+                  ${getSelectedTherapistRate()}/hour
+                </span>
+              </div>
+              <div style={{
+                borderTop: '1px solid #E5E7EB',
+                paddingTop: '12px',
+                marginTop: '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}>
+                <span style={{ fontWeight: '600', color: '#1F2937' }}>Total</span>
+                <span style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: '#7C3AED',
+                }}>
+                  ${getSelectedTherapistRate()}
+                </span>
+              </div>
+            </div>
+
+            {paymentError && (
+              <div style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                color: '#DC2626',
+                fontSize: '14px',
+              }}>
+                {paymentError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowPayment(false);
+                  setSessionId(null);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '14px 24px',
+                  background: '#F3F4F6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processPayment}
+                disabled={paymentLoading}
+                style={{
+                  flex: 2,
+                  padding: '14px 24px',
+                  background: paymentLoading ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  cursor: paymentLoading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {paymentLoading ? 'Processing...' : 'Pay Now'}
+              </button>
+            </div>
+
+            {/* Dev mode: Skip payment */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={skipPayment}
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  padding: '10px',
+                  background: 'transparent',
+                  color: '#9CA3AF',
+                  border: '1px dashed #D1D5DB',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Skip payment (dev mode)
+              </button>
+            )}
+
+            <p style={{
+              marginTop: '16px',
+              fontSize: '12px',
+              color: '#9CA3AF',
+              textAlign: 'center',
+            }}>
+              Payments are securely processed by Stripe
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

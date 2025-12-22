@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocket, useSocketRoom } from '@/hooks/useSocket';
 import { useWebRTC } from '@/hooks/useWebRTC';
+import { useRecording } from '@/hooks/useRecording';
 import VideoCall from '@/components/VideoCall/VideoCall';
 
 interface SessionData {
@@ -52,6 +53,21 @@ export default function TherapySessionPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showChat, setShowChat] = useState(true);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+
+  // Recording hook
+  const {
+    isRecording,
+    hasConsent,
+    bothConsented,
+    formattedDuration: recordingDuration,
+    updateConsent,
+    startRecording,
+    stopRecording,
+  } = useRecording({
+    sessionId,
+    onError: (error) => setRecordingError(error),
+  });
 
   // Determine if current user is the therapist
   const isTherapist = user?.isTherapist && session?.therapistId === user?.id;
@@ -141,6 +157,19 @@ export default function TherapySessionPage() {
     }
   }, [session?.status]);
 
+  // Start recording when both consent and we have streams
+  useEffect(() => {
+    if (bothConsented && localStream && !isRecording && connectionState === 'connected') {
+      // Combine local and remote streams for recording
+      const combinedStream = new MediaStream();
+      localStream.getTracks().forEach(track => combinedStream.addTrack(track));
+      if (remoteStream) {
+        remoteStream.getTracks().forEach(track => combinedStream.addTrack(track));
+      }
+      startRecording(combinedStream);
+    }
+  }, [bothConsented, localStream, remoteStream, isRecording, connectionState, startRecording]);
+
   // Listen for chat messages
   useEffect(() => {
     if (!socket) return;
@@ -193,6 +222,10 @@ export default function TherapySessionPage() {
   };
 
   const handleEndSession = () => {
+    // Stop recording if active
+    if (isRecording) {
+      stopRecording();
+    }
     socket?.emit('session:end', sessionId);
     endCall();
     router.push(`/therapy/summary/${sessionId}`);
@@ -294,7 +327,64 @@ export default function TherapySessionPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {/* Recording Consent Toggle */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 12px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+            }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: 'white',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={hasConsent}
+                  onChange={(e) => updateConsent(e.target.checked)}
+                  style={{ width: '16px', height: '16px' }}
+                />
+                Record session
+              </label>
+              {isRecording && (
+                <span style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: '#EF4444',
+                  fontSize: '12px',
+                }}>
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#EF4444',
+                    animation: 'pulse 1s infinite',
+                  }} />
+                  REC {recordingDuration}
+                </span>
+              )}
+              {hasConsent && !bothConsented && !isRecording && (
+                <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                  (waiting for other party)
+                </span>
+              )}
+            </div>
+
+            {/* Recording Error */}
+            {recordingError && (
+              <span style={{ fontSize: '12px', color: '#EF4444' }}>
+                {recordingError}
+              </span>
+            )}
+
             <button
               onClick={() => setShowChat(!showChat)}
               style={{

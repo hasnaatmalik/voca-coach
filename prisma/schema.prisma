@@ -29,6 +29,7 @@ model User {
   journalEntries JournalEntry[]
   biomarkers    Biomarker[]
   personas      CustomPersona[]
+  personaConversations PersonaConversation[]
   therapistProfile TherapistProfile?
   therapySessions TherapySession[] @relation("UserSessions")
   therapistSessions TherapySession[] @relation("TherapistSessions")
@@ -86,15 +87,37 @@ model Biomarker {
 }
 
 model CustomPersona {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  description       String
+  icon              String   @default("✨")
+  voiceId           String?  // ElevenLabs voice ID
+  voiceStability    Float    @default(0.5)    // 0-1
+  voiceSimilarity   Float    @default(0.8)    // 0-1
+  voiceStyle        Float    @default(0.0)    // 0-1
+  voiceSpeakerBoost Boolean  @default(true)
+  speechRate        Float    @default(1.0)    // 0.5-2.0
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations     PersonaConversation[]
+}
+
+model PersonaConversation {
   id          String   @id @default(cuid())
   userId      String
-  name        String
-  description String
-  icon        String   @default("✨")
-  voiceId     String?  // ElevenLabs voice ID
+  personaId   String?  // Can be preset ID (p1, p2) or custom persona ID, nullable for deleted personas
+  personaName String   // Store name for history
+  personaIcon String   // Store icon for history
+  messages    String   // JSON array of { role, content, timestamp }
+  summary     String?  // AI-generated summary
   createdAt   DateTime @default(now())
-  
+  updatedAt   DateTime @updatedAt
+
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  persona     CustomPersona? @relation(fields: [personaId], references: [id], onDelete: SetNull)
 }
 
 model SentimentSnapshot {

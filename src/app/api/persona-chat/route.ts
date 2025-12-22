@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getModel } from '@/lib/vertex';
 import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 // Persona system prompts
 const PERSONA_PROMPTS: Record<string, string> = {
@@ -38,9 +39,32 @@ export async function POST(req: Request) {
 
     const model = getModel('gemini-2.0-flash-exp');
 
-    // Build conversation context
-    const systemPrompt = PERSONA_PROMPTS[personaId] || 
-      'You are a helpful and empathetic conversation partner.';
+    // Build conversation context - check preset first, then custom personas
+    let systemPrompt: string;
+
+    if (PERSONA_PROMPTS[personaId]) {
+      // Use preset persona prompt
+      systemPrompt = PERSONA_PROMPTS[personaId];
+    } else {
+      // Fetch custom persona from database
+      const customPersona = await prisma.customPersona.findFirst({
+        where: {
+          id: personaId,
+          userId: authUser.userId
+        }
+      });
+
+      if (customPersona) {
+        // Use custom persona description as system prompt
+        systemPrompt = `You are ${customPersona.name}. ${customPersona.description}
+
+Stay in character at all times. Respond naturally as this persona would.
+Be conversational and engaging while maintaining your persona's personality.`;
+      } else {
+        // Fallback for invalid persona ID
+        systemPrompt = 'You are a helpful and empathetic conversation partner.';
+      }
+    }
 
     const historyContext = conversationHistory?.length > 0
       ? `\n\nConversation so far:\n${conversationHistory.map((m: {role: string, content: string}) => 
