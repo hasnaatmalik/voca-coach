@@ -12,8 +12,8 @@ export default function ChatNotificationBadge({ isTherapist = false }: ChatNotif
 
   useEffect(() => {
     fetchUnreadCount();
-    // Poll every 10 seconds
-    const interval = setInterval(fetchUnreadCount, 10000);
+    // Poll every 30 seconds (reduced frequency)
+    const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
 

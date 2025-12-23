@@ -49,6 +49,11 @@ model User {
   // Journal relations
   journalSessions     JournalSession[]
   journalStreak       JournalStreak?
+
+  // De-escalation relations
+  deEscalationSessions    DeEscalationSession[]
+  deEscalationPrefs       UserDeEscalationPrefs?
+  deEscalationAchievements DeEscalationAchievement[]
 }
 
 model Session {
@@ -497,4 +502,90 @@ model TherapistAISuggestion {
   priority         String   @default("medium") // low, medium, high
   isUsed           Boolean  @default(false)
   createdAt        DateTime @default(now())
+}
+
+// ============================================
+// DE-ESCALATION TRAINING SYSTEM MODELS
+// ============================================
+
+model DeEscalationSession {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  duration        Int?      // seconds
+  averageStress   Float?
+  peakStress      Float?
+  techniquesUsed  String    @default("[]") // JSON array of technique IDs
+  scenarioId      String?
+  scenario        DeEscalationScenario? @relation(fields: [scenarioId], references: [id])
+  recordingPath   String?   // Local file path: /public/uploads/de-escalation/{sessionId}.webm
+  transcript      String?   // JSON: timestamped transcript with emotions
+  biomarkers      String?   // JSON: detailed biomarker data over time
+  aiInterventions String    @default("[]") // JSON: log of AI coaching moments
+  crisisDetected  Boolean   @default(false)
+  userRating      Int?      // 1-5 post-session rating
+  userFeedback    String?
+  moodBefore      Int?      // 1-10 pre-session mood
+  moodAfter       Int?      // 1-10 post-session mood
+  journalEntry    String?   // Text journal entry
+  createdAt       DateTime  @default(now())
+
+  @@index([userId, startTime])
+}
+
+model DeEscalationTechnique {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // breathing, grounding, cognitive, physical
+  description String
+  duration    Int      // seconds
+  audioGuide  String?  // Local file path or generated TTS
+  steps       String   // JSON: step-by-step instructions
+  icon        String   @default("🧘")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model DeEscalationScenario {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  difficulty  String   // easy, medium, hard
+  category    String   // conflict, anxiety, anger, panic
+  aiPrompt    String   // system prompt for AI role-play
+  icon        String   @default("🎭")
+  isActive    Boolean  @default(true)
+  sessions    DeEscalationSession[]
+  createdAt   DateTime @default(now())
+}
+
+model UserDeEscalationPrefs {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredVoiceId    String?
+  preferredTechniques String   @default("[]") // JSON array
+  ambientSoundPref    String?
+  ambientVolume       Float    @default(0.3)
+  coachingEnabled     Boolean  @default(true)
+  recordingConsent    Boolean  @default(false)
+  sessionReminders    Boolean  @default(true)
+  darkMode            Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model DeEscalationAchievement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // streak, sessions, techniques, improvement
+  name        String
+  description String
+  icon        String
+  unlockedAt  DateTime @default(now())
+
+  @@index([userId])
 }
