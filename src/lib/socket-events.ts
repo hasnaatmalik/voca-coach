@@ -1,12 +1,61 @@
 // Shared Socket.io event type definitions
 
+// Extended ChatMessage with voice, media, and AI features
 export interface ChatMessage {
   id: string;
   conversationId: string;
   senderId: string;
   senderName: string;
-  content: string;
+  content: string | null;
+  type: 'text' | 'voice' | 'image' | 'file';
+  mediaUrl?: string;
+  mediaDuration?: number;
+  mediaSize?: number;
+  fileName?: string;
+  mimeType?: string;
+  transcript?: string;
+  sentiment?: string;
+  crisisLevel?: string;
+  replyToId?: string;
+  replyToPreview?: {
+    id: string;
+    content: string | null;
+    senderName: string;
+    type: string;
+  };
+  isEdited: boolean;
+  reactions?: ChatReaction[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatReaction {
+  id: string;
+  messageId: string;
+  userId: string;
+  userName: string;
+  emoji: string;
+  createdAt: string;
+}
+
+export interface PresenceData {
+  userId: string;
+  userName: string;
+  status: 'online' | 'away' | 'busy' | 'offline';
+  lastSeen?: string;
+}
+
+export interface CrisisAlertData {
+  messageId: string;
+  conversationId: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  category?: string;
+  resources: Array<{
+    name: string;
+    contact: string;
+    description: string;
+    url?: string;
+  }>;
 }
 
 export interface Notification {
@@ -23,7 +72,19 @@ export interface ServerToClientEvents {
   // Chat events
   'chat:message': (message: ChatMessage) => void;
   'chat:typing': (data: { conversationId: string; userId: string; userName: string; isTyping: boolean }) => void;
-  'chat:read': (data: { conversationId: string; messageIds: string[] }) => void;
+  'chat:read': (data: { conversationId: string; messageIds: string[]; readAt: string; readBy: string }) => void;
+
+  // Extended chat events
+  'chat:message-edited': (data: { messageId: string; conversationId: string; content: string; updatedAt: string }) => void;
+  'chat:message-deleted': (data: { messageId: string; conversationId: string }) => void;
+  'chat:reaction-added': (data: { messageId: string; conversationId: string; reaction: ChatReaction }) => void;
+  'chat:reaction-removed': (data: { messageId: string; conversationId: string; userId: string; emoji: string }) => void;
+  'chat:crisis-alert': (data: CrisisAlertData) => void;
+  'chat:biomarkers-ready': (data: { messageId: string; conversationId: string; biomarkers: string }) => void;
+
+  // Presence events
+  'presence:changed': (data: PresenceData) => void;
+  'presence:bulk': (data: PresenceData[]) => void;
 
   // WebRTC Signaling
   'webrtc:offer': (data: { sessionId: string; offer: RTCSessionDescriptionInit; peerId: string }) => void;
@@ -55,10 +116,49 @@ export interface ClientToServerEvents {
   'join:conversation': (conversationId: string) => void;
   'leave:conversation': (conversationId: string) => void;
 
-  // Chat
-  'chat:send': (data: { conversationId: string; content: string }) => void;
+  // Chat - Text messages
+  'chat:send': (data: {
+    conversationId: string;
+    content: string;
+    replyToId?: string;
+  }) => void;
+
+  // Chat - Voice messages
+  'chat:send-voice': (data: {
+    conversationId: string;
+    audioBase64: string;
+    duration: number;
+    replyToId?: string;
+  }) => void;
+
+  // Chat - Media messages (image/file)
+  'chat:send-media': (data: {
+    conversationId: string;
+    type: 'image' | 'file';
+    mediaUrl: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    content?: string;
+    replyToId?: string;
+  }) => void;
+
+  // Chat - Message actions
   'chat:typing': (data: { conversationId: string; isTyping: boolean }) => void;
   'chat:mark-read': (data: { conversationId: string; messageIds: string[] }) => void;
+  'chat:edit': (data: { messageId: string; conversationId: string; content: string }) => void;
+  'chat:delete': (data: { messageId: string; conversationId: string }) => void;
+
+  // Chat - Reactions
+  'chat:react': (data: { messageId: string; conversationId: string; emoji: string }) => void;
+  'chat:unreact': (data: { messageId: string; conversationId: string; emoji: string }) => void;
+
+  // Chat - Biomarker analysis (on-demand)
+  'chat:analyze-biomarkers': (data: { messageId: string; conversationId: string }) => void;
+
+  // Presence
+  'presence:update': (data: { status: 'online' | 'away' | 'busy' }) => void;
+  'presence:get': (data: { userIds: string[] }) => void;
 
   // WebRTC Signaling
   'webrtc:offer': (data: { sessionId: string; offer: RTCSessionDescriptionInit }) => void;

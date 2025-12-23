@@ -325,11 +325,67 @@ model ChatMessage {
   id              String           @id @default(cuid())
   conversationId  String
   senderId        String
-  content         String
-  isRead          Boolean          @default(false)
+  content         String?
+
+  // Message type and media
+  type            String           @default("text") // text, voice, image, file
+  mediaUrl        String?          // URL for voice/image/file
+  mediaDuration   Int?             // Duration in seconds (for voice)
+  mediaSize       Int?             // File size in bytes
+  fileName        String?          // Original file name
+  mimeType        String?          // MIME type of the media
+  transcript      String?          // Voice message transcription
+
+  // AI Analysis (JSON stored as strings for SQLite)
+  sentiment       String?          // JSON: {score, label, emotions}
+  biomarkers      String?          // JSON: voice biomarker data (on-demand analysis)
+  crisisLevel     String?          // none, low, medium, high, critical
+
+  // Threading & Replies
+  replyToId       String?
+  replyTo         ChatMessage?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies         ChatMessage[]    @relation("MessageReplies")
+
+  // Status
+  isEdited        Boolean          @default(false)
+  isDeleted       Boolean          @default(false)
+  readAt          DateTime?        // When the message was read (null = unread)
+
   createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  reactions       ChatReaction[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model ChatReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String      // Unicode emoji
+  createdAt DateTime    @default(now())
+
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model CannedResponse {
+  id          String   @id @default(cuid())
+  therapistId String
+  category    String   // greeting, crisis, homework, scheduling, encouragement
+  title       String
+  content     String
+  shortcut    String?  // e.g., "/greeting1"
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([therapistId, category])
 }
 
 // ============================================

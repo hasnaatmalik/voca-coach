@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/hooks/useAuth';
+import { Providers } from './providers';
 
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
 
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={dmSans.className} suppressHydrationWarning>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
