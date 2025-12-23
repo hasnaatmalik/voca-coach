@@ -36,7 +36,12 @@ function socketToChat(msg: SocketChatMessage, currentUserId: string): ChatMessag
     biomarkers: undefined, // parsed on demand
     crisisLevel: msg.crisisLevel as ChatMessage['crisisLevel'],
     replyToId: msg.replyToId,
-    replyToPreview: msg.replyToPreview,
+    replyToPreview: msg.replyToPreview ? {
+      id: msg.replyToPreview.id,
+      content: msg.replyToPreview.content,
+      senderName: msg.replyToPreview.senderName,
+      type: msg.replyToPreview.type as ChatMessage['type']
+    } : undefined,
     isEdited: msg.isEdited,
     reactions: msg.reactions?.map(r => ({
       id: r.id,

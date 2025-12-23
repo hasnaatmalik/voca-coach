@@ -38,7 +38,7 @@ export async function GET() {
         where: {
           conversationId: conv.id,
           senderId: { not: currentUser.userId },
-          isRead: false,
+          readAt: null,
         },
       });
       unreadCount += count;

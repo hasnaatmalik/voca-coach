@@ -67,7 +67,12 @@ export async function POST(req: Request) {
 
       // Call ElevenLabs STT API
       const sttFormData = new FormData();
-      sttFormData.append('file', new Blob([audioBuffer], { type: 'audio/webm' }), 'audio.webm');
+      // Convert Buffer to ArrayBuffer for Blob compatibility
+      const audioArrayBuffer = audioBuffer.buffer.slice(
+        audioBuffer.byteOffset,
+        audioBuffer.byteOffset + audioBuffer.byteLength
+      ) as ArrayBuffer;
+      sttFormData.append('file', new Blob([audioArrayBuffer], { type: 'audio/webm' }), 'audio.webm');
       sttFormData.append('model_id', 'scribe_v1');
 
       const sttResponse = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {

@@ -25,12 +25,12 @@ export default function ChatCrisisAlert({
   darkMode = false
 }: ChatCrisisAlertProps) {
   const [expanded, setExpanded] = useState(
-    alert.level === 'critical' || alert.level === 'high'
+    alert.riskLevel === 'critical' || alert.riskLevel === 'high'
   );
   const [showResources, setShowResources] = useState(false);
 
   const getAlertStyle = (): CSSProperties => {
-    switch (alert.level) {
+    switch (alert.riskLevel) {
       case 'critical':
         return {
           background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
@@ -55,7 +55,7 @@ export default function ChatCrisisAlert({
   };
 
   const getIcon = () => {
-    switch (alert.level) {
+    switch (alert.riskLevel) {
       case 'critical': return '🆘';
       case 'high': return '⚠️';
       case 'medium': return '💛';
@@ -65,14 +65,14 @@ export default function ChatCrisisAlert({
 
   const getTitle = () => {
     if (isTherapist) {
-      switch (alert.level) {
+      switch (alert.riskLevel) {
         case 'critical': return 'CRITICAL: Immediate attention required';
         case 'high': return 'HIGH RISK: Client needs support';
         case 'medium': return 'Concern detected in message';
         default: return 'Notice';
       }
     }
-    switch (alert.level) {
+    switch (alert.riskLevel) {
       case 'critical': return "You're Not Alone - Help Is Available";
       case 'high': return "We're Here For You";
       case 'medium': return 'Support Resources Available';
@@ -82,9 +82,9 @@ export default function ChatCrisisAlert({
 
   const getMessage = () => {
     if (isTherapist) {
-      return `Crisis indicators detected: ${alert.triggers.join(', ')}`;
+      return `Crisis indicators detected in conversation`;
     }
-    switch (alert.level) {
+    switch (alert.riskLevel) {
       case 'critical':
         return "It sounds like you're going through something really difficult. Your life matters, and there are people who want to help you right now.";
       case 'high':
@@ -97,7 +97,7 @@ export default function ChatCrisisAlert({
   };
 
   const alertStyles = getAlertStyle();
-  const isHighPriority = alert.level === 'critical' || alert.level === 'high';
+  const isHighPriority = alert.riskLevel === 'critical' || alert.riskLevel === 'high';
   const textColor = isHighPriority ? 'white' : (darkMode ? '#F3F4F6' : '#1F2937');
 
   const containerStyle: CSSProperties = {
@@ -106,7 +106,7 @@ export default function ChatCrisisAlert({
     borderRadius: '12px',
     overflow: 'hidden',
     margin: '8px 0',
-    animation: alert.level === 'critical' ? 'crisis-pulse 2s infinite' : 'none'
+    animation: alert.riskLevel === 'critical' ? 'crisis-pulse 2s infinite' : 'none'
   };
 
   const headerStyle: CSSProperties = {
@@ -157,7 +157,7 @@ export default function ChatCrisisAlert({
 
   const phoneButtonStyle: CSSProperties = {
     background: 'white',
-    color: alert.level === 'critical' ? '#DC2626' : '#EA580C',
+    color: alert.riskLevel === 'critical' ? '#DC2626' : '#EA580C',
     padding: '6px 12px',
     borderRadius: '16px',
     textDecoration: 'none',
@@ -212,7 +212,7 @@ export default function ChatCrisisAlert({
                   padding: '10px 12px',
                   fontSize: '12px'
                 }}>
-                  <strong>Detected at:</strong> {new Date(alert.timestamp).toLocaleTimeString()}
+                  <strong>Alert Level:</strong> {alert.riskLevel}
                   {alert.messageId && (
                     <div style={{ marginTop: '4px' }}>
                       <strong>Message ID:</strong> {alert.messageId.slice(0, 8)}...
@@ -243,7 +243,7 @@ export default function ChatCrisisAlert({
                   </button>
                 )}
 
-                {(showResources || alert.level === 'critical') && (
+                {(showResources || alert.riskLevel === 'critical') && (
                   <div style={resourcesContainerStyle}>
                     <h5 style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 10px' }}>
                       24/7 Crisis Support:
@@ -268,7 +268,7 @@ export default function ChatCrisisAlert({
                   </div>
                 )}
 
-                {alert.level === 'critical' && (
+                {alert.riskLevel === 'critical' && (
                   <div style={{
                     background: 'rgba(255,255,255,0.2)',
                     borderRadius: '8px',
@@ -287,7 +287,7 @@ export default function ChatCrisisAlert({
               </>
             )}
 
-            {onDismiss && alert.level !== 'critical' && (
+            {onDismiss && alert.riskLevel !== 'critical' && (
               <button
                 style={{
                   ...buttonStyle,

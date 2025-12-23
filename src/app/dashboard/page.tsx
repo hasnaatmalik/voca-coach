@@ -9,13 +9,25 @@ import LiveStatsPanel from '@/components/LiveStatsPanel';
 import StatusBadge from '@/components/StatusBadge';
 import Navbar from '@/components/Navbar';
 import AvailableTherapistsModal from '@/components/AvailableTherapistsModal';
-
-interface Stats {
-  sessionCount: number;
-  avgCalmScore: number;
-  journalCount: number;
-  streak: number;
-}
+import {
+  WeeklyProgress,
+  UpcomingSessions,
+  AchievementsStreak,
+  QuickActions,
+  RecentActivity
+} from '@/components/dashboard';
+import { DashboardSkeleton } from '@/components/Skeleton';
+import { useBreakpoint, getGridColumns } from '@/hooks/useBreakpoint';
+import type {
+  DashboardStats,
+  SentimentData,
+  WeeklyProgressData,
+  UpcomingSession,
+  DashboardAchievement,
+  ActivityItem,
+  DashboardRecommendation,
+  TodaySummary
+} from '@/types/dashboard';
 
 interface Activity {
   type: 'session' | 'journal';
@@ -24,36 +36,32 @@ interface Activity {
   result: string;
 }
 
-interface SentimentData {
-  avgEmotions: {
-    happy: number;
-    sad: number;
-    anxious: number;
-    calm: number;
-    neutral: number;
-    frustrated: number;
-  };
-  dominantMood: string;
-  emotionalStability: number;
-  recentSessions: Array<{
-    date: string;
-    dominantMood: string;
-    emotionalScore: number;
-    moodChanges: number;
-  }>;
-}
-
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [activity, setActivity] = useState<Activity[]>([]);
+  const breakpoint = useBreakpoint();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [, setActivity] = useState<Activity[]>([]);
   const [userName, setUserName] = useState('User');
-  const [loadingData, setLoadingData] = useState(true);
+  const [, setLoadingData] = useState(true);
   const [profilePic, setProfilePic] = useState<string | undefined>();
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
   const [showTherapistModal, setShowTherapistModal] = useState(false);
   const [availableTherapistCount, setAvailableTherapistCount] = useState(0);
+
+  // New enhanced dashboard state
+  const [empathyScore, setEmpathyScore] = useState<number>(0);
+  const [engagementScore, setEngagementScore] = useState<number>(0);
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgressData | null>(null);
+  const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
+  const [achievements, setAchievements] = useState<DashboardAchievement[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [aiRecommendations, setAiRecommendations] = useState<DashboardRecommendation[]>([]);
+  const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
+
+  // Responsive helpers
+  const isMobile = breakpoint === 'mobile';
+  const isTablet = breakpoint === 'tablet';
 
   useEffect(() => {
     if (!loading && !user) {
@@ -65,8 +73,8 @@ export default function DashboardPage() {
     if (user) {
       fetchStats();
       fetchAvailableCount();
+      fetchRecommendations();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchAvailableCount = async () => {
@@ -81,6 +89,25 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchRecommendations = async () => {
+    try {
+      const res = await fetch('/api/dashboard/recommendations');
+      if (res.ok) {
+        const data = await res.json();
+        setAiRecommendations(data.recommendations || []);
+        if (data.todaySummary) {
+          setTodaySummary({
+            ...data.todaySummary,
+            targetSessions: 3,
+            minutesPracticed: 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch recommendations:', error);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const res = await fetch('/api/stats');
@@ -90,6 +117,14 @@ export default function DashboardPage() {
         setActivity(data.activity || []);
         setUserName(data.userName || 'User');
         setSentimentData(data.sentimentData || null);
+
+        // Set enhanced dashboard data
+        setEmpathyScore(data.empathyScore || 0);
+        setEngagementScore(data.engagementScore || 0);
+        setWeeklyProgress(data.weeklyProgress || null);
+        setUpcomingSessions(data.upcomingSessions || []);
+        setAchievements(data.achievements || []);
+        setRecentActivity(data.recentActivity || []);
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -110,19 +145,14 @@ export default function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #E5E7EB',
-            borderTop: '4px solid #7C3AED',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }} />
-          <div style={{ color: '#6B7280' }}>Loading...</div>
-        </div>
+      <div style={{ minHeight: '100vh', background: '#F9FAFB' }}>
+        <DashboardSkeleton />
+        <style jsx global>{`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -149,24 +179,44 @@ export default function DashboardPage() {
         <div style={{ marginBottom: '24px' }}>
           <StatusBadge status="info" label="Professional therapy enhancement tool only" />
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '16px' : '0',
+            marginTop: '16px'
+          }}>
             <div>
-              <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
+              <h1 style={{
+                fontSize: isMobile ? '24px' : '28px',
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: '8px'
+              }}>
                 Session Overview
               </h1>
               <p style={{ color: '#6B7280' }}>Welcome back, {userName.split(' ')[0]}</p>
             </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button style={{
-                padding: '10px 20px',
-                background: 'white',
-                border: '1px solid #E5E7EB',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#4B5563',
-                cursor: 'pointer'
-              }}>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+              width: isMobile ? '100%' : 'auto'
+            }}>
+              <button
+                onClick={() => router.push('/dashboard/history')}
+                style={{
+                  padding: '10px 20px',
+                  background: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#4B5563',
+                  cursor: 'pointer'
+                }}
+              >
                 View all
               </button>
               <a href="/de-escalation" style={{
@@ -215,8 +265,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+        {/* Two Column Layout - Responsive */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: getGridColumns(breakpoint),
+          gap: '24px'
+        }}>
           {/* Left Column - Main Content */}
           <div>
             {/* Points of Improvement */}
@@ -236,16 +290,20 @@ export default function DashboardPage() {
                 Metrics based on your previous conversation
               </p>
 
-              {/* Circular Progress Charts */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
+              {/* Circular Progress Charts - Responsive */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                gap: isMobile ? '24px' : '32px'
+              }}>
                 <CircularProgress
                   percentage={sentimentData?.emotionalStability || stats?.avgCalmScore || 62}
                   label="Emotional Stability"
                   description="positive mood patterns"
                   color="purple"
                 />
-                <CircularProgress percentage={81} label="Empathy" description="client engagement" color="pink" />
-                <CircularProgress percentage={80} label="Engagement" description="speaking patterns" color="cyan" />
+                <CircularProgress percentage={empathyScore} label="Empathy" description="client engagement" color="pink" />
+                <CircularProgress percentage={engagementScore} label="Engagement" description="speaking patterns" color="cyan" />
               </div>
             </div>
 
@@ -279,8 +337,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Column - Live Stats Panel */}
-          <div>
+          {/* Right Column - Live Stats Panel & Upcoming Sessions */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <LiveStatsPanel
               currentMood={(sentimentData?.dominantMood && sentimentData.dominantMood.charAt(0).toUpperCase() + sentimentData.dominantMood.slice(1)) || "Engaged"}
               moodEmoji=""
@@ -289,16 +347,60 @@ export default function DashboardPage() {
                 { label: 'Emotional Stability', value: `${sentimentData?.emotionalStability || stats?.avgCalmScore || 0}%` }
               ]}
               recommendations={sentimentData?.recentSessions && sentimentData.recentSessions.length > 0 ? [
-                { 
-                  type: 'info', 
-                  message: `Recent mood: ${sentimentData.recentSessions[0]?.dominantMood}`, 
-                  timestamp: "Latest session" 
+                {
+                  type: 'info',
+                  message: `Recent mood: ${sentimentData.recentSessions[0]?.dominantMood}`,
+                  timestamp: "Latest session"
                 }
               ] : [
                 { type: 'info', message: "Complete a session to see mood insights", timestamp: "" }
               ]}
+              aiInsight={aiRecommendations[0] ? {
+                title: aiRecommendations[0].title,
+                message: aiRecommendations[0].message,
+                type: aiRecommendations[0].type,
+                priority: aiRecommendations[0].priority,
+                action: aiRecommendations[0].action
+              } : undefined}
+              todaySummary={todaySummary ? {
+                sessionsCompleted: todaySummary.sessionsCompleted,
+                targetSessions: todaySummary.targetSessions,
+                journalEntries: todaySummary.journalEntries,
+                focusArea: todaySummary.focusArea
+              } : undefined}
+              showProgressRing={!!todaySummary}
             />
+            <UpcomingSessions sessions={upcomingSessions} />
           </div>
+        </div>
+
+        {/* Second Row - Weekly Progress & Achievements - Responsive */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+          gap: '24px',
+          marginTop: '24px'
+        }}>
+          <WeeklyProgress data={weeklyProgress} />
+          <AchievementsStreak
+            currentStreak={stats?.streak || 0}
+            longestStreak={stats?.streak || 0}
+            achievements={achievements}
+          />
+        </div>
+
+        {/* Third Row - Quick Actions */}
+        <div style={{ marginTop: '24px' }}>
+          <QuickActions />
+        </div>
+
+        {/* Fourth Row - Recent Activity */}
+        <div style={{ marginTop: '24px' }}>
+          <RecentActivity
+            activities={recentActivity}
+            maxItems={8}
+            onViewAll={() => router.push('/dashboard/history')}
+          />
         </div>
       </main>
 

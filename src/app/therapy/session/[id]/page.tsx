@@ -31,7 +31,7 @@ interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
-  content: string;
+  content: string | null;
   createdAt: string;
 }
 

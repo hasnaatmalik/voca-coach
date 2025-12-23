@@ -61,7 +61,7 @@ export default function SmartReplies({
   }, [conversationId, lastMessage, isTherapist]);
 
   const handleSelect = (reply: SmartReply) => {
-    onSelect(reply.text);
+    onSelect(reply.content);
     setVisible(false);
   };
 
@@ -121,8 +121,7 @@ export default function SmartReplies({
             e.currentTarget.style.color = darkMode ? '#D1D5DB' : '#4B5563';
           }}
         >
-          {reply.emoji && <span>{reply.emoji}</span>}
-          {reply.text}
+          {reply.content}
         </button>
       ))}
     </div>
@@ -133,14 +132,14 @@ export default function SmartReplies({
 function getDefaultReplies(isTherapist: boolean): SmartReply[] {
   if (isTherapist) {
     return [
-      { text: "Tell me more about that.", emoji: "💭", category: "exploration" },
-      { text: "How does that make you feel?", emoji: "❤️", category: "emotional" },
-      { text: "That sounds challenging.", emoji: "🤝", category: "validation" }
+      { id: 'default-1', content: "Tell me more about that.", confidence: 0.9, category: "empathetic" },
+      { id: 'default-2', content: "How does that make you feel?", confidence: 0.85, category: "empathetic" },
+      { id: 'default-3', content: "That sounds challenging.", confidence: 0.8, category: "empathetic" }
     ];
   }
   return [
-    { text: "I appreciate you listening.", emoji: "🙏", category: "gratitude" },
-    { text: "I'm not sure how to explain it.", emoji: "🤔", category: "uncertainty" },
-    { text: "That's helpful, thank you.", emoji: "💙", category: "positive" }
+    { id: 'default-1', content: "I appreciate you listening.", confidence: 0.9, category: "empathetic" },
+    { id: 'default-2', content: "I'm not sure how to explain it.", confidence: 0.85, category: "informational" },
+    { id: 'default-3', content: "That's helpful, thank you.", confidence: 0.8, category: "empathetic" }
   ];
 }

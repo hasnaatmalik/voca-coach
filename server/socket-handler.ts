@@ -550,10 +550,12 @@ export function setupSocketHandlers(io: TypedIO) {
     socket.on('presence:update', async ({ status }) => {
       try {
         // Update user in database
+        // Note: Client presence updates only support 'online' | 'away' | 'busy'
+        // 'offline' is handled by disconnect, so isOnline is always true here
         await prisma.user.update({
           where: { id: userId },
           data: {
-            isOnline: status !== 'offline',
+            isOnline: true,
             lastActiveAt: new Date()
           }
         });

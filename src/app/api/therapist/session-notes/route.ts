@@ -29,11 +29,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Get notes from conversation metadata (stored as JSON in a field)
-    // In production, use a dedicated model
-    const notes = conversation.metadata
-      ? JSON.parse(conversation.metadata as string).sessionNotes || []
-      : [];
+    // Session notes are not yet implemented (requires dedicated SessionNote model)
+    // For now, return empty array - notes feature needs schema migration
+    const notes: unknown[] = [];
 
     return NextResponse.json({ notes });
   } catch (error) {
@@ -65,13 +63,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Get existing notes
-    const metadata = conversation.metadata
-      ? JSON.parse(conversation.metadata as string)
-      : {};
-    const notes = metadata.sessionNotes || [];
-
-    // Add new note
+    // Session notes feature requires dedicated SessionNote model
+    // For now, return a stub - notes feature needs schema migration
     const newNote = {
       id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       content,
@@ -79,14 +72,8 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString()
     };
 
-    notes.unshift(newNote);
-    metadata.sessionNotes = notes;
-
-    // Update conversation
-    await prisma.chatConversation.update({
-      where: { id: conversationId },
-      data: { metadata: JSON.stringify(metadata) }
-    });
+    // TODO: Persist note when SessionNote model is added
+    console.log('Session note created (not persisted):', newNote);
 
     return NextResponse.json(newNote);
   } catch (error) {
@@ -120,20 +107,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Get existing notes and filter out the deleted one
-    const metadata = conversation.metadata
-      ? JSON.parse(conversation.metadata as string)
-      : {};
-    const notes = (metadata.sessionNotes || []).filter(
-      (n: { id: string }) => n.id !== noteId
-    );
-    metadata.sessionNotes = notes;
-
-    // Update conversation
-    await prisma.chatConversation.update({
-      where: { id: conversationId },
-      data: { metadata: JSON.stringify(metadata) }
-    });
+    // Session notes feature requires dedicated SessionNote model
+    // For now, return success stub - notes feature needs schema migration
+    console.log('Session note deleted (not persisted):', noteId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

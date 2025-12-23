@@ -160,7 +160,7 @@ export function ReplyInputBar({
     <div style={containerStyle}>
       <div style={barStyle} />
       <div style={contentStyle}>
-        <div style={labelStyle}>Replying to {replyTo.sender?.name || 'Unknown'}</div>
+        <div style={labelStyle}>Replying to {replyTo.senderName || 'Unknown'}</div>
         <div style={textStyle}>{getContentPreview()}</div>
       </div>
       <button style={cancelButtonStyle} onClick={onCancel}>✕</button>

@@ -34,7 +34,7 @@ export default function ReactionPicker({
   const [activeCategory, setActiveCategory] = useState<string>('Frequently Used');
 
   const userReactions = existingReactions
-    .filter(r => r.users.some(u => u.id === currentUserId))
+    .filter(r => r.users.some(u => u.userId === currentUserId))
     .map(r => r.emoji);
 
   const handleEmojiClick = (emoji: string) => {
@@ -237,13 +237,13 @@ export function ReactionDisplay({
   return (
     <div style={containerStyle}>
       {reactions.map((reaction) => {
-        const hasReacted = reaction.users.some(u => u.id === currentUserId);
+        const hasReacted = reaction.users.some(u => u.userId === currentUserId);
         return (
           <button
             key={reaction.emoji}
             style={reactionBadgeStyle(hasReacted)}
             onClick={() => hasReacted ? onUnreact(reaction.emoji) : onReact(reaction.emoji)}
-            title={reaction.users.map(u => u.name).join(', ')}
+            title={reaction.users.map(u => u.userName).join(', ')}
           >
             <span>{reaction.emoji}</span>
             <span style={countStyle}>{reaction.count}</span>

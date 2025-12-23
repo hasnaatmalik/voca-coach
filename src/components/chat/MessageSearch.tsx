@@ -279,7 +279,7 @@ export default function MessageSearch({
             >
               <div style={resultHeaderStyle}>
                 <span style={resultSenderStyle}>
-                  {getTypeIcon(result.message.type)} {result.message.sender?.name || 'Unknown'}
+                  {getTypeIcon(result.message.type)} {result.message.senderName || 'Unknown'}
                 </span>
                 <span style={resultDateStyle}>{formatDate(result.message.createdAt)}</span>
               </div>

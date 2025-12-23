@@ -307,13 +307,15 @@ function StudentChatContent() {
                   Chat with your therapists
                 </p>
               </div>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: isConnected ? '#10B981' : '#EF4444',
-                title: isConnected ? 'Connected' : 'Disconnected'
-              }} />
+              <div
+                title={isConnected ? 'Connected' : 'Disconnected'}
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: isConnected ? '#10B981' : '#EF4444'
+                }}
+              />
             </div>
           </div>
 
