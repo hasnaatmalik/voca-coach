@@ -174,91 +174,77 @@ export default function DashboardPage() {
       />
 
       {/* Main Content */}
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
-        {/* Welcome Section with Status Badge */}
-        <div style={{ marginBottom: '24px' }}>
-          <StatusBadge status="info" label="Professional therapy enhancement tool only" />
-          
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
+        {/* Welcome Section - Simplified */}
+        <div style={{ marginBottom: '32px' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: isMobile ? 'flex-start' : 'center',
             flexDirection: isMobile ? 'column' : 'row',
-            gap: isMobile ? '16px' : '0',
-            marginTop: '16px'
+            gap: isMobile ? '20px' : '0'
           }}>
             <div>
               <h1 style={{
-                fontSize: isMobile ? '24px' : '28px',
+                fontSize: isMobile ? '26px' : '30px',
                 fontWeight: '700',
                 color: '#1F2937',
-                marginBottom: '8px'
+                marginBottom: '6px'
               }}>
-                Session Overview
+                Welcome back, {userName.split(' ')[0]}
               </h1>
-              <p style={{ color: '#6B7280' }}>Welcome back, {userName.split(' ')[0]}</p>
+              <p style={{ color: '#9CA3AF', fontSize: '15px' }}>
+                Here&apos;s your therapy progress overview
+              </p>
             </div>
             <div style={{
               display: 'flex',
-              gap: '12px',
+              gap: '10px',
               flexWrap: 'wrap',
               width: isMobile ? '100%' : 'auto'
             }}>
-              <button
-                onClick={() => router.push('/dashboard/history')}
-                style={{
-                  padding: '10px 20px',
-                  background: 'white',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#4B5563',
-                  cursor: 'pointer'
-                }}
-              >
-                View all
-              </button>
               <a href="/de-escalation" style={{
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                padding: '12px 24px',
+                background: 'var(--primary)',
                 color: 'white',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 fontSize: '14px',
                 fontWeight: '600',
-                display: 'inline-block',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
                 textDecoration: 'none'
               }}>
-                Start Session
+                <span>▶</span> Start Session
               </a>
               <button
                 onClick={() => setShowTherapistModal(true)}
                 style={{
-                  padding: '10px 20px',
-                  background: availableTherapistCount > 0 
-                    ? 'linear-gradient(135deg, #10B981 0%, #34D399 100%)' 
-                    : 'white',
-                  border: availableTherapistCount > 0 ? 'none' : '1px solid #E5E7EB',
-                  borderRadius: '12px',
+                  padding: '12px 20px',
+                  background: 'white',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '10px',
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: availableTherapistCount > 0 ? 'white' : '#4B5563',
+                  color: '#4B5563',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                 }}
               >
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: availableTherapistCount > 0 ? '#10B981' : '#9CA3AF',
-                  boxShadow: availableTherapistCount > 0 ? '0 0 8px #10B981' : 'none',
-                }} />
+                {availableTherapistCount > 0 && (
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#10B981',
+                    boxShadow: '0 0 6px #10B981',
+                  }} />
+                )}
                 {availableTherapistCount > 0 
-                  ? `${availableTherapistCount} Therapist${availableTherapistCount > 1 ? 's' : ''} Online`
+                  ? `${availableTherapistCount} Online`
                   : 'Talk to Therapist'}
               </button>
             </div>
@@ -275,20 +261,15 @@ export default function DashboardPage() {
           <div>
             {/* Points of Improvement */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '32px',
+              background: 'white',
+              borderRadius: '16px',
+              padding: '28px',
               marginBottom: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              border: '1px solid #E5E7EB'
             }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
-                Points of Improvement
+              <h2 style={{ fontSize: '17px', fontWeight: '600', color: '#1F2937', marginBottom: '20px' }}>
+                Progress Metrics
               </h2>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
-                Metrics based on your previous conversation
-              </p>
 
               {/* Circular Progress Charts - Responsive */}
               <div style={{
@@ -309,14 +290,12 @@ export default function DashboardPage() {
 
             {/* Emotions Analysis */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '20px',
-              padding: '32px',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)'
+              background: 'white',
+              borderRadius: '16px',
+              padding: '28px',
+              border: '1px solid #E5E7EB'
             }}>
-              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1F2937', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '17px', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>
                 Emotional Analysis
               </h2>
 
