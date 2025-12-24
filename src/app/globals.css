@@ -53,7 +53,7 @@
 
 body {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #E0F2FE 0%, #F3E8FF 50%, #FCE7F3 100%);
+  background: linear-gradient(180deg, #FAFBFC 0%, #F5F3FF 100%);
   background-attachment: fixed;
   color: var(--text-dark);
   line-height: 1.6;
