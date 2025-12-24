@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
@@ -20,7 +20,6 @@ interface Session {
     therapistProfile: {
       bio: string | null;
       specializations: string | null;
-      hourlyRate: number | null;
     } | null;
   };
 }
@@ -28,8 +27,10 @@ interface Session {
 export default function UserTherapySessions() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBookedMessage, setShowBookedMessage] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +38,13 @@ export default function UserTherapySessions() {
       return;
     }
     fetchSessions();
-  }, [user, router]);
+    
+    // Show success message if just booked
+    if (searchParams.get('booked') === 'true') {
+      setShowBookedMessage(true);
+      setTimeout(() => setShowBookedMessage(false), 5000);
+    }
+  }, [user, router, searchParams]);
 
   const fetchSessions = async () => {
     try {
@@ -64,11 +71,9 @@ export default function UserTherapySessions() {
       });
       if (res.ok) {
         fetchSessions();
-        alert('Session cancelled');
       }
     } catch (error) {
       console.error('Failed to cancel session:', error);
-      alert('Failed to cancel session');
     }
   };
 
@@ -94,25 +99,24 @@ export default function UserTherapySessions() {
       full: date.toLocaleDateString('en-US', { 
         weekday: 'long', 
         month: 'long', 
-        day: 'numeric',
-        year: 'numeric'
+        day: 'numeric'
       }),
     };
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'scheduled': return { bg: 'rgba(16, 185, 129, 0.1)', color: '#059669', text: '📅 Scheduled' };
-      case 'completed': return { bg: 'rgba(59, 130, 246, 0.1)', color: '#2563EB', text: '✅ Completed' };
-      case 'cancelled': return { bg: 'rgba(239, 68, 68, 0.1)', color: '#DC2626', text: '❌ Cancelled' };
-      default: return { bg: 'rgba(107, 114, 128, 0.1)', color: '#6B7280', text: status };
+      case 'scheduled': return { bg: '#ECFDF5', color: '#059669' };
+      case 'completed': return { bg: '#EFF6FF', color: '#2563EB' };
+      case 'cancelled': return { bg: '#FEF2F2', color: '#DC2626' };
+      default: return { bg: '#F3F4F6', color: '#6B7280' };
     }
   };
 
   if (!user) return null;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #F5F3FF 0%, #FDF8F3 100%)' }}>
+    <div style={{ minHeight: '100vh' }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name}
@@ -124,47 +128,64 @@ export default function UserTherapySessions() {
         isTherapist={user.isTherapist}
       />
       
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
+      <main style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px' }}>
+        {/* Success Message */}
+        {showBookedMessage && (
+          <div style={{
+            padding: '16px 20px',
+            background: '#ECFDF5',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            border: '1px solid #A7F3D0'
+          }}>
+            <span style={{ fontSize: '20px' }}>✅</span>
+            <span style={{ color: '#059669', fontWeight: '500' }}>Session booked successfully!</span>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           marginBottom: '32px',
           flexWrap: 'wrap',
           gap: '16px',
         }}>
           <div>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
-              My Sessions 📅
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '4px' }}>
+              My Sessions
             </h1>
-            <p style={{ color: '#6B7280' }}>Manage your therapy appointments</p>
+            <p style={{ color: '#9CA3AF', fontSize: '15px' }}>
+              {upcomingSessions.length} upcoming · {pastSessions.length} past
+            </p>
           </div>
           <Link
             href="/therapy/book"
             style={{
-              padding: '14px 28px',
-              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+              padding: '12px 24px',
+              background: 'var(--primary)',
               color: 'white',
-              borderRadius: '14px',
+              borderRadius: '10px',
               textDecoration: 'none',
               fontWeight: '600',
-              fontSize: '15px',
-              boxShadow: '0 8px 24px rgba(124, 58, 237, 0.3)',
-              transition: 'all 0.3s ease',
+              fontSize: '14px',
             }}
           >
-            ➕ Book New Session
+            + Book Session
           </Link>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px' }}>
+          <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '40px',
+              height: '40px',
               border: '3px solid #E5E7EB',
-              borderTopColor: '#7C3AED',
+              borderTopColor: 'var(--primary)',
               borderRadius: '50%',
               margin: '0 auto',
               animation: 'spin 1s linear infinite',
@@ -173,95 +194,42 @@ export default function UserTherapySessions() {
         ) : (
           <>
             {/* Upcoming Sessions */}
-            <div style={{ marginBottom: '40px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '20px',
-              }}>
-                <div style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
+            {upcomingSessions.length > 0 && (
+              <div style={{ marginBottom: '40px' }}>
+                <h2 style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  color: '#6B7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '16px'
                 }}>
-                  🗓️
-                </div>
-                <div>
-                  <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1F2937' }}>
-                    Upcoming Sessions
-                  </h2>
-                  <p style={{ fontSize: '14px', color: '#6B7280' }}>
-                    {upcomingSessions.length} session{upcomingSessions.length !== 1 ? 's' : ''} scheduled
-                  </p>
-                </div>
-              </div>
-
-              {upcomingSessions.length === 0 ? (
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  padding: '48px',
-                  textAlign: 'center',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
-                }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📭</div>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
-                    No upcoming sessions
-                  </h3>
-                  <p style={{ color: '#6B7280', marginBottom: '20px' }}>
-                    Book a session with a therapist to get started
-                  </p>
-                  <Link
-                    href="/therapy/book"
-                    style={{
-                      display: 'inline-block',
-                      padding: '12px 24px',
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                      color: 'white',
-                      borderRadius: '12px',
-                      textDecoration: 'none',
-                      fontWeight: '600',
-                    }}
-                  >
-                    Browse Therapists
-                  </Link>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gap: '16px' }}>
+                  Upcoming
+                </h2>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {upcomingSessions.map((session) => {
                     const dateInfo = formatDate(session.scheduledAt);
-                    const statusInfo = getStatusColor(session.status);
                     
                     return (
                       <div
                         key={session.id}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.95)',
-                          backdropFilter: 'blur(10px)',
-                          borderRadius: '20px',
-                          padding: '24px',
-                          border: '1px solid rgba(255, 255, 255, 0.5)',
-                          boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                          background: 'white',
+                          borderRadius: '14px',
+                          padding: '20px',
+                          border: '1px solid #E5E7EB',
                           display: 'flex',
-                          gap: '24px',
+                          gap: '20px',
                           alignItems: 'center',
-                          transition: 'transform 0.2s, box-shadow 0.2s',
                         }}
                       >
-                        {/* Date Card */}
+                        {/* Date */}
                         <div style={{
-                          width: '80px',
-                          height: '90px',
-                          borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                          width: '60px',
+                          height: '68px',
+                          borderRadius: '12px',
+                          background: 'var(--primary)',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -269,185 +237,141 @@ export default function UserTherapySessions() {
                           color: 'white',
                           flexShrink: 0,
                         }}>
-                          <span style={{ fontSize: '12px', opacity: 0.9, textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: '11px', opacity: 0.8, textTransform: 'uppercase' }}>
                             {dateInfo.month}
                           </span>
-                          <span style={{ fontSize: '32px', fontWeight: '700', lineHeight: 1 }}>
+                          <span style={{ fontSize: '24px', fontWeight: '700', lineHeight: 1 }}>
                             {dateInfo.day}
-                          </span>
-                          <span style={{ fontSize: '12px', opacity: 0.9 }}>
-                            {dateInfo.weekday}
                           </span>
                         </div>
 
-                        {/* Session Details */}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1F2937' }}>
-                              Session with {session.therapist.name}
-                            </h3>
-                            <span style={{
-                              padding: '4px 10px',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              background: statusInfo.bg,
-                              color: statusInfo.color,
-                            }}>
-                              {statusInfo.text}
-                            </span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', color: '#6B7280', fontSize: '14px' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              ⏰ {dateInfo.time}
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              ⏱️ {session.duration} minutes
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              📧 {session.therapist.email}
-                            </span>
-                          </div>
-
+                        {/* Details */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>
+                            {session.therapist.name}
+                          </h3>
+                          <p style={{ fontSize: '14px', color: '#6B7280' }}>
+                            {dateInfo.weekday} at {dateInfo.time} · {session.duration} min
+                          </p>
                           {session.userNote && (
                             <p style={{
-                              marginTop: '12px',
-                              padding: '10px 14px',
-                              background: 'rgba(124, 58, 237, 0.05)',
-                              borderRadius: '10px',
                               fontSize: '13px',
-                              color: '#6B7280',
-                              fontStyle: 'italic',
+                              color: '#9CA3AF',
+                              marginTop: '8px',
+                              fontStyle: 'italic'
                             }}>
-                              "{session.userNote}"
+                              &quot;{session.userNote}&quot;
                             </p>
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <button
-                            onClick={() => cancelSession(session.id)}
-                            style={{
-                              padding: '10px 20px',
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              color: '#DC2626',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontWeight: '600',
-                              fontSize: '13px',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                        {/* Cancel */}
+                        <button
+                          onClick={() => cancelSession(session.id)}
+                          style={{
+                            padding: '8px 16px',
+                            background: 'transparent',
+                            color: '#9CA3AF',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '8px',
+                            fontWeight: '500',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {upcomingSessions.length === 0 && pastSessions.length === 0 && (
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '60px 40px',
+                textAlign: 'center',
+                border: '1px solid #E5E7EB',
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
+                  No sessions yet
+                </h3>
+                <p style={{ color: '#6B7280', marginBottom: '24px' }}>
+                  Book your first free session with a therapist
+                </p>
+                <Link
+                  href="/therapy/book"
+                  style={{
+                    display: 'inline-block',
+                    padding: '12px 24px',
+                    background: 'var(--primary)',
+                    color: 'white',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    fontWeight: '600',
+                  }}
+                >
+                  Browse Therapists
+                </Link>
+              </div>
+            )}
 
             {/* Past Sessions */}
-            <div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '20px',
-              }}>
-                <div style={{
-                  width: '44px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
+            {pastSessions.length > 0 && (
+              <div>
+                <h2 style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  color: '#6B7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '16px'
                 }}>
-                  📜
-                </div>
-                <div>
-                  <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1F2937' }}>
-                    Past Sessions
-                  </h2>
-                  <p style={{ fontSize: '14px', color: '#6B7280' }}>
-                    Your session history
-                  </p>
-                </div>
-              </div>
-
-              {pastSessions.length === 0 ? (
+                  Past Sessions
+                </h2>
+                
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  padding: '48px',
-                  textAlign: 'center',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
-                }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌟</div>
-                  <p style={{ color: '#6B7280' }}>No past sessions yet</p>
-                </div>
-              ) : (
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)',
+                  background: 'white',
+                  borderRadius: '14px',
+                  border: '1px solid #E5E7EB',
                   overflow: 'hidden',
                 }}>
                   {pastSessions.map((session, index) => {
                     const dateInfo = formatDate(session.scheduledAt);
-                    const statusInfo = getStatusColor(session.status);
+                    const statusStyle = getStatusStyle(session.status);
                     
                     return (
                       <div
                         key={session.id}
                         style={{
-                          padding: '20px 24px',
+                          padding: '16px 20px',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '20px',
+                          gap: '16px',
                           borderBottom: index < pastSessions.length - 1 ? '1px solid #F3F4F6' : 'none',
                         }}
                       >
-                        <div style={{
-                          width: '50px',
-                          height: '50px',
-                          borderRadius: '12px',
-                          background: statusInfo.bg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '20px',
-                          flexShrink: 0,
-                        }}>
-                          {session.status === 'completed' ? '✅' : session.status === 'cancelled' ? '❌' : '📅'}
-                        </div>
-                        
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>
-                            Session with {session.therapist.name}
+                          <p style={{ fontWeight: '500', color: '#1F2937', marginBottom: '2px', fontSize: '15px' }}>
+                            {session.therapist.name}
                           </p>
-                          <p style={{ fontSize: '13px', color: '#6B7280' }}>
-                            {dateInfo.full} at {dateInfo.time}
+                          <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
+                            {dateInfo.full}
                           </p>
                         </div>
                         
                         <span style={{
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          background: statusInfo.bg,
-                          color: statusInfo.color,
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          background: statusStyle.bg,
+                          color: statusStyle.color,
                           textTransform: 'capitalize',
                         }}>
                           {session.status}
@@ -456,8 +380,8 @@ export default function UserTherapySessions() {
                     );
                   })}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
       </main>
