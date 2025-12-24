@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-// Store session notes in a simple format using the database
-// For a production app, you'd create a dedicated SessionNote model
-
 // GET - Get session notes for a conversation
 export async function GET(req: Request) {
   try {
@@ -29,9 +26,26 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Session notes are not yet implemented (requires dedicated SessionNote model)
-    // For now, return empty array - notes feature needs schema migration
-    const notes: unknown[] = [];
+    const notes = await prisma.sessionNote.findMany({
+      where: {
+        conversationId,
+        therapistId: currentUser.userId
+      },
+      include: {
+        linkedMessage: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            senderId: true
+          }
+        }
+      },
+      orderBy: [
+        { isPinned: 'desc' },
+        { createdAt: 'desc' }
+      ]
+    });
 
     return NextResponse.json({ notes });
   } catch (error) {
@@ -48,7 +62,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conversationId, content, linkedMessageId } = await req.json();
+    const { conversationId, content, linkedMessageId, category, isPinned } = await req.json();
 
     if (!conversationId || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -63,22 +77,97 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Session notes feature requires dedicated SessionNote model
-    // For now, return a stub - notes feature needs schema migration
-    const newNote = {
-      id: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      content,
-      linkedMessageId: linkedMessageId || null,
-      createdAt: new Date().toISOString()
-    };
+    // Verify linked message exists and belongs to this conversation
+    if (linkedMessageId) {
+      const message = await prisma.chatMessage.findUnique({
+        where: { id: linkedMessageId }
+      });
 
-    // TODO: Persist note when SessionNote model is added
-    console.log('Session note created (not persisted):', newNote);
+      if (!message || message.conversationId !== conversationId) {
+        return NextResponse.json({ error: 'Invalid linked message' }, { status: 400 });
+      }
+    }
 
-    return NextResponse.json(newNote);
+    const note = await prisma.sessionNote.create({
+      data: {
+        conversationId,
+        therapistId: currentUser.userId,
+        content,
+        linkedMessageId: linkedMessageId || null,
+        category: category || null,
+        isPinned: isPinned || false
+      },
+      include: {
+        linkedMessage: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            senderId: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(note);
   } catch (error) {
     console.error('Error creating session note:', error);
     return NextResponse.json({ error: 'Failed to create note' }, { status: 500 });
+  }
+}
+
+// PATCH - Update a session note
+export async function PATCH(req: Request) {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== 'therapist') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id, content, category, isPinned } = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: 'Note ID required' }, { status: 400 });
+    }
+
+    // Verify note belongs to this therapist
+    const existingNote = await prisma.sessionNote.findUnique({
+      where: { id }
+    });
+
+    if (!existingNote || existingNote.therapistId !== currentUser.userId) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
+
+    const updateData: {
+      content?: string;
+      category?: string | null;
+      isPinned?: boolean;
+    } = {};
+
+    if (content !== undefined) updateData.content = content;
+    if (category !== undefined) updateData.category = category;
+    if (isPinned !== undefined) updateData.isPinned = isPinned;
+
+    const note = await prisma.sessionNote.update({
+      where: { id },
+      data: updateData,
+      include: {
+        linkedMessage: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            senderId: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(note);
+  } catch (error) {
+    console.error('Error updating session note:', error);
+    return NextResponse.json({ error: 'Failed to update note' }, { status: 500 });
   }
 }
 
@@ -107,9 +196,18 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    // Session notes feature requires dedicated SessionNote model
-    // For now, return success stub - notes feature needs schema migration
-    console.log('Session note deleted (not persisted):', noteId);
+    // Verify note exists and belongs to this therapist
+    const note = await prisma.sessionNote.findUnique({
+      where: { id: noteId }
+    });
+
+    if (!note || note.therapistId !== currentUser.userId) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
+
+    await prisma.sessionNote.delete({
+      where: { id: noteId }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
