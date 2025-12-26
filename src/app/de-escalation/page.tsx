@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 
@@ -16,6 +17,16 @@ import AmbientSoundMixer from '@/components/de-escalation/AmbientSoundMixer';
 import CrisisAlertEnhanced from '@/components/de-escalation/CrisisAlertEnhanced';
 import VoiceSelector from '@/components/de-escalation/VoiceSelector';
 import ScenarioPractice from '@/components/de-escalation/ScenarioPractice';
+
+// Bento components
+import {
+  DeEscalationHero,
+  SessionCard,
+  StressIndicator,
+  QuickTipsGrid,
+  TechniqueCard,
+  ProgressView,
+} from '@/components/de-escalation/bento';
 
 // Types
 import {
@@ -54,7 +65,6 @@ export default function DeEscalationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [sessionSaved, setSessionSaved] = useState(false);
   const [profilePic, setProfilePic] = useState<string>();
-  const [darkMode, setDarkMode] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('session');
 
   // Biomarkers & Analysis
@@ -105,13 +115,6 @@ export default function DeEscalationPage() {
   const biomarkerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<string | null>(null);
 
-  // Colors based on dark mode
-  const bgColor = darkMode ? '#111827' : '#F8FAFC';
-  const cardBg = darkMode ? '#1F2937' : 'white';
-  const textColor = darkMode ? '#F9FAFB' : '#1F2937';
-  const mutedColor = darkMode ? '#9CA3AF' : '#6B7280';
-  const borderColor = darkMode ? '#374151' : '#E5E7EB';
-
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
@@ -160,7 +163,7 @@ export default function DeEscalationPage() {
         performTranscription();
         lastTranscribedChunkIndex.current = audioChunksRef.current.length;
       }
-    }, 15000); // Reduced frequency to avoid rate limits
+    }, 15000);
 
     return () => clearInterval(transcriptionInterval);
   }, [isRecording]);
@@ -187,10 +190,8 @@ export default function DeEscalationPage() {
       return;
     }
 
-    // First check-in after 20 seconds, then every 30 seconds
     const checkInInterval = setInterval(() => {
       const now = Date.now();
-      // Ensure at least 25 seconds between check-ins and not playing audio
       if (!isPlayingAudio && !activeBreathingPattern && now - lastCheckInRef.current > 25000) {
         lastCheckInRef.current = now;
         triggerPeriodicCheckIn();
@@ -200,15 +201,9 @@ export default function DeEscalationPage() {
     return () => clearInterval(checkInInterval);
   }, [isRecording, isPlayingAudio, activeBreathingPattern]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const getStressColor = useCallback((level: number) => {
-    if (level < 0.3) return '#10B981';
-    if (level < 0.5) return '#F59E0B';
+    if (level < 0.3) return '#7AB89E';
+    if (level < 0.5) return '#E4B17A';
     if (level < 0.7) return '#F97316';
     return '#EF4444';
   }, []);
@@ -226,14 +221,12 @@ export default function DeEscalationPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Set up Web Audio API for visualization
       audioContextRef.current = new AudioContext();
       const source = audioContextRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 256;
       source.connect(analyserRef.current);
 
-      // Set up MediaRecorder
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -278,7 +271,6 @@ export default function DeEscalationPage() {
 
     setIsRecording(false);
 
-    // Final analysis
     if (audioChunksRef.current.length > 0) {
       await analyzeFullSession();
     }
@@ -289,10 +281,8 @@ export default function DeEscalationPage() {
     if (audioChunksRef.current.length < 5) return;
 
     try {
-      // WebM requires the first chunk (contains headers) + recent chunks for valid audio
       const firstChunk = audioChunksRef.current[0];
       const recentChunks = audioChunksRef.current.slice(-5);
-      // Combine first chunk (headers) with recent audio data
       const chunksToAnalyze = [firstChunk, ...recentChunks.filter(c => c !== firstChunk)];
       const audioBlob = new Blob(chunksToAnalyze, { type: 'audio/webm' });
       const reader = new FileReader();
@@ -313,7 +303,6 @@ export default function DeEscalationPage() {
             setBiomarkersHistory((prev) => [...prev, data]);
             setStressLevel(data.overallStressScore);
 
-            // Check for crisis keywords in recommendations
             if (data.recommendations) {
               checkForCrisis(data.recommendations.join(' '));
             }
@@ -329,16 +318,14 @@ export default function DeEscalationPage() {
     }
   };
 
-  // Perform transcription using only NEW audio chunks (with header from first chunk)
+  // Perform transcription using only NEW audio chunks
   const performTranscription = async () => {
     try {
-      // Get chunks from last transcribed position
       const startIndex = lastTranscribedChunkIndex.current;
       const newChunks = audioChunksRef.current.slice(startIndex);
 
       if (newChunks.length < 2) return;
 
-      // Include first chunk (headers) + new chunks for valid WebM
       const firstChunk = audioChunksRef.current[0];
       const chunksToTranscribe = startIndex === 0
         ? newChunks
@@ -371,8 +358,6 @@ export default function DeEscalationPage() {
         const data = await res.json();
         if (data.segments && data.segments.length > 0) {
           setTranscriptSegments((prev) => [...prev, ...data.segments]);
-
-          // Check transcript for crisis keywords
           checkForCrisis(data.text);
         }
       }
@@ -395,7 +380,6 @@ export default function DeEscalationPage() {
         if (result.isCrisis) {
           setCrisisDetection(result);
           if (result.shouldPauseSession) {
-            // Don't auto-stop, but show prominent alert
             triggerCrisisIntervention(result);
           }
         }
@@ -405,7 +389,7 @@ export default function DeEscalationPage() {
     }
   };
 
-  // Periodic check-in messages (encouraging, not stress-based)
+  // Periodic check-in messages
   const triggerPeriodicCheckIn = async () => {
     if (isPlayingAudio) return;
 
@@ -565,10 +549,8 @@ export default function DeEscalationPage() {
         ? Math.max(...biomarkersHistory.map((b) => b.overallStressScore))
         : stressLevel;
 
-      // Get techniques used from active technique history
       const techniquesUsed = activeTechniqueId ? [activeTechniqueId] : [];
 
-      // Save to de-escalation sessions endpoint
       const res = await fetch('/api/de-escalation/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -588,7 +570,6 @@ export default function DeEscalationPage() {
       if (res.ok) {
         setSessionSaved(true);
       } else {
-        // Fallback to general sessions API
         const fallbackRes = await fetch('/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -647,6 +628,18 @@ export default function DeEscalationPage() {
     router.push('/login');
   };
 
+  // Waveform component for SessionCard
+  const waveformComponent = (
+    <AudioWaveform
+      analyserNode={analyserRef.current}
+      stressLevel={stressLevel}
+      isRecording={isRecording}
+      showBreathingGuide={!!activeBreathingPattern}
+      breathingPhase={breathingPhase}
+      darkMode={false}
+    />
+  );
+
   if (loading || !user) {
     return (
       <div style={{
@@ -654,26 +647,33 @@ export default function DeEscalationPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: bgColor,
+        background: '#FAF7F3',
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #E5E7EB',
-            borderTop: '4px solid #7C3AED',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px',
-          }} />
-          <div style={{ color: mutedColor }}>Loading...</div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ textAlign: 'center' }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid #F0E4D3',
+              borderTop: '4px solid #D9A299',
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+            }}
+          />
+          <div style={{ color: '#6B6B6B' }}>Loading...</div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: bgColor }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F3' }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name || 'User'}
@@ -685,591 +685,514 @@ export default function DeEscalationPage() {
       />
 
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
-        {/* Header with View Toggle */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: textColor,
-              marginBottom: '4px',
-            }}>
-              De-Escalation Training
-            </h1>
-            <p style={{ color: mutedColor, margin: 0 }}>
-              Practice calming techniques with real-time voice analysis
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* View Mode Toggle */}
-            <div style={{
-              display: 'flex',
-              background: darkMode ? '#374151' : '#F3F4F6',
-              borderRadius: '10px',
-              padding: '4px',
-            }}>
-              {(['session', 'techniques', 'progress'] as ViewMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  style={{
-                    padding: '8px 16px',
-                    background: viewMode === mode
-                      ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
-                      : 'transparent',
-                    color: viewMode === mode ? 'white' : textColor,
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-
-            {/* Scenario Practice Button */}
-            <button
-              onClick={() => setShowScenarioPractice(true)}
-              style={{
-                padding: '10px 16px',
-                background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>🎭</span>
-              Scenarios
-            </button>
-
-            {/* Voice Settings Button */}
-            <button
-              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-              style={{
-                padding: '10px',
-                background: showVoiceSettings ? '#7C3AED' : (darkMode ? '#374151' : '#F3F4F6'),
-                color: showVoiceSettings ? 'white' : textColor,
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '18px',
-              }}
-              title="Voice Settings"
-            >
-              🎙️
-            </button>
-
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              style={{
-                padding: '10px',
-                background: darkMode ? '#374151' : '#F3F4F6',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '18px',
-              }}
-            >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
-          </div>
-        </div>
+        {/* Immersive Hero Header */}
+        <DeEscalationHero
+          isRecording={isRecording}
+          sessionTime={sessionTime}
+          stressLevel={stressLevel}
+          onViewModeChange={setViewMode}
+          currentViewMode={viewMode}
+          onOpenScenarios={() => setShowScenarioPractice(true)}
+          onOpenVoiceSettings={() => setShowVoiceSettings(true)}
+        />
 
         {/* Crisis Alert */}
-        {crisisDetection && crisisDetection.isCrisis && (
-          <div style={{ marginBottom: '24px' }}>
-            <CrisisAlertEnhanced
-              detection={crisisDetection}
-              onDismiss={() => setCrisisDetection(null)}
-              darkMode={darkMode}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {crisisDetection && crisisDetection.isCrisis && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{ marginBottom: '24px' }}
+            >
+              <CrisisAlertEnhanced
+                detection={crisisDetection}
+                onDismiss={() => setCrisisDetection(null)}
+                darkMode={false}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Content based on View Mode */}
-        {viewMode === 'session' && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-            gap: '24px',
-          }}>
-            {/* Left Column - Main Session */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Breathing Exercise Overlay */}
-              {activeBreathingPattern && (
-                <BreathingExercise
-                  pattern={activeBreathingPattern}
-                  onComplete={handleBreathingComplete}
-                  onCancel={() => {
-                    setActiveBreathingPattern(null);
-                    setBreathingPhase(null);
-                    setActiveTechniqueId(null);
-                  }}
-                  onPhaseChange={setBreathingPhase}
-                  darkMode={darkMode}
-                />
-              )}
-
-              {/* Recording Card */}
-              {!activeBreathingPattern && (
-                <div style={{
-                  background: cardBg,
-                  borderRadius: '20px',
-                  padding: '32px',
-                  border: `1px solid ${borderColor}`,
-                }}>
-                  {/* Audio Waveform */}
-                  <AudioWaveform
-                    analyserNode={analyserRef.current}
-                    stressLevel={stressLevel}
-                    isRecording={isRecording}
-                    showBreathingGuide={!!activeBreathingPattern}
-                    breathingPhase={breathingPhase}
-                    darkMode={darkMode}
-                  />
-
-                  {/* Session Timer & Controls */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '24px',
-                  }}>
-                    <div>
-                      <div style={{
-                        fontSize: '36px',
-                        fontWeight: '700',
-                        color: textColor,
-                        fontFamily: 'monospace',
-                      }}>
-                        {formatTime(sessionTime)}
-                      </div>
-                      {isRecording && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginTop: '4px',
-                        }}>
-                          <span style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: getStressColor(stressLevel),
-                          }} />
-                          <span style={{
-                            fontSize: '14px',
-                            color: getStressColor(stressLevel),
-                            fontWeight: '500',
-                          }}>
-                            {getStressLabel(stressLevel)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      {!isRecording ? (
-                        <>
-                          {/* Mood Check Before Session */}
-                          {!sessionSaved && sessionTime === 0 && (
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              marginRight: '16px',
-                            }}>
-                              <span style={{ fontSize: '13px', color: mutedColor }}>
-                                Mood:
-                              </span>
-                              <input
-                                type="range"
-                                min="1"
-                                max="10"
-                                value={moodBefore}
-                                onChange={(e) => setMoodBefore(parseInt(e.target.value))}
-                                style={{ width: '80px' }}
-                              />
-                              <span style={{ fontSize: '13px', color: textColor }}>
-                                {moodBefore}
-                              </span>
-                            </div>
-                          )}
-
-                          <button
-                            onClick={startSession}
-                            style={{
-                              padding: '14px 32px',
-                              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '12px',
-                              fontWeight: '600',
-                              fontSize: '16px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                            }}
-                          >
-                            <span>🎙️</span>
-                            Start Session
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={stopSession}
-                          style={{
-                            padding: '14px 32px',
-                            background: '#EF4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontWeight: '600',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                          }}
-                        >
-                          <span>⏹️</span>
-                          End Session
-                        </button>
-                      )}
-
-                      {!isRecording && sessionTime > 0 && !sessionSaved && (
-                        <button
-                          onClick={saveSession}
-                          disabled={isSaving}
-                          style={{
-                            padding: '14px 32px',
-                            background: isSaving ? '#9CA3AF' : '#10B981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontWeight: '600',
-                            fontSize: '16px',
-                            cursor: isSaving ? 'not-allowed' : 'pointer',
-                          }}
-                        >
-                          {isSaving ? 'Saving...' : 'Save Session'}
-                        </button>
-                      )}
-
-                      {sessionSaved && (
-                        <span style={{
-                          padding: '14px 20px',
-                          color: '#10B981',
-                          fontWeight: '600',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}>
-                          ✓ Saved!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Recording Consent Toggle */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginTop: '16px',
-                    padding: '12px',
-                    background: darkMode ? '#111827' : '#F9FAFB',
-                    borderRadius: '10px',
-                  }}>
-                    <input
-                      type="checkbox"
-                      id="consent"
-                      checked={recordingConsent}
-                      onChange={(e) => setRecordingConsent(e.target.checked)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <label
-                      htmlFor="consent"
-                      style={{ fontSize: '13px', color: mutedColor, cursor: 'pointer' }}
+        <AnimatePresence mode="wait">
+          {viewMode === 'session' && (
+            <motion.div
+              key="session-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
+                gap: '24px',
+              }}
+            >
+              {/* Left Column - Main Session */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Breathing Exercise Overlay */}
+                <AnimatePresence>
+                  {activeBreathingPattern && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
                     >
-                      Save session recording for playback
-                    </label>
-                  </div>
-                </div>
-              )}
+                      <BreathingExercise
+                        pattern={activeBreathingPattern}
+                        onComplete={handleBreathingComplete}
+                        onCancel={() => {
+                          setActiveBreathingPattern(null);
+                          setBreathingPhase(null);
+                          setActiveTechniqueId(null);
+                        }}
+                        onPhaseChange={setBreathingPhase}
+                        darkMode={false}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              {/* Live Transcript */}
-              {(isRecording || transcriptSegments.length > 0) && !activeBreathingPattern && (
-                <TranscriptViewer
-                  segments={transcriptSegments}
-                  isLive={isRecording}
-                  currentTimestamp={sessionTime}
-                  darkMode={darkMode}
-                />
-              )}
+                {/* Session Recording Card */}
+                {!activeBreathingPattern && (
+                  <SessionCard
+                    isRecording={isRecording}
+                    sessionTime={sessionTime}
+                    stressLevel={stressLevel}
+                    moodBefore={moodBefore}
+                    onMoodChange={setMoodBefore}
+                    onStartSession={startSession}
+                    onStopSession={stopSession}
+                    onSaveSession={saveSession}
+                    isSaving={isSaving}
+                    sessionSaved={sessionSaved}
+                    recordingConsent={recordingConsent}
+                    onConsentChange={setRecordingConsent}
+                    waveformComponent={waveformComponent}
+                    isPlayingAudio={isPlayingAudio}
+                  />
+                )}
 
-              {/* AI Response */}
-              {isAnalyzing && (
-                <div style={{
-                  background: cardBg,
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: `1px solid ${borderColor}`,
-                  textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: '24px', marginBottom: '12px' }}>🤔</div>
-                  <p style={{ color: mutedColor }}>Analyzing your session...</p>
-                </div>
-              )}
+                {/* Live Transcript */}
+                <AnimatePresence>
+                  {(isRecording || transcriptSegments.length > 0) && !activeBreathingPattern && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <TranscriptViewer
+                        segments={transcriptSegments}
+                        isLive={isRecording}
+                        currentTimestamp={sessionTime}
+                        darkMode={false}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              {aiResponse && !isAnalyzing && !isRecording && (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '20px' }}>🧘</span>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: textColor,
-                        margin: 0,
-                      }}>
-                        AI Coach Summary
-                      </h3>
-                    </div>
-                    {isPlayingAudio && (
-                      <span style={{
-                        padding: '4px 10px',
-                        background: '#10B981',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        color: 'white',
-                      }}>
-                        🔊 Playing
-                      </span>
-                    )}
-                  </div>
+                {/* AI Response */}
+                <AnimatePresence>
+                  {isAnalyzing && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '24px',
+                        padding: '32px',
+                        border: '1px solid #DCC5B2',
+                        textAlign: 'center',
+                      }}
+                    >
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                        style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}
+                      >
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D9A299" strokeWidth="2">
+                          <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+                          <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+                          <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+                          <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
+                          <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
+                          <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
+                          <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
+                          <path d="M6 18a4 4 0 0 1-1.967-.516" />
+                          <path d="M19.967 17.484A4 4 0 0 1 18 18" />
+                        </svg>
+                      </motion.div>
+                      <p style={{ color: '#6B6B6B', margin: 0 }}>Analyzing your session...</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                  <p style={{
-                    fontSize: '15px',
-                    color: darkMode ? '#D1D5DB' : '#4B5563',
-                    lineHeight: '1.6',
-                    fontStyle: 'italic',
-                    margin: '0 0 16px 0',
-                  }}>
-                    "{aiResponse}"
-                  </p>
-
-                  <button
-                    onClick={() => playAIResponse(aiResponse)}
-                    disabled={isPlayingAudio}
+                {aiResponse && !isAnalyzing && !isRecording && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     style={{
-                      padding: '10px 20px',
-                      background: isPlayingAudio ? '#9CA3AF' : '#10B981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '10px',
-                      fontWeight: '600',
-                      fontSize: '14px',
-                      cursor: isPlayingAudio ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
+                      background: 'linear-gradient(135deg, rgba(122, 184, 158, 0.15) 0%, rgba(217, 162, 153, 0.15) 100%)',
+                      backdropFilter: 'blur(10px)',
+                      borderRadius: '24px',
+                      padding: '28px',
+                      border: '1px solid rgba(122, 184, 158, 0.3)',
                     }}
                   >
-                    <span>🔊</span>
-                    {isPlayingAudio ? 'Playing...' : 'Play Audio'}
-                  </button>
-                </div>
-              )}
-            </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '16px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7AB89E" strokeWidth="2">
+                          <circle cx="12" cy="6" r="3" />
+                          <path d="M12 9v3" />
+                          <path d="M6 15c0-2 1.5-3 3-3h6c1.5 0 3 1 3 3" />
+                          <path d="M4 20c0-1.5 1-3 4-3h8c3 0 4 1.5 4 3" />
+                          <path d="M9 21v-2" />
+                          <path d="M15 21v-2" />
+                        </svg>
+                        <h3 style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#2D2D2D',
+                          margin: 0,
+                        }}>
+                          AI Coach Summary
+                        </h3>
+                      </div>
+                      {isPlayingAudio && (
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          style={{
+                            padding: '6px 14px',
+                            background: '#7AB89E',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <motion.span
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ repeat: Infinity, duration: 0.8 }}
+                            style={{ display: 'flex', alignItems: 'center' }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            </svg>
+                          </motion.span>
+                          Playing
+                        </motion.span>
+                      )}
+                    </div>
 
-            {/* Right Column - Sidebar */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Biomarkers Panel */}
-              <BiometricsPanel
-                biomarkers={biomarkers}
-                isLive={isRecording}
-                darkMode={darkMode}
-              />
+                    <p style={{
+                      fontSize: '15px',
+                      color: '#4B5563',
+                      lineHeight: 1.7,
+                      fontStyle: 'italic',
+                      margin: '0 0 20px 0',
+                    }}>
+                      "{aiResponse}"
+                    </p>
 
-              {/* Quick Techniques */}
-              <TechniqueLibrary
-                onStartTechnique={handleStartTechnique}
-                activeTechniqueId={activeTechniqueId}
-                darkMode={darkMode}
-                compact={true}
-              />
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => playAIResponse(aiResponse)}
+                      disabled={isPlayingAudio}
+                      style={{
+                        padding: '12px 24px',
+                        background: isPlayingAudio
+                          ? '#9CA3AF'
+                          : 'linear-gradient(135deg, #7AB89E 0%, #10B981 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '14px',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        cursor: isPlayingAudio ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: isPlayingAudio ? 'none' : '0 4px 16px rgba(122, 184, 158, 0.3)',
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      </svg>
+                      {isPlayingAudio ? 'Playing...' : 'Play Audio'}
+                    </motion.button>
+                  </motion.div>
+                )}
 
-              {/* Ambient Sound Mixer */}
-              <AmbientSoundMixer
-                darkMode={darkMode}
-                compact={true}
-              />
-
-              {/* Quick Progress */}
-              <ProgressDashboard
-                darkMode={darkMode}
-                compact={true}
-              />
-            </div>
-          </div>
-        )}
-
-        {viewMode === 'techniques' && (
-          <TechniqueLibrary
-            onStartTechnique={(technique) => {
-              setViewMode('session');
-              handleStartTechnique(technique);
-            }}
-            activeTechniqueId={activeTechniqueId}
-            darkMode={darkMode}
-          />
-        )}
-
-        {viewMode === 'progress' && (
-          <ProgressDashboard darkMode={darkMode} />
-        )}
-
-        {/* Quick Tips (shown when not recording and no response) */}
-        {viewMode === 'session' && !isRecording && !aiResponse && !isAnalyzing && !activeBreathingPattern && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-            marginTop: '24px',
-          }}>
-            {[
-              { icon: '🫁', title: 'Breathe', desc: 'Deep breaths lower stress hormones' },
-              { icon: '🐢', title: 'Slow Down', desc: 'Speak 20% slower than normal' },
-              { icon: '👂', title: 'Pause', desc: 'Take 2-second pauses between thoughts' },
-              { icon: '🌍', title: 'Ground', desc: 'Notice 5 things you can see around you' },
-            ].map((tip, i) => (
-              <div
-                key={i}
-                style={{
-                  background: cardBg,
-                  borderRadius: '16px',
-                  padding: '20px',
-                  textAlign: 'center',
-                  border: `1px solid ${borderColor}`,
-                }}
-              >
-                <div style={{ fontSize: '28px', marginBottom: '12px' }}>{tip.icon}</div>
-                <div style={{ fontWeight: '600', color: textColor, marginBottom: '4px' }}>
-                  {tip.title}
-                </div>
-                <div style={{ fontSize: '13px', color: mutedColor }}>{tip.desc}</div>
+                {/* Quick Tips */}
+                {!isRecording && !aiResponse && !isAnalyzing && !activeBreathingPattern && (
+                  <QuickTipsGrid
+                    stressLevel={stressLevel}
+                    onTechniqueSelect={(technique) => console.log('Selected:', technique)}
+                  />
+                )}
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Right Column - Sidebar */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* Stress Indicator */}
+                <StressIndicator
+                  stressLevel={stressLevel}
+                  isRecording={isRecording}
+                  showDetails={true}
+                />
+
+                {/* Biomarkers Panel */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <BiometricsPanel
+                    biomarkers={biomarkers}
+                    isLive={isRecording}
+                    darkMode={false}
+                  />
+                </motion.div>
+
+                {/* Quick Techniques */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <TechniqueLibrary
+                    onStartTechnique={handleStartTechnique}
+                    activeTechniqueId={activeTechniqueId}
+                    darkMode={false}
+                    compact={true}
+                  />
+                </motion.div>
+
+                {/* Ambient Sound Mixer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <AmbientSoundMixer
+                    darkMode={false}
+                    compact={true}
+                  />
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {viewMode === 'techniques' && (
+            <motion.div
+              key="techniques-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                gap: '24px',
+              }}
+            >
+              <TechniqueCard
+                currentStressLevel={stressLevel}
+                onSelectTechnique={(technique) => {
+                  setViewMode('session');
+                  handleStartTechnique({
+                    id: technique.id,
+                    name: technique.name,
+                    description: technique.description,
+                    type: technique.category === 'breathing' ? 'breathing' : 'grounding',
+                    duration: parseInt(technique.duration) || 3,
+                    icon: '',
+                    steps: technique.steps,
+                  });
+                }}
+              />
+
+              <TechniqueLibrary
+                onStartTechnique={(technique) => {
+                  setViewMode('session');
+                  handleStartTechnique(technique);
+                }}
+                activeTechniqueId={activeTechniqueId}
+                darkMode={false}
+              />
+            </motion.div>
+          )}
+
+          {viewMode === 'progress' && (
+            <motion.div
+              key="progress-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <ProgressView
+                stats={{
+                  totalSessions: 24,
+                  totalMinutes: 186,
+                  avgStressReduction: 32,
+                  currentStreak: 5,
+                  longestStreak: 12,
+                  favoriteTechnique: 'Box Breathing',
+                }}
+                recentSessions={[
+                  {
+                    id: '1',
+                    date: new Date(Date.now() - 86400000).toISOString(),
+                    duration: 480,
+                    stressReduction: 35,
+                    techniques: ['Box Breathing', 'Grounding'],
+                    moodBefore: 4,
+                    moodAfter: 7,
+                  },
+                  {
+                    id: '2',
+                    date: new Date(Date.now() - 172800000).toISOString(),
+                    duration: 360,
+                    stressReduction: 28,
+                    techniques: ['4-7-8 Breathing'],
+                    moodBefore: 5,
+                    moodAfter: 8,
+                  },
+                  {
+                    id: '3',
+                    date: new Date(Date.now() - 259200000).toISOString(),
+                    duration: 600,
+                    stressReduction: 42,
+                    techniques: ['Box Breathing', 'Body Scan'],
+                    moodBefore: 3,
+                    moodAfter: 7,
+                  },
+                ]}
+              />
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                style={{ marginTop: '24px' }}
+              >
+                <ProgressDashboard darkMode={false} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Scenario Practice Modal */}
-        {showScenarioPractice && (
-          <ScenarioPractice
-            onClose={() => setShowScenarioPractice(false)}
-            onComplete={(scenarioId, score) => {
-              console.log(`Completed scenario ${scenarioId} with score ${score}`);
-              setShowScenarioPractice(false);
-            }}
-            voiceId={selectedVoiceId || undefined}
-            darkMode={darkMode}
-          />
-        )}
+        <AnimatePresence>
+          {showScenarioPractice && (
+            <ScenarioPractice
+              onClose={() => setShowScenarioPractice(false)}
+              onComplete={(scenarioId, score) => {
+                console.log(`Completed scenario ${scenarioId} with score ${score}`);
+                setShowScenarioPractice(false);
+              }}
+              voiceId={selectedVoiceId || undefined}
+              darkMode={false}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Voice Settings Modal */}
-        {showVoiceSettings && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}>
-            <div style={{
-              background: darkMode ? '#1F2937' : 'white',
-              borderRadius: '20px',
-              width: '100%',
-              maxWidth: '450px',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              position: 'relative',
-            }}>
-              <button
-                onClick={() => setShowVoiceSettings(false)}
+        <AnimatePresence>
+          {showVoiceSettings && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                padding: '20px',
+              }}
+              onClick={() => setShowVoiceSettings(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
                 style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: mutedColor,
-                  zIndex: 1,
+                  background: 'white',
+                  borderRadius: '24px',
+                  width: '100%',
+                  maxWidth: '450px',
+                  maxHeight: '90vh',
+                  overflow: 'auto',
+                  position: 'relative',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 }}
               >
-                ×
-              </button>
-              <VoiceSelector
-                selectedVoiceId={selectedVoiceId}
-                onVoiceSelect={(voiceId) => setSelectedVoiceId(voiceId)}
-                onSave={(voiceId) => {
-                  setSelectedVoiceId(voiceId);
-                  setShowVoiceSettings(false);
-                }}
-                darkMode={darkMode}
-              />
-            </div>
-          </div>
-        )}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowVoiceSettings(false)}
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    background: '#FAF7F3',
+                    border: 'none',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#6B6B6B',
+                    zIndex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </motion.button>
+                <VoiceSelector
+                  selectedVoiceId={selectedVoiceId}
+                  onVoiceSelect={(voiceId) => setSelectedVoiceId(voiceId)}
+                  onSave={(voiceId) => {
+                    setSelectedVoiceId(voiceId);
+                    setShowVoiceSettings(false);
+                  }}
+                  darkMode={false}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
         @media (max-width: 768px) {
-          main > div {
+          main > div > div {
             grid-template-columns: 1fr !important;
           }
         }

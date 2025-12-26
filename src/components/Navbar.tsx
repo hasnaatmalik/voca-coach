@@ -18,6 +18,52 @@ const colors = {
   textMuted: '#7A7A7A',
 };
 
+// SVG Icon Components for Command Palette
+const HomeIcon = ({ color = '#D9A299', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+const TargetIcon = ({ color = '#7AB89E', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const ChartIcon = ({ color = '#7AAFC9', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const BookIcon = ({ color = '#E4B17A', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
+const ChatBubbleIcon = ({ color = '#B8A9D9', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const CalendarIcon = ({ color = '#D9A299', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
 interface NavItem {
   label: string;
   href: string;
@@ -188,20 +234,8 @@ const AnimatedLogo: React.FC<{
           )}
         </AnimatePresence>
 
-        {/* Logo Mark with breathing glow */}
+        {/* Logo Mark */}
         <motion.div
-          animate={{
-            rotate: isHovered ? 360 : 0,
-            boxShadow: [
-              `0 0 20px rgba(217, 162, 153, 0.2)`,
-              `0 0 30px rgba(217, 162, 153, 0.4)`,
-              `0 0 20px rgba(217, 162, 153, 0.2)`,
-            ]
-          }}
-          transition={{
-            rotate: { duration: 0.8, ease: 'easeInOut' },
-            boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-          }}
           style={{ borderRadius: '12px' }}
         >
           <Image
@@ -211,6 +245,7 @@ const AnimatedLogo: React.FC<{
             height={36}
             style={{
               borderRadius: '12px',
+              filter: 'sepia(1) saturate(2) hue-rotate(-25deg) brightness(0.95)',
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -224,7 +259,7 @@ const AnimatedLogo: React.FC<{
           {'Voca-Coach'.split('').map((letter, i) => (
             <motion.span
               key={i}
-              animate={{ color: isHovered ? colors.accent : colors.text }}
+              animate={{ color: isHovered ? colors.accentDark : colors.accent }}
               transition={{ delay: isHovered ? i * 0.03 : 0, duration: 0.2 }}
               style={{ display: letter === ' ' ? 'inline' : 'inline-block' }}
             >
@@ -279,6 +314,7 @@ const NavLink: React.FC<{
           position: 'relative',
           cursor: 'pointer',
           zIndex: 1,
+          whiteSpace: 'nowrap',
         }}
         onMouseEnter={() => onHover(item.href)}
         whileHover={{ scale: 1.05 }}
@@ -325,7 +361,7 @@ const SlidingPillNav: React.FC<{
         display: 'flex',
         alignItems: 'center',
         gap: '2px',
-        background: colors.surface,
+        background: 'transparent',
         padding: '4px',
         borderRadius: '100px',
         position: 'relative',
@@ -956,12 +992,12 @@ const CommandPalette: React.FC<{
   }, [onClose]);
 
   const quickActions = [
-    { label: 'Go to Dashboard', href: '/dashboard', icon: '🏠' },
-    { label: 'Start Live Session', href: '/de-escalation', icon: '🎯' },
-    { label: 'View Analytics', href: '/biomarkers', icon: '📊' },
-    { label: 'Open Journal', href: '/journal', icon: '📝' },
-    { label: 'Practice Mode', href: '/persona', icon: '💬' },
-    { label: 'Book Therapy', href: '/therapy/book', icon: '🗓️' },
+    { label: 'Go to Dashboard', href: '/dashboard', icon: <HomeIcon color="#D9A299" size={20} /> },
+    { label: 'Start Live Session', href: '/de-escalation', icon: <TargetIcon color="#7AB89E" size={20} /> },
+    { label: 'View Analytics', href: '/biomarkers', icon: <ChartIcon color="#7AAFC9" size={20} /> },
+    { label: 'Open Journal', href: '/journal', icon: <BookIcon color="#E4B17A" size={20} /> },
+    { label: 'Practice Mode', href: '/persona', icon: <ChatBubbleIcon color="#B8A9D9" size={20} /> },
+    { label: 'Book Therapy', href: '/therapy/book', icon: <CalendarIcon color="#D9A299" size={20} /> },
   ];
 
   const filteredActions = quickActions.filter(action =>
@@ -1075,7 +1111,7 @@ const CommandPalette: React.FC<{
                       cursor: 'pointer',
                     }}
                   >
-                    <span style={{ fontSize: 20 }}>{action.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{action.icon}</span>
                     <span style={{ color: colors.text, fontWeight: 500 }}>{action.label}</span>
                   </motion.div>
                 </Link>
@@ -1250,7 +1286,6 @@ const ModernNavbar: React.FC<ModernNavbarProps> = ({
           borderRadius: 100,
           border: '1px solid rgba(220, 197, 178, 0.3)',
           boxShadow: `0 8px 32px rgba(0, 0, 0, ${shadowOpacity.get()})`,
-          overflow: 'hidden',
         }}
         role="navigation"
         aria-label="Main navigation"
@@ -1263,6 +1298,7 @@ const ModernNavbar: React.FC<ModernNavbarProps> = ({
             background: `rgba(250, 247, 243, ${springOpacity.get()})`,
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: 100,
           }}
         />
 

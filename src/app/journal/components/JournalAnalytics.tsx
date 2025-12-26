@@ -3,6 +3,81 @@
 import { useState, useEffect, useCallback } from 'react';
 import { JournalStreak, MoodTrend, DistortionStats, TagCloud } from '../types';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  success: '#7AB89E',
+  warning: '#E4B17A',
+};
+
+// SVG Icon Components
+const FlameIcon = ({ color = themeColors.warning, size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+  </svg>
+);
+
+const NotesIcon = ({ color = themeColors.primaryDark, size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+  </svg>
+);
+
+const TrendUpIcon = ({ color = themeColors.success, size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+    <polyline points="16 7 22 7 22 13" />
+  </svg>
+);
+
+const TrendDownIcon = ({ color = '#E07A5F', size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+    <polyline points="16 17 22 17 22 11" />
+  </svg>
+);
+
+const SearchIcon = ({ color = themeColors.text, size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const TagIcon = ({ color = themeColors.text, size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z" />
+    <path d="M7 7h.01" />
+  </svg>
+);
+
+const CalendarIcon = ({ color = themeColors.text, size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const ChartIcon = ({ color = themeColors.primaryDark, size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
 interface AnalyticsData {
   streak: JournalStreak | null;
   moodTrends: MoodTrend[];
@@ -37,10 +112,10 @@ export default function JournalAnalytics() {
   }, [fetchAnalytics]);
 
   const getMoodColor = (mood: number) => {
-    if (mood <= 3) return '#EF4444';
-    if (mood <= 5) return '#F59E0B';
-    if (mood <= 7) return '#3B82F6';
-    return '#10B981';
+    if (mood <= 3) return '#E07A5F';
+    if (mood <= 5) return themeColors.warning;
+    if (mood <= 7) return themeColors.primary;
+    return themeColors.success;
   };
 
   if (isLoading) {
@@ -52,13 +127,14 @@ export default function JournalAnalytics() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+        boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+        border: `1px solid ${themeColors.border}`,
       }}>
         <div style={{
           width: '40px',
           height: '40px',
-          border: '3px solid #E5E7EB',
-          borderTop: '3px solid #7C3AED',
+          border: `3px solid ${themeColors.border}`,
+          borderTop: `3px solid ${themeColors.primaryDark}`,
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
         }} />
@@ -73,9 +149,10 @@ export default function JournalAnalytics() {
         borderRadius: '20px',
         padding: '48px',
         textAlign: 'center',
-        boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+        boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+        border: `1px solid ${themeColors.border}`,
       }}>
-        <p style={{ color: '#6B7280' }}>Unable to load analytics</p>
+        <p style={{ color: themeColors.textMuted }}>Unable to load analytics</p>
       </div>
     );
   }
@@ -91,24 +168,38 @@ export default function JournalAnalytics() {
         background: 'white',
         borderRadius: '20px',
         padding: '20px 24px',
-        boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+        boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+        border: `1px solid ${themeColors.border}`,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <div>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', margin: 0 }}>
-            Journal Analytics
-          </h2>
-          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0' }}>
-            Insights from your journaling journey
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: `${themeColors.primary}20`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <ChartIcon color={themeColors.primaryDark} size={24} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: themeColors.text, margin: 0 }}>
+              Journal Analytics
+            </h2>
+            <p style={{ fontSize: '13px', color: themeColors.textMuted, margin: '4px 0 0' }}>
+              Insights from your journaling journey
+            </p>
+          </div>
         </div>
 
         {/* Date Range Toggle */}
         <div style={{
           display: 'flex',
-          background: '#F3F4F6',
+          background: themeColors.beige,
           borderRadius: '8px',
           padding: '4px',
         }}>
@@ -122,7 +213,7 @@ export default function JournalAnalytics() {
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '13px',
-                color: dateRange === range ? '#7C3AED' : '#6B7280',
+                color: dateRange === range ? themeColors.primaryDark : themeColors.textMuted,
                 cursor: 'pointer',
                 fontWeight: dateRange === range ? '600' : '400',
                 textTransform: 'capitalize',
@@ -142,47 +233,60 @@ export default function JournalAnalytics() {
       }}>
         {/* Streak Card */}
         <div style={{
-          background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+          background: `linear-gradient(135deg, ${themeColors.warning}20 0%, ${themeColors.warning}35 100%)`,
           borderRadius: '16px',
           padding: '20px',
+          border: `1px solid ${themeColors.warning}30`,
         }}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#92400E' }}>
+          <div style={{ marginBottom: '8px' }}><FlameIcon color={themeColors.warning} size={32} /></div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: themeColors.warning }}>
             {data.streak?.currentStreak || 0}
           </div>
-          <div style={{ fontSize: '14px', color: '#B45309' }}>Day Streak</div>
-          <div style={{ fontSize: '12px', color: '#D97706', marginTop: '4px' }}>
+          <div style={{ fontSize: '14px', color: themeColors.text }}>Day Streak</div>
+          <div style={{ fontSize: '12px', color: themeColors.textMuted, marginTop: '4px' }}>
             Best: {data.streak?.longestStreak || 0} days
           </div>
         </div>
 
         {/* Total Entries */}
         <div style={{
-          background: 'linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%)',
+          background: `linear-gradient(135deg, ${themeColors.primary}20 0%, ${themeColors.primary}35 100%)`,
           borderRadius: '16px',
           padding: '20px',
+          border: `1px solid ${themeColors.primary}30`,
         }}>
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📝</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#3730A3' }}>
+          <div style={{ marginBottom: '8px' }}><NotesIcon color={themeColors.primaryDark} size={32} /></div>
+          <div style={{ fontSize: '32px', fontWeight: '700', color: themeColors.primaryDark }}>
             {data.streak?.totalEntries || 0}
           </div>
-          <div style={{ fontSize: '14px', color: '#4338CA' }}>Total Entries</div>
+          <div style={{ fontSize: '14px', color: themeColors.text }}>Total Entries</div>
         </div>
 
         {/* Average Mood */}
         {typeof data.averageMood === 'number' && (
           <div style={{
-            background: `linear-gradient(135deg, ${getMoodColor(data.averageMood)}15 0%, ${getMoodColor(data.averageMood)}25 100%)`,
+            background: `linear-gradient(135deg, ${getMoodColor(data.averageMood)}20 0%, ${getMoodColor(data.averageMood)}35 100%)`,
             borderRadius: '16px',
             padding: '20px',
+            border: `1px solid ${getMoodColor(data.averageMood)}30`,
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: `${getMoodColor(data.averageMood)}30`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '8px',
+              fontSize: '18px',
+            }}>
               {data.averageMood <= 3 ? '😔' : data.averageMood <= 5 ? '😐' : data.averageMood <= 7 ? '🙂' : '😊'}
             </div>
             <div style={{ fontSize: '32px', fontWeight: '700', color: getMoodColor(data.averageMood) }}>
               {data.averageMood.toFixed(1)}
             </div>
-            <div style={{ fontSize: '14px', color: getMoodColor(data.averageMood) }}>Avg Mood</div>
+            <div style={{ fontSize: '14px', color: themeColors.text }}>Avg Mood</div>
           </div>
         )}
 
@@ -190,24 +294,25 @@ export default function JournalAnalytics() {
         {typeof data.moodImprovement === 'number' && (
           <div style={{
             background: data.moodImprovement >= 0
-              ? 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
-              : 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+              ? `linear-gradient(135deg, ${themeColors.success}20 0%, ${themeColors.success}35 100%)`
+              : `linear-gradient(135deg, #E07A5F20 0%, #E07A5F35 100%)`,
             borderRadius: '16px',
             padding: '20px',
+            border: `1px solid ${data.moodImprovement >= 0 ? themeColors.success : '#E07A5F'}30`,
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>
-              {data.moodImprovement >= 0 ? '📈' : '📉'}
+            <div style={{ marginBottom: '8px' }}>
+              {data.moodImprovement >= 0 ? <TrendUpIcon color={themeColors.success} size={32} /> : <TrendDownIcon color="#E07A5F" size={32} />}
             </div>
             <div style={{
               fontSize: '32px',
               fontWeight: '700',
-              color: data.moodImprovement >= 0 ? '#059669' : '#DC2626',
+              color: data.moodImprovement >= 0 ? themeColors.success : '#E07A5F',
             }}>
               {data.moodImprovement >= 0 ? '+' : ''}{data.moodImprovement.toFixed(1)}
             </div>
             <div style={{
               fontSize: '14px',
-              color: data.moodImprovement >= 0 ? '#047857' : '#B91C1C',
+              color: themeColors.text,
             }}>
               Mood Change
             </div>
@@ -221,10 +326,11 @@ export default function JournalAnalytics() {
           background: 'white',
           borderRadius: '20px',
           padding: '24px',
-          boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+          boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+          border: `1px solid ${themeColors.border}`,
         }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', margin: '0 0 20px' }}>
-            Mood Trend
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: themeColors.text, margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ChartIcon color={themeColors.primaryDark} size={18} /> Mood Trend
           </h3>
           <div style={{
             display: 'flex',
@@ -255,7 +361,7 @@ export default function JournalAnalytics() {
                 />
                 <span style={{
                   fontSize: '10px',
-                  color: '#9CA3AF',
+                  color: themeColors.textMuted,
                   marginTop: '4px',
                 }}>
                   {new Date(trend.date).toLocaleDateString('en-US', { day: 'numeric' })}
@@ -278,10 +384,11 @@ export default function JournalAnalytics() {
             background: 'white',
             borderRadius: '20px',
             padding: '24px',
-            boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+            boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+            border: `1px solid ${themeColors.border}`,
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', margin: '0 0 16px' }}>
-              🔍 Common Patterns
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: themeColors.text, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <SearchIcon color={themeColors.primaryDark} size={16} /> Common Patterns
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {data.distortionStats.slice(0, 5).map((stat) => (
@@ -291,21 +398,21 @@ export default function JournalAnalytics() {
                     justifyContent: 'space-between',
                     marginBottom: '4px',
                   }}>
-                    <span style={{ fontSize: '13px', color: '#4B5563' }}>{stat.type}</span>
-                    <span style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                    <span style={{ fontSize: '13px', color: themeColors.text }}>{stat.type}</span>
+                    <span style={{ fontSize: '12px', color: themeColors.textMuted }}>
                       {stat.count} ({stat.percentage}%)
                     </span>
                   </div>
                   <div style={{
                     height: '6px',
-                    background: '#F3F4F6',
+                    background: themeColors.beige,
                     borderRadius: '3px',
                     overflow: 'hidden',
                   }}>
                     <div style={{
                       width: `${stat.percentage}%`,
                       height: '100%',
-                      background: '#F59E0B',
+                      background: themeColors.warning,
                       borderRadius: '3px',
                     }} />
                   </div>
@@ -321,10 +428,11 @@ export default function JournalAnalytics() {
             background: 'white',
             borderRadius: '20px',
             padding: '24px',
-            boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+            boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+            border: `1px solid ${themeColors.border}`,
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', margin: '0 0 16px' }}>
-              🏷️ Common Themes
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: themeColors.text, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TagIcon color={themeColors.primaryDark} size={16} /> Common Themes
             </h3>
             <div style={{
               display: 'flex',
@@ -339,11 +447,12 @@ export default function JournalAnalytics() {
                     key={tag.tag}
                     style={{
                       padding: '6px 12px',
-                      background: '#F5F3FF',
-                      color: '#7C3AED',
+                      background: `${themeColors.primary}20`,
+                      color: themeColors.primaryDark,
                       borderRadius: '999px',
                       fontSize: `${12 * scale}px`,
                       fontWeight: tag.count > maxCount * 0.5 ? '600' : '400',
+                      border: `1px solid ${themeColors.primary}30`,
                     }}
                   >
                     {tag.tag}
@@ -364,10 +473,11 @@ export default function JournalAnalytics() {
           background: 'white',
           borderRadius: '20px',
           padding: '24px',
-          boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+          boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+          border: `1px solid ${themeColors.border}`,
         }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1F2937', margin: '0 0 16px' }}>
-            📅 Weekly Activity
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: themeColors.text, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CalendarIcon color={themeColors.primaryDark} size={16} /> Weekly Activity
           </h3>
           <div style={{
             display: 'flex',
@@ -385,20 +495,20 @@ export default function JournalAnalytics() {
                       height: '40px',
                       borderRadius: '8px',
                       background: count > 0
-                        ? `rgba(124, 58, 237, ${0.2 + intensity * 0.6})`
-                        : '#F3F4F6',
+                        ? `rgba(217, 162, 153, ${0.25 + intensity * 0.5})`
+                        : themeColors.beige,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '14px',
                       fontWeight: '600',
-                      color: count > 0 ? '#7C3AED' : '#9CA3AF',
+                      color: count > 0 ? themeColors.primaryDark : themeColors.textMuted,
                       marginBottom: '4px',
                     }}
                   >
                     {count}
                   </div>
-                  <span style={{ fontSize: '11px', color: '#6B7280' }}>{day}</span>
+                  <span style={{ fontSize: '11px', color: themeColors.textMuted }}>{day}</span>
                 </div>
               );
             })}

@@ -89,26 +89,56 @@ export default function VoiceSelector({
     }
   };
 
-  const bgColor = darkMode ? '#1F2937' : 'white';
-  const textColor = darkMode ? '#F9FAFB' : '#1F2937';
-  const mutedColor = darkMode ? '#9CA3AF' : '#6B7280';
-  const borderColor = darkMode ? '#374151' : '#E5E7EB';
-  const cardBg = darkMode ? '#111827' : '#F9FAFB';
+  const bgColor = darkMode ? '#1F2937' : 'rgba(255, 255, 255, 0.95)';
+  const textColor = darkMode ? '#F9FAFB' : '#2D2D2D';
+  const mutedColor = darkMode ? '#9CA3AF' : '#6B6B6B';
+  const borderColor = darkMode ? '#374151' : '#DCC5B2';
+  const cardBg = darkMode ? '#111827' : '#F0E4D3';
+  const accentColor = '#D9A299';
+  const accentColorDark = '#C08B82';
 
-  const getStyleIcon = (style: VoiceOption['style']) => {
+  // SVG Icons
+  const MicIcon = ({ size = 14, color = 'white' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="8" y1="23" x2="16" y2="23" />
+    </svg>
+  );
+
+  const PlayIcon = ({ size = 12, color = accentColorDark }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+      <polygon points="5,3 19,12 5,21" />
+    </svg>
+  );
+
+  const StopIcon = ({ size = 12, color = 'white' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+    </svg>
+  );
+
+  const LoadingIcon = ({ size = 12, color = accentColorDark }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  );
+
+  const SaveIcon = ({ size = 12, color = 'white' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+      <polyline points="17,21 17,13 7,13 7,21" />
+      <polyline points="7,3 7,8 15,8" />
+    </svg>
+  );
+
+  const getStyleLabel = (style: VoiceOption['style']) => {
     switch (style) {
-      case 'calm': return '😌';
-      case 'warm': return '🤗';
-      case 'professional': return '👔';
-      default: return '🎙️';
-    }
-  };
-
-  const getGenderIcon = (gender: VoiceOption['gender']) => {
-    switch (gender) {
-      case 'female': return '♀️';
-      case 'male': return '♂️';
-      default: return '⚪';
+      case 'calm': return 'Calm';
+      case 'warm': return 'Warm';
+      case 'professional': return 'Pro';
+      default: return '';
     }
   };
 
@@ -116,9 +146,10 @@ export default function VoiceSelector({
     return (
       <div style={{
         background: bgColor,
-        borderRadius: '12px',
-        padding: '12px',
+        borderRadius: '16px',
+        padding: '14px',
         border: `1px solid ${borderColor}`,
+        backdropFilter: 'blur(10px)',
       }}>
         <div style={{
           display: 'flex',
@@ -127,7 +158,7 @@ export default function VoiceSelector({
           marginBottom: '10px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>🎙️</span>
+            <MicIcon size={14} color={accentColor} />
             <span style={{ fontSize: '13px', fontWeight: '600', color: textColor }}>
               Voice
             </span>
@@ -139,10 +170,10 @@ export default function VoiceSelector({
           onChange={(e) => onVoiceSelect(e.target.value)}
           style={{
             width: '100%',
-            padding: '8px 12px',
-            background: cardBg,
+            padding: '10px 14px',
+            background: darkMode ? cardBg : 'rgba(255, 255, 255, 0.9)',
             border: `1px solid ${borderColor}`,
-            borderRadius: '8px',
+            borderRadius: '10px',
             color: textColor,
             fontSize: '13px',
             cursor: 'pointer',
@@ -163,19 +194,32 @@ export default function VoiceSelector({
     <div style={{
       background: bgColor,
       borderRadius: '16px',
-      padding: '20px',
+      padding: '16px',
       border: `1px solid ${borderColor}`,
+      backdropFilter: 'blur(10px)',
+      boxShadow: '0 4px 24px rgba(0, 0, 0, 0.04)',
     }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        marginBottom: '16px',
+        marginBottom: '12px',
       }}>
-        <span style={{ fontSize: '20px' }}>🎙️</span>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '8px',
+          background: `linear-gradient(135deg, ${accentColor} 0%, #DCC5B2 100%)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: `0 2px 8px rgba(217, 162, 153, 0.3)`,
+        }}>
+          <MicIcon size={16} color="white" />
+        </div>
         <h3 style={{
-          fontSize: '16px',
+          fontSize: '14px',
           fontWeight: '600',
           color: textColor,
           margin: 0,
@@ -188,8 +232,8 @@ export default function VoiceSelector({
       <div style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
-        marginBottom: '20px',
+        gap: '6px',
+        marginBottom: '12px',
       }}>
         {VOICE_OPTIONS.map((voice) => (
           <div
@@ -199,32 +243,37 @@ export default function VoiceSelector({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '14px 16px',
+              padding: '10px 12px',
               background: selectedVoiceId === voice.id
-                ? darkMode ? 'rgba(124, 58, 237, 0.2)' : 'rgba(124, 58, 237, 0.1)'
-                : cardBg,
-              borderRadius: '12px',
+                ? darkMode ? 'rgba(217, 162, 153, 0.2)' : 'rgba(217, 162, 153, 0.12)'
+                : darkMode ? cardBg : 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '10px',
               cursor: 'pointer',
               border: selectedVoiceId === voice.id
-                ? '2px solid #7C3AED'
+                ? `2px solid ${accentColor}`
                 : `1px solid ${borderColor}`,
               transition: 'all 0.2s ease',
+              boxShadow: selectedVoiceId === voice.id
+                ? '0 2px 8px rgba(217, 162, 153, 0.2)'
+                : 'none',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {/* Selection indicator */}
               <div style={{
-                width: '20px',
-                height: '20px',
+                width: '18px',
+                height: '18px',
                 borderRadius: '50%',
-                border: `2px solid ${selectedVoiceId === voice.id ? '#7C3AED' : borderColor}`,
-                background: selectedVoiceId === voice.id ? '#7C3AED' : 'transparent',
+                border: `2px solid ${selectedVoiceId === voice.id ? accentColor : borderColor}`,
+                background: selectedVoiceId === voice.id ? accentColor : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'all 0.2s ease',
               }}>
                 {selectedVoiceId === voice.id && (
-                  <span style={{ color: 'white', fontSize: '12px' }}>✓</span>
+                  <span style={{ color: 'white', fontSize: '10px' }}>✓</span>
                 )}
               </div>
 
@@ -233,21 +282,31 @@ export default function VoiceSelector({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  marginBottom: '4px',
                 }}>
                   <span style={{
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: '600',
                     color: textColor,
                   }}>
                     {voice.name}
                   </span>
-                  <span style={{ fontSize: '12px' }}>{getGenderIcon(voice.gender)}</span>
-                  <span style={{ fontSize: '12px' }}>{getStyleIcon(voice.style)}</span>
+                  <span style={{
+                    fontSize: '9px',
+                    fontWeight: '500',
+                    color: accentColorDark,
+                    background: 'rgba(217, 162, 153, 0.15)',
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.3px',
+                  }}>
+                    {getStyleLabel(voice.style)}
+                  </span>
                 </div>
                 <div style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   color: mutedColor,
+                  lineHeight: 1.2,
                 }}>
                   {voice.description}
                 </div>
@@ -262,37 +321,29 @@ export default function VoiceSelector({
               }}
               disabled={isLoading === voice.id}
               style={{
-                padding: '8px 14px',
+                padding: '6px',
                 background: isPreviewPlaying === voice.id
-                  ? '#EF4444'
-                  : darkMode ? '#374151' : '#E5E7EB',
-                color: isPreviewPlaying === voice.id ? 'white' : textColor,
+                  ? accentColorDark
+                  : darkMode ? '#374151' : 'rgba(240, 228, 211, 0.8)',
                 border: 'none',
-                borderRadius: '8px',
-                fontSize: '12px',
-                fontWeight: '500',
+                borderRadius: '6px',
                 cursor: isLoading === voice.id ? 'wait' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                justifyContent: 'center',
                 opacity: isLoading === voice.id ? 0.7 : 1,
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+                width: '28px',
+                height: '28px',
               }}
             >
               {isLoading === voice.id ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
-                  Loading
-                </>
+                <LoadingIcon size={14} color={accentColorDark} />
               ) : isPreviewPlaying === voice.id ? (
-                <>
-                  <span>⏹️</span>
-                  Stop
-                </>
+                <StopIcon size={12} color="white" />
               ) : (
-                <>
-                  <span>▶️</span>
-                  Preview
-                </>
+                <PlayIcon size={12} color={accentColorDark} />
               )}
             </button>
           </div>
@@ -301,26 +352,27 @@ export default function VoiceSelector({
 
       {/* Speech Rate Control */}
       <div style={{
-        padding: '16px',
-        background: cardBg,
-        borderRadius: '12px',
-        marginBottom: '16px',
+        padding: '12px',
+        background: darkMode ? cardBg : 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '10px',
+        marginBottom: '12px',
+        border: `1px solid ${borderColor}`,
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '12px',
+          marginBottom: '8px',
         }}>
-          <span style={{ fontSize: '13px', fontWeight: '500', color: textColor }}>
+          <span style={{ fontSize: '12px', fontWeight: '600', color: textColor }}>
             Speech Rate
           </span>
           <span style={{
-            fontSize: '13px',
+            fontSize: '11px',
             fontWeight: '600',
-            color: '#7C3AED',
-            padding: '2px 8px',
-            background: 'rgba(124, 58, 237, 0.1)',
+            color: accentColorDark,
+            padding: '2px 6px',
+            background: 'rgba(217, 162, 153, 0.15)',
             borderRadius: '4px',
           }}>
             {localSpeechRate.toFixed(1)}x
@@ -330,9 +382,9 @@ export default function VoiceSelector({
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '8px',
         }}>
-          <span style={{ fontSize: '11px', color: mutedColor }}>Slow</span>
+          <span style={{ fontSize: '10px', color: mutedColor }}>Slow</span>
           <input
             type="range"
             min="0.5"
@@ -342,34 +394,37 @@ export default function VoiceSelector({
             onChange={(e) => handleSpeechRateChange(parseFloat(e.target.value))}
             style={{
               flex: 1,
-              height: '6px',
-              borderRadius: '3px',
+              height: '4px',
+              borderRadius: '2px',
               cursor: 'pointer',
+              accentColor: accentColor,
             }}
           />
-          <span style={{ fontSize: '11px', color: mutedColor }}>Fast</span>
+          <span style={{ fontSize: '10px', color: mutedColor }}>Fast</span>
         </div>
 
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '8px',
-          marginTop: '12px',
+          gap: '6px',
+          marginTop: '8px',
         }}>
           {[0.75, 1.0, 1.25].map((rate) => (
             <button
               key={rate}
               onClick={() => handleSpeechRateChange(rate)}
               style={{
-                padding: '4px 12px',
+                padding: '4px 10px',
                 background: localSpeechRate === rate
-                  ? '#7C3AED'
+                  ? accentColor
                   : 'transparent',
                 color: localSpeechRate === rate ? 'white' : mutedColor,
-                border: `1px solid ${localSpeechRate === rate ? '#7C3AED' : borderColor}`,
+                border: `1px solid ${localSpeechRate === rate ? accentColor : borderColor}`,
                 borderRadius: '6px',
-                fontSize: '11px',
+                fontSize: '10px',
+                fontWeight: '500',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease',
               }}
             >
               {rate === 1.0 ? 'Normal' : `${rate}x`}
@@ -385,24 +440,26 @@ export default function VoiceSelector({
           disabled={!selectedVoiceId}
           style={{
             width: '100%',
-            padding: '14px',
+            padding: '10px',
             background: selectedVoiceId
-              ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
-              : darkMode ? '#374151' : '#E5E7EB',
+              ? `linear-gradient(135deg, ${accentColor} 0%, #DCC5B2 100%)`
+              : darkMode ? '#374151' : '#E5DDD3',
             color: selectedVoiceId ? 'white' : mutedColor,
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontWeight: '600',
-            fontSize: '14px',
+            fontSize: '12px',
             cursor: selectedVoiceId ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
+            gap: '6px',
+            boxShadow: selectedVoiceId ? '0 2px 8px rgba(217, 162, 153, 0.35)' : 'none',
+            transition: 'all 0.2s ease',
           }}
         >
-          <span>💾</span>
-          Save Voice Preference
+          <SaveIcon size={14} color={selectedVoiceId ? 'white' : mutedColor} />
+          Save Preference
         </button>
       )}
 

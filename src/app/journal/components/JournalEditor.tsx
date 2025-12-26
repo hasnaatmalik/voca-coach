@@ -3,6 +3,20 @@
 import { useState, useEffect } from 'react';
 import { MOOD_EMOJIS } from '../types';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  success: '#7AB89E',
+  warning: '#E4B17A',
+};
+
 interface JournalEditorProps {
   onSave?: () => void;
   onStreakUpdate?: () => void;
@@ -143,18 +157,20 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
     <div style={{
       background: 'white',
       borderRadius: '20px',
-      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+      boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
       overflow: 'hidden',
+      border: `1px solid ${themeColors.border}`,
     }}>
       {/* Header */}
       <div style={{
         padding: '20px 24px',
-        borderBottom: '1px solid #E5E7EB',
+        borderBottom: `1px solid ${themeColors.border}`,
+        background: `linear-gradient(135deg, ${themeColors.primary}08 0%, ${themeColors.secondary}08 100%)`,
       }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', margin: 0 }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '600', color: themeColors.text, margin: 0 }}>
           Write Entry
         </h2>
-        <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0' }}>
+        <p style={{ fontSize: '13px', color: themeColors.textMuted, margin: '4px 0 0' }}>
           Express your thoughts freely
         </p>
       </div>
@@ -168,12 +184,13 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
           style={{
             width: '100%',
             padding: '12px 16px',
-            border: '1px solid #E5E7EB',
+            border: `1px solid ${themeColors.border}`,
             borderRadius: '12px',
             fontSize: '16px',
             fontWeight: '500',
             outline: 'none',
             marginBottom: '16px',
+            color: themeColors.text,
           }}
         />
 
@@ -183,7 +200,7 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
             display: 'block',
             fontSize: '13px',
             fontWeight: '600',
-            color: '#4B5563',
+            color: themeColors.text,
             marginBottom: '8px',
           }}>
             How are you feeling? ({mood}/10)
@@ -200,9 +217,9 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
                 style={{
                   width: '44px',
                   height: '44px',
-                  border: mood === m ? '2px solid #7C3AED' : '1px solid #E5E7EB',
+                  border: mood === m ? `2px solid ${themeColors.primaryDark}` : `1px solid ${themeColors.border}`,
                   borderRadius: '12px',
-                  background: mood === m ? '#F5F3FF' : 'white',
+                  background: mood === m ? `${themeColors.primary}15` : 'white',
                   cursor: 'pointer',
                   fontSize: '20px',
                   display: 'flex',
@@ -227,13 +244,14 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
               width: '100%',
               minHeight: '200px',
               padding: '16px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               borderRadius: '12px',
               fontSize: '15px',
               lineHeight: '1.7',
               resize: 'vertical',
               outline: 'none',
               fontFamily: 'inherit',
+              color: themeColors.text,
             }}
           />
           <div style={{
@@ -241,7 +259,7 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
             justifyContent: 'space-between',
             marginTop: '8px',
             fontSize: '12px',
-            color: '#9CA3AF',
+            color: themeColors.textMuted,
           }}>
             <span>{wordCount} words, {charCount} characters</span>
             {lastSaved && (
@@ -256,7 +274,7 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
             display: 'block',
             fontSize: '13px',
             fontWeight: '600',
-            color: '#4B5563',
+            color: themeColors.text,
             marginBottom: '8px',
           }}>
             Tags
@@ -278,8 +296,8 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
                     alignItems: 'center',
                     gap: '6px',
                     padding: '6px 12px',
-                    background: '#F5F3FF',
-                    color: '#7C3AED',
+                    background: `${themeColors.primary}15`,
+                    color: themeColors.primaryDark,
                     borderRadius: '999px',
                     fontSize: '13px',
                     fontWeight: '500',
@@ -291,7 +309,7 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#7C3AED',
+                      color: themeColors.primaryDark,
                       cursor: 'pointer',
                       padding: 0,
                       fontSize: '14px',
@@ -319,10 +337,11 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
               style={{
                 flex: 1,
                 padding: '10px 14px',
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${themeColors.border}`,
                 borderRadius: '8px',
                 fontSize: '14px',
                 outline: 'none',
+                color: themeColors.text,
               }}
             />
             <button
@@ -330,12 +349,13 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
               disabled={!tagInput.trim()}
               style={{
                 padding: '10px 16px',
-                background: tagInput.trim() ? '#7C3AED' : '#E5E7EB',
+                background: tagInput.trim() ? themeColors.primaryDark : themeColors.border,
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '14px',
                 cursor: tagInput.trim() ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s',
               }}
             >
               Add
@@ -355,12 +375,13 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
                 onClick={() => handleAddTag(tag)}
                 style={{
                   padding: '4px 10px',
-                  background: '#F3F4F6',
+                  background: themeColors.beige,
                   border: 'none',
                   borderRadius: '999px',
                   fontSize: '12px',
-                  color: '#6B7280',
+                  color: themeColors.textMuted,
                   cursor: 'pointer',
+                  transition: 'all 0.2s',
                 }}
               >
                 + {tag}
@@ -376,19 +397,20 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
           gap: '8px',
           marginBottom: '20px',
           padding: '12px 16px',
-          background: '#F9FAFB',
+          background: themeColors.cream,
           borderRadius: '12px',
+          border: `1px solid ${themeColors.border}`,
         }}>
           <input
             type="checkbox"
             id="ai-analysis"
             checked={showAnalysis}
             onChange={(e) => setShowAnalysis(e.target.checked)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', accentColor: themeColors.primaryDark }}
           />
           <label htmlFor="ai-analysis" style={{
             fontSize: '14px',
-            color: '#4B5563',
+            color: themeColors.text,
             cursor: 'pointer',
           }}>
             Include AI analysis (detect patterns & provide insights)
@@ -400,15 +422,16 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
           <div style={{
             marginBottom: '20px',
             padding: '16px',
-            background: '#FEF3C7',
+            background: `${themeColors.warning}20`,
             borderRadius: '12px',
+            border: `1px solid ${themeColors.warning}40`,
           }}>
             {analysis.distortion && (
               <div style={{ marginBottom: '8px' }}>
                 <span style={{
                   fontSize: '12px',
                   fontWeight: '600',
-                  color: '#92400E',
+                  color: themeColors.warning,
                   textTransform: 'uppercase',
                 }}>
                   Detected Pattern: {analysis.distortion}
@@ -418,7 +441,7 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
             {analysis.reframingSuggestion && (
               <p style={{
                 fontSize: '14px',
-                color: '#78350F',
+                color: themeColors.text,
                 margin: 0,
                 lineHeight: '1.5',
               }}>
@@ -439,13 +462,14 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
               onClick={handleAnalyze}
               style={{
                 padding: '12px 24px',
-                background: '#F3F4F6',
-                border: 'none',
+                background: themeColors.beige,
+                border: `1px solid ${themeColors.border}`,
                 borderRadius: '12px',
                 fontSize: '14px',
                 fontWeight: '500',
-                color: '#4B5563',
+                color: themeColors.text,
                 cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             >
               Analyze
@@ -457,14 +481,16 @@ export default function JournalEditor({ onSave, onStreakUpdate }: JournalEditorP
             style={{
               padding: '12px 32px',
               background: content.trim() && !isSaving
-                ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
-                : '#E5E7EB',
+                ? `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`
+                : themeColors.border,
               border: 'none',
               borderRadius: '12px',
               fontSize: '14px',
               fontWeight: '600',
               color: 'white',
               cursor: content.trim() && !isSaving ? 'pointer' : 'not-allowed',
+              boxShadow: content.trim() && !isSaving ? '0 4px 12px rgba(217, 162, 153, 0.35)' : 'none',
+              transition: 'all 0.2s',
             }}
           >
             {isSaving ? 'Saving...' : 'Save Entry'}

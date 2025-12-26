@@ -4,6 +4,31 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Message, InsightResponse } from '../types';
 import MicrophoneInput from '@/app/persona/components/MicrophoneInput';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+};
+
+// SVG Icon Components
+const SearchIcon = ({ color = '#E4B17A', size = 12 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
+  </svg>
+);
+
+const SendIcon = ({ color = 'white', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
+
 interface JournalChatProps {
   sessionId?: string | null;
   onSessionChange?: (sessionId: string | null) => void;
@@ -226,25 +251,29 @@ export default function JournalChat({
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: 'calc(100vh - 200px)',
+      height: '100%',
+      flex: 1,
       background: 'white',
       borderRadius: '20px',
-      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+      boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
       overflow: 'hidden',
+      border: `1px solid ${themeColors.border}`,
     }}>
       {/* Header */}
       <div style={{
         padding: '16px 24px',
-        borderBottom: '1px solid #E5E7EB',
+        borderBottom: `1px solid ${themeColors.border}`,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        background: `linear-gradient(135deg, ${themeColors.primary}08 0%, ${themeColors.secondary}08 100%)`,
+        flexShrink: 0,
       }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', margin: 0 }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '600', color: themeColors.text, margin: 0 }}>
             Reflective Chat
           </h2>
-          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '13px', color: themeColors.textMuted, margin: '4px 0 0' }}>
             Share your thoughts and I&apos;ll help you reflect
           </p>
         </div>
@@ -327,6 +356,7 @@ export default function JournalChat({
         ref={scrollRef}
         style={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
           padding: '24px',
         }}
@@ -354,7 +384,7 @@ export default function JournalChat({
                   padding: '4px 8px',
                   borderRadius: '4px',
                 }}>
-                  🔍 Detected: {m.distortion}
+                  <SearchIcon color="#F59E0B" size={12} /> Detected: {m.distortion}
                 </span>
               )}
 
@@ -367,17 +397,18 @@ export default function JournalChat({
                 lineHeight: '1.6',
                 ...(m.role === 'user'
                   ? {
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                      background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
                       color: 'white',
                       borderBottomRightRadius: '4px',
+                      boxShadow: '0 2px 8px rgba(217, 162, 153, 0.25)',
                     }
                   : {
                       background: 'rgba(255, 255, 255, 0.9)',
                       backdropFilter: 'blur(10px)',
-                      color: '#1F2937',
+                      color: themeColors.text,
                       borderBottomLeftRadius: '4px',
-                      border: '1px solid rgba(255, 255, 255, 0.5)',
-                      boxShadow: '0 2px 8px rgba(124, 58, 237, 0.08)',
+                      border: `1px solid ${themeColors.border}`,
+                      boxShadow: '0 2px 8px rgba(217, 162, 153, 0.08)',
                     }),
               }}>
                 {m.content}
@@ -404,7 +435,7 @@ export default function JournalChat({
                 padding: '16px 20px',
                 borderRadius: '20px',
                 borderBottomLeftRadius: '4px',
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${themeColors.border}`,
                 display: 'flex',
                 gap: '6px',
               }}>
@@ -414,7 +445,7 @@ export default function JournalChat({
                     style={{
                       width: '8px',
                       height: '8px',
-                      background: '#10B981',
+                      background: themeColors.primary,
                       borderRadius: '50%',
                       animation: `bounce 1s ease-in-out ${i * 0.15}s infinite`,
                     }}
@@ -429,8 +460,9 @@ export default function JournalChat({
       {/* Input Area */}
       <div style={{
         padding: '16px 24px',
-        borderTop: '1px solid #E5E7EB',
-        background: '#FAFAFA',
+        borderTop: `1px solid ${themeColors.border}`,
+        background: '#FAF7F3',
+        flexShrink: 0,
       }}>
         <form
           onSubmit={(e) => {
@@ -456,12 +488,13 @@ export default function JournalChat({
             style={{
               flex: 1,
               padding: '14px 20px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               borderRadius: '999px',
               fontSize: '15px',
               outline: 'none',
-              background: voiceMode ? '#F3F4F6' : 'white',
+              background: voiceMode ? '#F0E4D3' : 'white',
               opacity: voiceMode ? 0.6 : 1,
+              color: themeColors.text,
             }}
           />
 
@@ -473,8 +506,8 @@ export default function JournalChat({
               height: '48px',
               background:
                 input.trim() && !isLoading
-                  ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
-                  : '#E5E7EB',
+                  ? `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`
+                  : themeColors.border,
               color: 'white',
               border: 'none',
               borderRadius: '50%',
@@ -482,10 +515,11 @@ export default function JournalChat({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
+              boxShadow: input.trim() && !isLoading ? '0 4px 12px rgba(217, 162, 153, 0.35)' : 'none',
+              transition: 'all 0.2s',
             }}
           >
-            →
+            <SendIcon size={18} />
           </button>
         </form>
 

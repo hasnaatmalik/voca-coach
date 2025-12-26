@@ -1,6 +1,48 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
+import { renderIconById, ICON_DEFINITIONS } from './IconPicker';
+
+// Helper to check if a string is a valid icon ID
+const isIconId = (icon: string): boolean => {
+  return ICON_DEFINITIONS.some(def => def.id === icon);
+};
+
+// Render icon - handles both icon IDs and direct ReactNode/emojis
+const renderPersonaIcon = (icon: string | ReactNode, size: number = 20): ReactNode => {
+  if (typeof icon === 'string' && isIconId(icon)) {
+    return renderIconById(icon, size);
+  }
+  return icon;
+};
+
+// SVG Icon Components
+const BookIcon = ({ color = '#1F2937', size = 18 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
+const ChatIcon = ({ color = '#6B7280', size = 48 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const TrashIcon = ({ color = '#9CA3AF', size = 12 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
+
+const XIcon = ({ color = '#6B7280', size = 18 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -12,7 +54,7 @@ interface Conversation {
   id: string;
   personaId: string;
   personaName: string;
-  personaIcon: string;
+  personaIcon: string | ReactNode;
   messages: ConversationMessage[];
   summary?: string;
   createdAt: string;
@@ -154,8 +196,8 @@ export default function ConversationHistory({ onLoadConversation, onClose }: Con
         padding: '16px 20px',
         borderBottom: '1px solid #E5E7EB'
       }}>
-        <h3 style={{ fontWeight: '600', color: '#1F2937', margin: 0 }}>
-          📚 Conversation History
+        <h3 style={{ fontWeight: '600', color: '#1F2937', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <BookIcon color="#1F2937" size={18} /> Conversation History
         </h3>
         {onClose && (
           <button
@@ -167,10 +209,12 @@ export default function ConversationHistory({ onLoadConversation, onClose }: Con
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
-              fontSize: '18px'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            ×
+            <XIcon color="#6B7280" size={18} />
           </button>
         )}
       </div>
@@ -201,7 +245,7 @@ export default function ConversationHistory({ onLoadConversation, onClose }: Con
             padding: '40px 20px',
             color: '#6B7280'
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>💬</div>
+            <div style={{ marginBottom: '12px' }}><ChatIcon color="#6B7280" size={48} /></div>
             <p>No conversations yet</p>
             <p style={{ fontSize: '13px' }}>Start chatting with a persona to see your history here</p>
           </div>
@@ -215,7 +259,7 @@ export default function ConversationHistory({ onLoadConversation, onClose }: Con
                 gap: '8px',
                 marginBottom: '8px'
               }}>
-                <span style={{ fontSize: '20px' }}>{convs[0]?.personaIcon}</span>
+                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}>{convs[0]?.personaIcon ? renderPersonaIcon(convs[0].personaIcon, 20) : null}</span>
                 <span style={{
                   fontWeight: '600',
                   color: '#1F2937',
@@ -317,7 +361,7 @@ export default function ConversationHistory({ onLoadConversation, onClose }: Con
                               fontSize: '12px'
                             }}
                           >
-                            🗑️
+                            <TrashIcon color="#9CA3AF" size={12} />
                           </button>
                         </div>
                       </div>

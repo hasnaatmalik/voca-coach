@@ -3,6 +3,17 @@
 import { useState } from 'react';
 import { MOOD_EMOJIS } from '../types';
 
+// SVG Icon Component
+const SparklesIcon = ({ color = '#10B981', size = 48 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
 interface MoodTrackerProps {
   onSave?: () => void;
   compact?: boolean;
@@ -60,7 +71,7 @@ export default function MoodTracker({ onSave, compact = false }: MoodTrackerProp
         boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
         textAlign: 'center',
       }}>
-        <div style={{ fontSize: '48px', marginBottom: '12px' }}>✨</div>
+        <div style={{ marginBottom: '12px' }}><SparklesIcon color="#10B981" size={48} /></div>
         <div style={{
           fontSize: '18px',
           fontWeight: '600',
