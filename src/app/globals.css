@@ -18,6 +18,17 @@
   --accent: #10B981;
   --accent-yellow: #F59E0B;
 
+  /* Wellness Login Theme */
+  --wellness-cream: #FAF7F3;
+  --wellness-beige: #F0E4D3;
+  --wellness-tan: #DCC5B2;
+  --wellness-rose: #D9A299;
+  --wellness-rose-dark: #C8847A;
+  --wellness-text: #2D2D2D;
+  --wellness-text-muted: #6B6B6B;
+  --wellness-error: #E07A7A;
+  --wellness-success: #7AB89E;
+
   /* Gradient backgrounds */
   --bg-gradient-main: linear-gradient(135deg, #E0F2FE 0%, #F3E8FF 50%, #FCE7F3 100%);
   --bg-gradient-purple: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
