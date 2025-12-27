@@ -5,6 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 
+// SVG Icon Components
+const SparkleIcon = ({ color = '#7C3AED', size = 12 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z" />
+  </svg>
+);
+
+const StarIcon = ({ filled, color = '#F59E0B', size = 32 }: { filled: boolean; color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth="2">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
 interface SessionData {
   id: string;
   scheduledAt: string;
@@ -282,7 +295,9 @@ function SummaryContent() {
                   padding: '12px 0',
                   borderBottom: i < highlights.length - 1 ? '1px solid #F3F4F6' : 'none',
                 }}>
-                  <span style={{ color: '#7C3AED' }}>✦</span>
+                  <span style={{ color: '#7C3AED', display: 'flex', alignItems: 'center', paddingTop: '4px' }}>
+                    <SparkleIcon color="#7C3AED" size={12} />
+                  </span>
                   <span style={{ color: '#4B5563' }}>{highlight}</span>
                 </li>
               ))}
@@ -373,12 +388,17 @@ function SummaryContent() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    fontSize: '32px',
                     cursor: 'pointer',
-                    color: star <= (summary?.rating || rating) ? '#F59E0B' : '#D1D5DB',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
-                  ★
+                  <StarIcon
+                    filled={star <= (summary?.rating || rating)}
+                    color={star <= (summary?.rating || rating) ? '#F59E0B' : '#D1D5DB'}
+                    size={32}
+                  />
                 </button>
               ))}
             </div>

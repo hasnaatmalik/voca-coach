@@ -2,6 +2,53 @@
 
 import { useState } from 'react';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  background: '#FAF7F3',
+  cardBg: '#F0E4D3',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+};
+
+// Icon components
+const TableIcon = ({ color, size = 18 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="3" y1="9" x2="21" y2="9" />
+    <line x1="3" y1="15" x2="21" y2="15" />
+    <line x1="9" y1="3" x2="9" y2="21" />
+    <line x1="15" y1="3" x2="15" y2="21" />
+  </svg>
+);
+
+const CodeIcon = ({ color, size = 18 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 18 22 12 16 6" />
+    <polyline points="8 6 2 12 8 18" />
+  </svg>
+);
+
+const DocumentIcon = ({ color, size = 18 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+  </svg>
+);
+
+const DownloadIcon = ({ color, size = 16 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
 interface ExportModalProps {
   onClose: () => void;
   onExport: (options: {
@@ -47,29 +94,32 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
     {
       value: 'csv' as const,
       label: 'CSV',
-      description: 'Spreadsheet-compatible format for Excel, Google Sheets',
-      icon: 'Table',
+      description: 'Spreadsheet format for Excel, Sheets',
+      Icon: TableIcon,
+      color: '#7AB89E',
     },
     {
       value: 'json' as const,
       label: 'JSON',
-      description: 'Structured data format for developers and APIs',
-      icon: 'Code',
+      description: 'Structured data for developers',
+      Icon: CodeIcon,
+      color: '#E4B17A',
     },
     {
       value: 'pdf' as const,
       label: 'PDF Report',
-      description: 'Professional report with charts and insights',
-      icon: 'Document',
+      description: 'Professional report with charts',
+      Icon: DocumentIcon,
+      color: themeColors.primary,
     },
   ];
 
   const dateOptions = [
-    { value: '7d' as const, label: 'Last 7 days' },
-    { value: '30d' as const, label: 'Last 30 days' },
-    { value: '90d' as const, label: 'Last 90 days' },
+    { value: '7d' as const, label: '7 days' },
+    { value: '30d' as const, label: '30 days' },
+    { value: '90d' as const, label: '90 days' },
     { value: 'all' as const, label: 'All time' },
-    { value: 'custom' as const, label: 'Custom range' },
+    { value: 'custom' as const, label: 'Custom' },
   ];
 
   return (
@@ -79,46 +129,62 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
         inset: 0,
         zIndex: 50,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(4px)',
+        paddingTop: '80px',
+        background: 'rgba(45, 45, 45, 0.4)',
+        backdropFilter: 'blur(8px)',
       }}
       onClick={onClose}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '20px',
-          maxWidth: '480px',
+          background: 'rgba(255, 255, 255, 0.98)',
+          borderRadius: '16px',
+          maxWidth: '400px',
           width: '95%',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+          boxShadow: '0 20px 60px rgba(217, 162, 153, 0.25)',
+          border: `1px solid ${themeColors.border}`,
         }}
       >
         {/* Header */}
         <div
           style={{
-            padding: '24px',
-            borderBottom: '1px solid #E5E7EB',
+            padding: '14px 18px',
+            borderBottom: `1px solid ${themeColors.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            background: `linear-gradient(135deg, ${themeColors.primary}10 0%, ${themeColors.secondary}10 100%)`,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
-            Export Biomarker Data
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              background: `${themeColors.primary}20`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <DownloadIcon color={themeColors.primaryDark} size={14} />
+            </div>
+            <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: themeColors.text }}>
+              Export Data
+            </h2>
+          </div>
           <button
             onClick={onClose}
             style={{
-              width: '32px',
-              height: '32px',
+              width: '26px',
+              height: '26px',
               borderRadius: '50%',
               border: 'none',
-              background: '#F3F4F6',
-              color: '#6B7280',
-              fontSize: '18px',
+              background: themeColors.cardBg,
+              color: themeColors.textMuted,
+              fontSize: '14px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -130,37 +196,45 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '14px 18px', background: themeColors.background }}>
           {/* Format selection */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '12px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: themeColors.text, marginBottom: '8px' }}>
               Export Format
             </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               {formatOptions.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setFormat(option.value)}
                   style={{
-                    padding: '16px',
-                    borderRadius: '12px',
-                    border: format === option.value ? '2px solid #7C3AED' : '1px solid #E5E7EB',
-                    background: format === option.value ? '#F3E8FF' : 'white',
-                    textAlign: 'left',
+                    flex: 1,
+                    padding: '10px 8px',
+                    borderRadius: '10px',
+                    border: format === option.value ? `2px solid ${themeColors.primaryDark}` : `1px solid ${themeColors.border}`,
+                    background: format === option.value ? `${themeColors.primary}15` : 'white',
+                    textAlign: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '24px' }}>{option.icon}</span>
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                        {option.label}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>
-                        {option.description}
-                      </div>
-                    </div>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: `${option.color}20`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 6px',
+                  }}>
+                    <option.Icon color={option.color} size={16} />
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: themeColors.text }}>
+                    {option.label}
+                  </div>
+                  <div style={{ fontSize: '9px', color: themeColors.textMuted, marginTop: '2px', lineHeight: 1.2 }}>
+                    {option.description}
                   </div>
                 </button>
               ))}
@@ -168,22 +242,22 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
           </div>
 
           {/* Date range selection */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '12px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: themeColors.text, marginBottom: '8px' }}>
               Date Range
             </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {dateOptions.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setDateRange(option.value)}
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    border: dateRange === option.value ? '2px solid #7C3AED' : '1px solid #E5E7EB',
-                    background: dateRange === option.value ? '#F3E8FF' : 'white',
-                    color: dateRange === option.value ? '#7C3AED' : '#6B7280',
-                    fontSize: '13px',
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    border: dateRange === option.value ? `2px solid ${themeColors.primaryDark}` : `1px solid ${themeColors.border}`,
+                    background: dateRange === option.value ? `${themeColors.primary}15` : 'white',
+                    color: dateRange === option.value ? themeColors.primaryDark : themeColors.textMuted,
+                    fontSize: '11px',
                     fontWeight: 500,
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -196,9 +270,9 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
 
             {/* Custom date inputs */}
             {dateRange === 'custom' && (
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '10px', color: themeColors.textMuted, display: 'block', marginBottom: '4px' }}>
                     From
                   </label>
                   <input
@@ -208,16 +282,18 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
                     max={endDate || new Date().toISOString().split('T')[0]}
                     style={{
                       width: '100%',
-                      padding: '10px 12px',
+                      padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #E5E7EB',
-                      fontSize: '14px',
+                      border: `1px solid ${themeColors.border}`,
+                      fontSize: '12px',
                       outline: 'none',
+                      background: 'white',
+                      color: themeColors.text,
                     }}
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '12px', color: '#6B7280', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '10px', color: themeColors.textMuted, display: 'block', marginBottom: '4px' }}>
                     To
                   </label>
                   <input
@@ -228,11 +304,13 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
                     max={new Date().toISOString().split('T')[0]}
                     style={{
                       width: '100%',
-                      padding: '10px 12px',
+                      padding: '8px 10px',
                       borderRadius: '8px',
-                      border: '1px solid #E5E7EB',
-                      fontSize: '14px',
+                      border: `1px solid ${themeColors.border}`,
+                      fontSize: '12px',
                       outline: 'none',
+                      background: 'white',
+                      color: themeColors.text,
                     }}
                   />
                 </div>
@@ -244,24 +322,26 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
         {/* Footer */}
         <div
           style={{
-            padding: '16px 24px',
-            borderTop: '1px solid #E5E7EB',
+            padding: '12px 18px',
+            borderTop: `1px solid ${themeColors.border}`,
             display: 'flex',
             justifyContent: 'flex-end',
-            gap: '12px',
+            gap: '10px',
+            background: 'white',
           }}
         >
           <button
             onClick={onClose}
             style={{
-              padding: '10px 20px',
+              padding: '8px 16px',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               background: 'white',
-              color: '#6B7280',
-              fontSize: '14px',
+              color: themeColors.textMuted,
+              fontSize: '12px',
               fontWeight: 500,
               cursor: 'pointer',
+              transition: 'all 0.2s',
             }}
           >
             Cancel
@@ -270,16 +350,28 @@ export default function ExportModal({ onClose, onExport }: ExportModalProps) {
             onClick={handleExport}
             disabled={exporting || (dateRange === 'custom' && (!startDate || !endDate))}
             style={{
-              padding: '10px 24px',
+              padding: '8px 18px',
               borderRadius: '8px',
               border: 'none',
-              background: exporting ? '#9CA3AF' : 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-              color: 'white',
-              fontSize: '14px',
+              background: exporting || (dateRange === 'custom' && (!startDate || !endDate))
+                ? themeColors.border
+                : `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.secondary} 100%)`,
+              color: exporting || (dateRange === 'custom' && (!startDate || !endDate))
+                ? themeColors.textMuted
+                : themeColors.text,
+              fontSize: '12px',
               fontWeight: 500,
-              cursor: exporting ? 'not-allowed' : 'pointer',
+              cursor: exporting || (dateRange === 'custom' && (!startDate || !endDate)) ? 'not-allowed' : 'pointer',
+              boxShadow: exporting || (dateRange === 'custom' && (!startDate || !endDate))
+                ? 'none'
+                : '0 2px 8px rgba(217, 162, 153, 0.3)',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
             }}
           >
+            <DownloadIcon color={exporting || (dateRange === 'custom' && (!startDate || !endDate)) ? themeColors.textMuted : themeColors.text} size={12} />
             {exporting ? 'Exporting...' : `Export ${format.toUpperCase()}`}
           </button>
         </div>

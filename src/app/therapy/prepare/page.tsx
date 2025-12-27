@@ -5,6 +5,36 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 
+// SVG Icon Components
+const CameraIcon = ({ color = '#6B7280', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+    <circle cx="12" cy="13" r="4" />
+  </svg>
+);
+
+const MicrophoneIcon = ({ color = '#6B7280', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const CheckIcon = ({ color = '#10B981', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const XIcon = ({ color = '#EF4444', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
 interface SessionData {
   id: string;
   scheduledAt: string;
@@ -377,8 +407,14 @@ function PrepareContent() {
               borderRadius: '10px',
               textAlign: 'center',
             }}>
-              <div style={{ fontSize: '24px', marginBottom: '4px' }}>
-                {cameraWorking === null ? '📷' : cameraWorking ? '✅' : '❌'}
+              <div style={{ marginBottom: '4px', display: 'flex', justifyContent: 'center' }}>
+                {cameraWorking === null ? (
+                  <CameraIcon color="#6B7280" size={24} />
+                ) : cameraWorking ? (
+                  <CheckIcon color="#10B981" size={24} />
+                ) : (
+                  <XIcon color="#EF4444" size={24} />
+                )}
               </div>
               <div style={{ fontSize: '13px', color: '#6B7280' }}>Camera</div>
             </div>
@@ -389,8 +425,14 @@ function PrepareContent() {
               borderRadius: '10px',
               textAlign: 'center',
             }}>
-              <div style={{ fontSize: '24px', marginBottom: '4px' }}>
-                {micWorking === null ? '🎤' : micWorking ? '✅' : '❌'}
+              <div style={{ marginBottom: '4px', display: 'flex', justifyContent: 'center' }}>
+                {micWorking === null ? (
+                  <MicrophoneIcon color="#6B7280" size={24} />
+                ) : micWorking ? (
+                  <CheckIcon color="#10B981" size={24} />
+                ) : (
+                  <XIcon color="#EF4444" size={24} />
+                )}
               </div>
               <div style={{ fontSize: '13px', color: '#6B7280' }}>Microphone</div>
             </div>
@@ -425,9 +467,20 @@ function PrepareContent() {
               borderRadius: '10px',
               fontWeight: '600',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
             }}
           >
-            {preSessionData.techCheckPassed ? 'Tech Check Passed ✓' : 'Run Tech Check'}
+            {preSessionData.techCheckPassed ? (
+              <>
+                Tech Check Passed
+                <CheckIcon color="white" size={16} />
+              </>
+            ) : (
+              'Run Tech Check'
+            )}
           </button>
         </div>
 

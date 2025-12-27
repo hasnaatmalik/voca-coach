@@ -1,15 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import VoiceSelector from './VoiceSelector';
-import EmojiPicker from './EmojiPicker';
+import IconPicker from './IconPicker';
 import VoiceSettings from './VoiceSettings';
+
+// Theme colors from globals.css - wellness theme
+const THEME = {
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  tan: '#DCC5B2',
+  rose: '#D9A299',
+  roseDark: '#C8847A',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  success: '#7AB89E',
+};
+
+// SVG Icon Components for headers
+const SparklesIcon = ({ color = THEME.rose, size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
+const PencilIcon = ({ color = THEME.rose, size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
 
 interface PersonaData {
   id?: string;
   name: string;
   description: string;
-  icon: string;
+  icon: string | ReactNode;
   voiceId?: string;
   voiceStability?: number;
   voiceSimilarity?: number;
@@ -27,7 +56,8 @@ interface PersonaCreatorProps {
 export default function PersonaCreator({ editingPersona, onSave, onCancel }: PersonaCreatorProps) {
   const [name, setName] = useState(editingPersona?.name || '');
   const [description, setDescription] = useState(editingPersona?.description || '');
-  const [icon, setIcon] = useState(editingPersona?.icon || '✨');
+  // IconPicker works with icon IDs; default to 'sparkles' if icon is not a valid icon ID
+  const [icon, setIcon] = useState<string>(typeof editingPersona?.icon === 'string' ? editingPersona.icon : 'sparkles');
   const [voiceId, setVoiceId] = useState(editingPersona?.voiceId || '');
   const [voiceSettings, setVoiceSettings] = useState({
     voiceStability: editingPersona?.voiceStability ?? 0.5,
@@ -64,11 +94,25 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
       <h3 style={{
         fontSize: '20px',
         fontWeight: '600',
-        color: '#1F2937',
+        color: THEME.text,
         marginBottom: '24px',
-        textAlign: 'center'
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
       }}>
-        {editingPersona ? '✏️ Edit Persona' : '✨ Create Custom Persona'}
+        {editingPersona ? (
+          <>
+            <PencilIcon color={THEME.rose} size={22} />
+            Edit Persona
+          </>
+        ) : (
+          <>
+            <SparklesIcon color={THEME.rose} size={22} />
+            Create Custom Persona
+          </>
+        )}
       </h3>
 
       {/* Tabs */}
@@ -76,23 +120,24 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
         display: 'flex',
         gap: '8px',
         marginBottom: '24px',
-        background: '#F3F4F6',
+        background: THEME.beige,
         padding: '4px',
-        borderRadius: '10px'
+        borderRadius: '12px',
+        border: `1px solid ${THEME.tan}`
       }}>
         <button
           onClick={() => setActiveTab('basic')}
           style={{
             flex: 1,
             padding: '10px',
-            background: activeTab === 'basic' ? 'white' : 'transparent',
+            background: activeTab === 'basic' ? THEME.cream : 'transparent',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '10px',
             fontWeight: '500',
-            color: activeTab === 'basic' ? '#1F2937' : '#6B7280',
+            color: activeTab === 'basic' ? THEME.text : THEME.textMuted,
             cursor: 'pointer',
             transition: 'all 0.2s',
-            boxShadow: activeTab === 'basic' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+            boxShadow: activeTab === 'basic' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
           }}
         >
           Basic Info
@@ -102,14 +147,14 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
           style={{
             flex: 1,
             padding: '10px',
-            background: activeTab === 'voice' ? 'white' : 'transparent',
+            background: activeTab === 'voice' ? THEME.cream : 'transparent',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '10px',
             fontWeight: '500',
-            color: activeTab === 'voice' ? '#1F2937' : '#6B7280',
+            color: activeTab === 'voice' ? THEME.text : THEME.textMuted,
             cursor: 'pointer',
             transition: 'all 0.2s',
-            boxShadow: activeTab === 'voice' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+            boxShadow: activeTab === 'voice' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
           }}
         >
           Voice Settings
@@ -124,12 +169,12 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#4B5563',
+              color: THEME.text,
               marginBottom: '8px'
             }}>
               Persona Icon
             </label>
-            <EmojiPicker selectedEmoji={icon} onSelect={setIcon} />
+            <IconPicker selectedIcon={icon} onSelect={setIcon} />
           </div>
 
           {/* Name Input */}
@@ -138,7 +183,7 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#4B5563',
+              color: THEME.text,
               marginBottom: '8px'
             }}>
               Persona Name
@@ -151,15 +196,17 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${THEME.tan}`,
                 borderRadius: '12px',
                 fontSize: '15px',
-                outline: 'none'
+                outline: 'none',
+                background: THEME.cream,
+                color: THEME.text,
               }}
             />
             <div style={{
               fontSize: '12px',
-              color: '#9CA3AF',
+              color: THEME.textMuted,
               marginTop: '4px',
               textAlign: 'right'
             }}>
@@ -173,7 +220,7 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#4B5563',
+              color: THEME.text,
               marginBottom: '8px'
             }}>
               Personality Description
@@ -187,17 +234,19 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${THEME.tan}`,
                 borderRadius: '12px',
                 fontSize: '15px',
                 outline: 'none',
                 resize: 'none',
-                lineHeight: '1.5'
+                lineHeight: '1.5',
+                background: THEME.cream,
+                color: THEME.text,
               }}
             />
             <div style={{
               fontSize: '12px',
-              color: '#9CA3AF',
+              color: THEME.textMuted,
               marginTop: '4px',
               textAlign: 'right'
             }}>
@@ -213,7 +262,7 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#4B5563',
+              color: THEME.text,
               marginBottom: '8px'
             }}>
               Select Voice
@@ -246,13 +295,14 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
           disabled={saving}
           style={{
             padding: '14px 28px',
-            background: '#F3F4F6',
-            color: '#4B5563',
-            border: 'none',
+            background: THEME.beige,
+            color: THEME.textMuted,
+            border: `1px solid ${THEME.tan}`,
             borderRadius: '12px',
             fontWeight: '600',
             cursor: saving ? 'not-allowed' : 'pointer',
-            opacity: saving ? 0.7 : 1
+            opacity: saving ? 0.7 : 1,
+            transition: 'all 0.2s',
           }}
         >
           Cancel
@@ -263,16 +313,18 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
           style={{
             padding: '14px 28px',
             background: isValid && !saving
-              ? 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)'
-              : '#E5E7EB',
-            color: 'white',
+              ? `linear-gradient(135deg, ${THEME.rose} 0%, ${THEME.roseDark} 100%)`
+              : THEME.beige,
+            color: isValid && !saving ? 'white' : THEME.textMuted,
             border: 'none',
             borderRadius: '12px',
             fontWeight: '600',
             cursor: isValid && !saving ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            boxShadow: isValid && !saving ? `0 4px 12px ${THEME.rose}40` : 'none',
+            transition: 'all 0.2s',
           }}
         >
           {saving && (
@@ -294,6 +346,13 @@ export default function PersonaCreator({ editingPersona, onSave, onCancel }: Per
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        input:focus, textarea:focus {
+          border-color: ${THEME.rose} !important;
+          box-shadow: 0 0 0 3px ${THEME.rose}15;
+        }
+        input::placeholder, textarea::placeholder {
+          color: ${THEME.textMuted};
         }
       `}</style>
     </div>

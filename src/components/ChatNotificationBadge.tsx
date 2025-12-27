@@ -42,30 +42,32 @@ export default function ChatNotificationBadge({ isTherapist = false }: ChatNotif
         width: '40px',
         height: '40px',
         borderRadius: '12px',
-        background: unreadCount > 0 ? 'rgba(124, 58, 237, 0.1)' : 'rgba(255, 255, 255, 0.5)',
+        background: unreadCount > 0 ? 'rgba(217, 162, 153, 0.15)' : 'transparent',
         transition: 'all 0.2s',
         textDecoration: 'none',
       }}
     >
-      <span style={{ fontSize: '20px' }}>💬</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D9A299" strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
       
       {unreadCount > 0 && (
         <span style={{
           position: 'absolute',
           top: '-4px',
           right: '-4px',
-          minWidth: '20px',
-          height: '20px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)',
+          minWidth: '18px',
+          height: '18px',
+          borderRadius: '9px',
+          background: 'linear-gradient(135deg, #D9A299 0%, #C8847A 100%)',
           color: 'white',
-          fontSize: '11px',
+          fontSize: '10px',
           fontWeight: '700',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0 6px',
-          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+          padding: '0 5px',
+          boxShadow: '0 2px 8px rgba(217, 162, 153, 0.5)',
           animation: 'pulse-badge 2s infinite',
         }}>
           {unreadCount > 9 ? '9+' : unreadCount}

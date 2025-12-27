@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 
@@ -10,7 +11,6 @@ import VoiceRecorder from '@/components/biomarkers/VoiceRecorder';
 import BiomarkerChart from '@/components/biomarkers/BiomarkerChart';
 import RadarChart from '@/components/biomarkers/RadarChart';
 import HeatmapCalendar from '@/components/biomarkers/HeatmapCalendar';
-import TimeRangeSelector from '@/components/biomarkers/TimeRangeSelector';
 import SessionList from '@/components/biomarkers/SessionList';
 import SessionDetailModal from '@/components/biomarkers/SessionDetailModal';
 import InsightCard from '@/components/biomarkers/InsightCard';
@@ -18,8 +18,78 @@ import GoalSetter from '@/components/biomarkers/GoalSetter';
 import BaselineComparison from '@/components/biomarkers/BaselineComparison';
 import ExportModal from '@/components/biomarkers/ExportModal';
 import AlertSettings from '@/components/biomarkers/AlertSettings';
-import TrendIndicator from '@/components/biomarkers/TrendIndicator';
-import { calculateTrend, BIOMARKER_METRICS } from '@/lib/biomarker-utils';
+import { BIOMARKER_METRICS } from '@/lib/biomarker-utils';
+
+// Bento components
+import {
+  BiomarkersHero,
+  HealthScoreCard,
+  QuickStatsGrid,
+  ChartCardWrapper,
+  RecordingPanel,
+  EmptyStateCard,
+  TimeRangePicker,
+} from '@/components/biomarkers/bento';
+
+// SVG Icon Components
+const TargetIcon = ({ color = '#D9A299', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+const CalmFaceIcon = ({ color = '#7AB89E', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+    <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="3" strokeLinecap="round" />
+    <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+const ChartIcon = ({ color = '#7AAFC9', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const CalendarIcon = ({ color = '#E4B17A', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const AIBrainIcon = ({ color = '#D9A299', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+    <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+    <path d="M12 18v4" />
+  </svg>
+);
+
+const RulerIcon = ({ color = '#9CA3AF', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21.3 8.7 8.7 21.3c-.4.4-1 .4-1.4 0L2.7 16.7c-.4-.4-.4-1 0-1.4L15.3 2.7c.4-.4 1-.4 1.4 0l4.6 4.6c.4.4.4 1 0 1.4z" />
+    <line x1="9" y1="11" x2="11" y2="9" />
+    <line x1="6" y1="14" x2="8" y2="12" />
+    <line x1="12" y1="8" x2="14" y2="6" />
+  </svg>
+);
+
+const ClipboardIcon = ({ color = '#7AAFC9', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+  </svg>
+);
 
 interface Biomarker {
   id: string;
@@ -125,7 +195,6 @@ export default function BiomarkerDashboard() {
   const [showRecorder, setShowRecorder] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showAlertSettings, setShowAlertSettings] = useState(false);
-  const [showGoalSetter, setShowGoalSetter] = useState(false);
   const [activeView, setActiveView] = useState<'overview' | 'history' | 'goals'>('overview');
   const [profilePic, setProfilePic] = useState<string>();
 
@@ -137,7 +206,7 @@ export default function BiomarkerDashboard() {
     endDate?: string;
   }>({ preset: '7d', days: 7 });
 
-  // Alert settings (would be persisted to user preferences in production)
+  // Alert settings
   const [alertSettings, setAlertSettings] = useState<AlertSettingsState>({
     stress: { enabled: true, threshold: 70 },
     clarity: { enabled: true, threshold: 50 },
@@ -224,9 +293,8 @@ export default function BiomarkerDashboard() {
     }
   };
 
-  const handleRecordingComplete = async (result: BiomarkerResult, audioBlob: Blob) => {
+  const handleRecordingComplete = async (result: BiomarkerResult) => {
     try {
-      // Save biomarker to database
       const res = await fetch('/api/biomarkers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -237,7 +305,6 @@ export default function BiomarkerDashboard() {
       });
 
       if (res.ok) {
-        // Refresh data
         await fetchBiomarkers();
         setShowRecorder(false);
       }
@@ -316,10 +383,8 @@ export default function BiomarkerDashboard() {
       if (res.ok) {
         if (options.format === 'pdf') {
           const data = await res.json();
-          // Handle PDF data (could open in new window or download)
           console.log('PDF data:', data);
         } else {
-          // Download file
           const blob = await res.blob();
           const url = window.URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -390,20 +455,43 @@ export default function BiomarkerDashboard() {
       .filter(d => d.value !== undefined && d.value !== null);
   };
 
+  const healthScore = insights?.overallHealthScore ||
+    Math.round((latestBiomarker?.clarity || 0) * 0.6 + (100 - (latestBiomarker?.stress || 0)) * 0.4);
+
   if (loading || !user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #E0F2FE 0%, #F3E8FF 50%, #FCE7F3 100%)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #E5E7EB', borderTop: '4px solid #7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-          <div style={{ color: '#6B7280' }}>Loading...</div>
-        </div>
-        <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#FAF7F3',
+      }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ textAlign: 'center' }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid #F0E4D3',
+              borderTop: '4px solid #7AAFC9',
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+            }}
+          />
+          <div style={{ color: '#6B6B6B' }}>Loading...</div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #E0F2FE 0%, #F3E8FF 50%, #FCE7F3 100%)' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF7F3' }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name || 'User'}
@@ -414,312 +502,316 @@ export default function BiomarkerDashboard() {
         currentPage="/biomarkers"
       />
 
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
-              Voice Biomarkers Dashboard
-            </h1>
-            <p style={{ color: '#6B7280' }}>Track and analyze your vocal health patterns over time.</p>
-          </div>
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+        {/* Immersive Hero Header */}
+        <BiomarkersHero
+          activeView={activeView}
+          onViewChange={setActiveView}
+          onRecordClick={() => setShowRecorder(!showRecorder)}
+          onExportClick={() => setShowExportModal(true)}
+          onAlertsClick={() => setShowAlertSettings(true)}
+          recordingsCount={biomarkers.length}
+          isRecording={showRecorder}
+        />
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setShowRecorder(!showRecorder)}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              Record Voice Sample
-            </button>
-            <button
-              onClick={() => setShowExportModal(true)}
-              style={{
-                padding: '12px 20px',
-                borderRadius: '12px',
-                border: '1px solid #E5E7EB',
-                background: 'white',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
-            >
-              Export
-            </button>
-            <button
-              onClick={() => setShowAlertSettings(true)}
-              style={{
-                padding: '12px 20px',
-                borderRadius: '12px',
-                border: '1px solid #E5E7EB',
-                background: 'white',
-                color: '#374151',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
-            >
-              Alerts
-            </button>
-          </div>
-        </div>
+        {/* Recording Panel */}
+        <RecordingPanel
+          isOpen={showRecorder}
+          onClose={() => setShowRecorder(false)}
+        >
+          <VoiceRecorder
+            onAnalysisComplete={handleRecordingComplete}
+            onError={err => console.error('Recording error:', err)}
+          />
+        </RecordingPanel>
 
-        {/* Voice Recorder (collapsible) */}
-        {showRecorder && (
-          <div style={{ marginBottom: '32px' }}>
-            <VoiceRecorder
-              onAnalysisComplete={handleRecordingComplete}
-              onError={err => console.error('Recording error:', err)}
+        {/* Time Range Picker */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ marginBottom: '24px' }}
+        >
+          <TimeRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+          />
+        </motion.div>
+
+        {/* Loading State */}
+        {loadingData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              textAlign: 'center',
+              padding: '60px',
+              color: '#6B6B6B',
+            }}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+              style={{
+                width: '32px',
+                height: '32px',
+                border: '3px solid #F0E4D3',
+                borderTopColor: '#7AAFC9',
+                borderRadius: '50%',
+                margin: '0 auto 16px',
+              }}
             />
-          </div>
+            Loading biomarker data...
+          </motion.div>
         )}
 
-        {/* Time Range Selector */}
-        <div style={{ marginBottom: '24px' }}>
-          <TimeRangeSelector
-            defaultPreset="7d"
-            onChange={range => {
-              setDateRange(range);
-            }}
-          />
-        </div>
+        {/* Empty State */}
+        {!loadingData && biomarkers.length === 0 && (
+          <EmptyStateCard onRecordClick={() => setShowRecorder(true)} />
+        )}
 
-        {/* View Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          {(['overview', 'history', 'goals'] as const).map(view => (
-            <button
-              key={view}
-              onClick={() => setActiveView(view)}
-              style={{
-                padding: '10px 20px',
-                borderRadius: '20px',
-                border: activeView === view ? '2px solid #7C3AED' : '1px solid #E5E7EB',
-                background: activeView === view ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)' : 'white',
-                color: activeView === view ? '#7C3AED' : '#6B7280',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                textTransform: 'capitalize',
-              }}
-            >
-              {view}
-            </button>
-          ))}
-        </div>
-
-        {loadingData ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#6B7280' }}>
-            <div style={{ width: '32px', height: '32px', border: '3px solid #E5E7EB', borderTopColor: '#7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-            Loading biomarker data...
-          </div>
-        ) : biomarkers.length === 0 ? (
-          <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '60px', textAlign: 'center', boxShadow: '0 8px 32px rgba(124, 58, 237, 0.08)' }}>
-            <div style={{ fontSize: '64px', marginBottom: '24px' }}>Voice Analytics</div>
-            <h2 style={{ fontSize: '22px', fontWeight: '600', color: '#1F2937', marginBottom: '12px' }}>Start Tracking Your Voice Health</h2>
-            <p style={{ color: '#6B7280', marginBottom: '32px', maxWidth: '500px', margin: '0 auto 32px' }}>
-              Record your first voice sample to begin tracking biomarkers like pitch, clarity, stress levels, and more.
-            </p>
-            <button
-              onClick={() => setShowRecorder(true)}
-              style={{
-                padding: '16px 32px',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-            >
-              Record Your First Sample
-            </button>
-          </div>
-        ) : (
-          <>
+        {/* Main Content */}
+        {!loadingData && biomarkers.length > 0 && (
+          <AnimatePresence mode="wait">
             {activeView === 'overview' && (
-              <>
-                {/* Quick Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-                  {/* Overall Health Score */}
-                  <div style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)', borderRadius: '16px', padding: '24px', color: 'white' }}>
-                    <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>Health Score</div>
-                    <div style={{ fontSize: '36px', fontWeight: '700' }}>
-                      {insights?.overallHealthScore || Math.round((latestBiomarker?.clarity || 0) * 0.6 + (100 - (latestBiomarker?.stress || 0)) * 0.4)}
-                    </div>
-                    {insights?.weeklyImprovement !== undefined && (
-                      <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.9 }}>
-                        {insights.weeklyImprovement > 0 ? '+' : ''}{insights.weeklyImprovement.toFixed(1)}% this week
-                      </div>
-                    )}
-                  </div>
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                {/* Health Score and Quick Stats */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(280px, 1fr) minmax(0, 2fr)',
+                  gap: '24px',
+                  marginBottom: '24px',
+                }}>
+                  <HealthScoreCard
+                    score={healthScore}
+                    weeklyImprovement={insights?.weeklyImprovement}
+                    previousScore={previousBiomarker ?
+                      Math.round((previousBiomarker.clarity * 0.6) + ((100 - previousBiomarker.stress) * 0.4)) :
+                      undefined
+                    }
+                  />
 
-                  {/* Latest Metrics */}
-                  {latestBiomarker && (
-                    <>
-                      <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '14px', color: '#6B7280' }}>Clarity</span>
-                          {previousBiomarker && (
-                            <TrendIndicator
-                              {...calculateTrend(latestBiomarker.clarity, previousBiomarker.clarity)}
-                              isPositive={latestBiomarker.clarity > previousBiomarker.clarity}
-                              size="sm"
-                              showLabel={false}
-                            />
-                          )}
-                        </div>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: '#EC4899' }}>
-                          {latestBiomarker.clarity.toFixed(0)}%
-                        </div>
-                      </div>
-
-                      <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '14px', color: '#6B7280' }}>Stress</span>
-                          {previousBiomarker && (
-                            <TrendIndicator
-                              {...calculateTrend(latestBiomarker.stress, previousBiomarker.stress)}
-                              isPositive={latestBiomarker.stress < previousBiomarker.stress}
-                              size="sm"
-                              showLabel={false}
-                            />
-                          )}
-                        </div>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: latestBiomarker.stress > 50 ? '#F59E0B' : '#10B981' }}>
-                          {latestBiomarker.stress.toFixed(0)}%
-                        </div>
-                      </div>
-
-                      <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)' }}>
-                        <div style={{ fontSize: '14px', color: '#6B7280', marginBottom: '8px' }}>Recordings</div>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: '#7C3AED' }}>
-                          {biomarkers.length}
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <QuickStatsGrid
+                    clarity={latestBiomarker?.clarity || 0}
+                    stress={latestBiomarker?.stress || 0}
+                    pitch={latestBiomarker?.pitch}
+                    recordingsCount={biomarkers.length}
+                    previousClarity={previousBiomarker?.clarity}
+                    previousStress={previousBiomarker?.stress}
+                    speechRate={latestBiomarker?.speechRate || undefined}
+                  />
                 </div>
 
                 {/* Charts Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '32px' }}>
-                  <BiomarkerChart
-                    data={getChartData('clarity')}
-                    metric="clarity"
-                    baseline={baseline?.clarity}
-                    goal={goals.clarity?.target}
-                    normalRange={BIOMARKER_METRICS.clarity?.normalRange}
-                  />
-                  <BiomarkerChart
-                    data={getChartData('stress')}
-                    metric="stress"
-                    baseline={baseline?.stress}
-                    goal={goals.stress?.target}
-                    normalRange={BIOMARKER_METRICS.stress?.normalRange}
-                  />
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gap: '24px',
+                  marginBottom: '24px',
+                }}>
+                  <ChartCardWrapper
+                    title="Clarity Trend"
+                    subtitle="Voice clarity over time"
+                    icon={<TargetIcon color="#D9A299" />}
+                    accentColor="#D9A299"
+                  >
+                    <BiomarkerChart
+                      data={getChartData('clarity')}
+                      metric="clarity"
+                      baseline={baseline?.clarity}
+                      goal={goals.clarity?.target}
+                      normalRange={BIOMARKER_METRICS.clarity?.normalRange}
+                    />
+                  </ChartCardWrapper>
+
+                  <ChartCardWrapper
+                    title="Stress Levels"
+                    subtitle="Vocal stress indicators"
+                    icon={<CalmFaceIcon color="#7AB89E" />}
+                    accentColor="#7AB89E"
+                  >
+                    <BiomarkerChart
+                      data={getChartData('stress')}
+                      metric="stress"
+                      baseline={baseline?.stress}
+                      goal={goals.stress?.target}
+                      normalRange={BIOMARKER_METRICS.stress?.normalRange}
+                    />
+                  </ChartCardWrapper>
                 </div>
 
                 {/* Radar and Heatmap Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gap: '24px',
+                  marginBottom: '24px',
+                }}>
                   {latestBiomarker && (
-                    <RadarChart
-                      current={latestBiomarker}
-                      baseline={baseline || undefined}
-                    />
+                    <ChartCardWrapper
+                      title="Voice Profile"
+                      subtitle="Multi-dimensional analysis"
+                      icon={<ChartIcon color="#7AAFC9" />}
+                      accentColor="#7AAFC9"
+                    >
+                      <RadarChart
+                        current={latestBiomarker}
+                        baseline={baseline || undefined}
+                      />
+                    </ChartCardWrapper>
                   )}
-                  <HeatmapCalendar
-                    data={getHeatmapData()}
-                    weeks={12}
-                    onDayClick={date => {
-                      const sessions = biomarkers.filter(b => b.date.startsWith(date));
-                      if (sessions.length > 0) setSelectedSession(sessions[0]);
-                    }}
-                  />
+
+                  <ChartCardWrapper
+                    title="Recording Activity"
+                    subtitle="12-week overview"
+                    icon={<CalendarIcon color="#E4B17A" />}
+                    accentColor="#E4B17A"
+                  >
+                    <HeatmapCalendar
+                      data={getHeatmapData()}
+                      weeks={12}
+                      onDayClick={date => {
+                        const sessions = biomarkers.filter(b => b.date.startsWith(date));
+                        if (sessions.length > 0) setSelectedSession(sessions[0]);
+                      }}
+                    />
+                  </ChartCardWrapper>
                 </div>
 
                 {/* AI Insights */}
-                <div style={{ marginBottom: '32px' }}>
-                  <InsightCard
-                    insights={insights}
-                    loading={loadingInsights}
-                    onPlayTTS={handlePlayTTS}
-                    onRefresh={fetchInsights}
-                  />
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  style={{ marginBottom: '24px' }}
+                >
+                  <ChartCardWrapper
+                    title="AI Insights"
+                    subtitle="Personalized recommendations"
+                    icon={<AIBrainIcon color="#D9A299" />}
+                    accentColor="#D9A299"
+                    fullWidth
+                  >
+                    <InsightCard
+                      insights={insights}
+                      loading={loadingInsights}
+                      onPlayTTS={handlePlayTTS}
+                      onRefresh={fetchInsights}
+                    />
+                  </ChartCardWrapper>
+                </motion.div>
 
                 {/* Baseline Comparison */}
-                <div style={{ marginBottom: '32px' }}>
-                  <BaselineComparison
-                    baseline={baseline}
-                    current={latestBiomarker}
-                    onRecalculate={handleRecalculateBaseline}
-                    loading={loadingBaseline}
-                  />
-                </div>
-              </>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <ChartCardWrapper
+                    title="Baseline Comparison"
+                    subtitle="Compare to your personal baseline"
+                    icon={<RulerIcon color="#9CA3AF" />}
+                    accentColor="#9CA3AF"
+                    fullWidth
+                  >
+                    <BaselineComparison
+                      baseline={baseline}
+                      current={latestBiomarker}
+                      onRecalculate={handleRecalculateBaseline}
+                      loading={loadingBaseline}
+                    />
+                  </ChartCardWrapper>
+                </motion.div>
+              </motion.div>
             )}
 
             {activeView === 'history' && (
-              <SessionList
-                sessions={biomarkers}
-                onSessionClick={session => setSelectedSession(session)}
-                onDeleteSession={handleDeleteSession}
-                loading={loadingData}
-              />
+              <motion.div
+                key="history"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <ChartCardWrapper
+                  title="Recording History"
+                  subtitle="All your voice samples"
+                  icon={<ClipboardIcon color="#7AAFC9" />}
+                  accentColor="#7AAFC9"
+                  fullWidth
+                >
+                  <SessionList
+                    sessions={biomarkers}
+                    onSessionClick={session => setSelectedSession(session)}
+                    onDeleteSession={handleDeleteSession}
+                    loading={loadingData}
+                  />
+                </ChartCardWrapper>
+              </motion.div>
             )}
 
             {activeView === 'goals' && (
-              <GoalSetter
-                currentGoals={goals}
-                onSave={handleSaveGoals}
-                onGetSuggestions={handleGetSuggestions}
-              />
+              <motion.div
+                key="goals"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <ChartCardWrapper
+                  title="Voice Goals"
+                  subtitle="Set and track your improvement targets"
+                  icon={<TargetIcon color="#D9A299" />}
+                  accentColor="#D9A299"
+                  fullWidth
+                >
+                  <GoalSetter
+                    currentGoals={goals}
+                    onSave={handleSaveGoals}
+                    onGetSuggestions={handleGetSuggestions}
+                  />
+                </ChartCardWrapper>
+              </motion.div>
             )}
-          </>
+          </AnimatePresence>
         )}
       </main>
 
       {/* Modals */}
-      {selectedSession && (
-        <SessionDetailModal
-          session={selectedSession}
-          baseline={baseline || undefined}
-          onClose={() => setSelectedSession(null)}
-          onDelete={handleDeleteSession}
-          onPlayTTS={handlePlayTTS}
-        />
-      )}
+      <AnimatePresence>
+        {selectedSession && (
+          <SessionDetailModal
+            session={selectedSession}
+            baseline={baseline || undefined}
+            onClose={() => setSelectedSession(null)}
+            onDelete={handleDeleteSession}
+            onPlayTTS={handlePlayTTS}
+          />
+        )}
 
-      {showExportModal && (
-        <ExportModal
-          onClose={() => setShowExportModal(false)}
-          onExport={handleExport}
-        />
-      )}
+        {showExportModal && (
+          <ExportModal
+            onClose={() => setShowExportModal(false)}
+            onExport={handleExport}
+          />
+        )}
 
-      {showAlertSettings && (
-        <AlertSettings
-          settings={alertSettings}
-          onSave={async settings => setAlertSettings(settings)}
-          onClose={() => setShowAlertSettings(false)}
-        />
-      )}
+        {showAlertSettings && (
+          <AlertSettings
+            settings={alertSettings}
+            onSave={async settings => setAlertSettings(settings)}
+            onClose={() => setShowAlertSettings(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      <style jsx>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          main > div > div {
+            grid-template-columns: 1fr !important;
+          }
         }
       `}</style>
     </div>

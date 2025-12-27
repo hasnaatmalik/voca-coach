@@ -1,5 +1,19 @@
 'use client';
 
+// SVG Icon Components
+const PencilIcon = ({ color = '#6B7280', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
+
+const TrashIcon = ({ color = '#EF4444', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
+
 interface Persona {
   id: string;
   name: string;
@@ -117,12 +131,10 @@ export default function PersonaCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#6B7280',
-                fontSize: '14px'
               }}
               title="Edit persona"
             >
-              ✏️
+              <PencilIcon color="#6B7280" size={14} />
             </button>
           )}
           {onDelete && (
@@ -138,12 +150,10 @@ export default function PersonaCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#EF4444',
-                fontSize: '14px'
               }}
               title="Delete persona"
             >
-              🗑️
+              <TrashIcon color="#EF4444" size={14} />
             </button>
           )}
         </div>

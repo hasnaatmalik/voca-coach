@@ -2,21 +2,107 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
-import PersonaList from './components/PersonaList';
+import {
+  PersonaHero,
+  PersonaGrid,
+  PersonaPreviewCard,
+  ScenarioGrid,
+  QuickActionsBar,
+  DeleteModal,
+  TemplatesCard,
+  ContentWrapper,
+} from '@/components/persona/bento';
 import PersonaCreator from './components/PersonaCreator';
 import PersonaChat from './components/PersonaChat';
 import ConversationHistory from './components/ConversationHistory';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import { ROLEPLAY_SCENARIOS, PERSONA_TEMPLATES, Scenario } from './scenarios';
+import { ROLEPLAY_SCENARIOS, PERSONA_TEMPLATES, Scenario, Template } from './scenarios';
+
+// SVG Icon Components for ContentWrapper
+const SparklesIcon = ({ color = '#D9A299', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
+const PencilIcon = ({ color = '#E4B17A', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </svg>
+);
+
+const BookIcon = ({ color = '#7AAFC9', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
+const ChartIcon = ({ color = '#7AB89E', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+// Theme colors for icons
+const iconTheme = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  success: '#7AB89E',
+  warning: '#E4B17A',
+  muted: '#6B6B6B',
+};
+
+// SVG Icons for DEFAULT_PERSONAS
+const MeditationIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={iconTheme.primaryDark} strokeWidth="1.5">
+    <circle cx="12" cy="6" r="3" />
+    <path d="M12 9v4" />
+    <path d="M8 17.5c0-2.5 1.79-4.5 4-4.5s4 2 4 4.5" />
+    <path d="M6 20c0-1.5.5-3 2-4" />
+    <path d="M18 20c0-1.5-.5-3-2-4" />
+  </svg>
+);
+
+const HeartIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={iconTheme.success} strokeWidth="1.5">
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
+
+const BriefcaseIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={iconTheme.warning} strokeWidth="1.5">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+  </svg>
+);
+
+const WorriedFaceIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={iconTheme.primary} strokeWidth="1.5">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M8 15s1.5 2 4 2 4-2 4-2" />
+    <path d="M9 9h.01" />
+    <path d="M15 9h.01" />
+    <path d="M8 6s1-1 2-1" />
+    <path d="M16 6s-1-1-2-1" />
+  </svg>
+);
 
 interface Persona {
   id: string;
   name: string;
   type: 'preset' | 'custom';
   description: string;
-  icon: string;
+  icon: string | React.ReactNode;
   voiceId?: string;
   voiceStability?: number;
   voiceSimilarity?: number;
@@ -35,15 +121,15 @@ interface ConversationData {
   id: string;
   personaId: string;
   personaName: string;
-  personaIcon: string;
+  personaIcon: string | React.ReactNode;
   messages: ChatMessage[];
 }
 
 const DEFAULT_PERSONAS: Persona[] = [
-  { id: 'p1', name: 'Calm Mentor', type: 'preset', description: 'A patient and understanding guide who helps you stay grounded.', icon: '🧘' },
-  { id: 'p2', name: 'Supportive Friend', type: 'preset', description: 'An empathetic listener who validates your feelings.', icon: '💚' },
-  { id: 'p3', name: 'Difficult Boss', type: 'preset', description: 'Practice handling challenging workplace conversations.', icon: '💼' },
-  { id: 'p4', name: 'Anxious Client', type: 'preset', description: 'Learn to de-escalate and reassure worried individuals.', icon: '😰' },
+  { id: 'p1', name: 'Calm Mentor', type: 'preset', description: 'A patient and understanding guide who helps you stay grounded.', icon: <MeditationIcon size={32} /> },
+  { id: 'p2', name: 'Supportive Friend', type: 'preset', description: 'An empathetic listener who validates your feelings.', icon: <HeartIcon size={32} /> },
+  { id: 'p3', name: 'Difficult Boss', type: 'preset', description: 'Practice handling challenging workplace conversations.', icon: <BriefcaseIcon size={32} /> },
+  { id: 'p4', name: 'Anxious Client', type: 'preset', description: 'Learn to de-escalate and reassure worried individuals.', icon: <WorriedFaceIcon size={32} /> },
 ];
 
 type ViewMode = 'preview' | 'chat' | 'create' | 'edit' | 'history' | 'analytics' | 'scenarios';
@@ -61,6 +147,7 @@ export default function PersonaPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const selectedPersona = personas.find(p => p.id === activePersonaId);
+  const customPersonasCount = personas.filter(p => p.type === 'custom').length;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -93,7 +180,7 @@ export default function PersonaPage() {
   const handleCreatePersona = async (personaData: {
     name: string;
     description: string;
-    icon: string;
+    icon: string | React.ReactNode;
     voiceId?: string;
     voiceStability?: number;
     voiceSimilarity?: number;
@@ -120,7 +207,7 @@ export default function PersonaPage() {
     id?: string;
     name: string;
     description: string;
-    icon: string;
+    icon: string | React.ReactNode;
     voiceId?: string;
     voiceStability?: number;
     voiceSimilarity?: number;
@@ -177,7 +264,6 @@ export default function PersonaPage() {
 
     try {
       if (currentConversationId) {
-        // Update existing conversation
         await fetch('/api/persona-conversations', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -187,7 +273,6 @@ export default function PersonaPage() {
           }),
         });
       } else {
-        // Create new conversation
         const res = await fetch('/api/persona-conversations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -210,7 +295,6 @@ export default function PersonaPage() {
   }, [selectedPersona, currentConversationId]);
 
   const handleLoadConversation = (conversation: ConversationData) => {
-    // Find or set the persona
     const persona = personas.find(p => p.id === conversation.personaId);
     if (persona) {
       setActivePersonaId(persona.id);
@@ -220,7 +304,6 @@ export default function PersonaPage() {
   };
 
   const handleStartScenario = (scenario: Scenario) => {
-    // Find best matching persona for scenario
     const matchingPersona = personas.find(p =>
       p.name.toLowerCase().includes(scenario.personaHint?.toLowerCase() || '')
     );
@@ -241,29 +324,51 @@ export default function PersonaPage() {
     setViewMode('edit');
   };
 
-  const confirmDelete = (personaId: string) => {
-    setDeleteConfirmId(personaId);
-  };
-
   if (loading || !user) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #E5E7EB', borderTop: '4px solid #7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-          <div style={{ color: '#6B7280' }}>Loading...</div>
-        </div>
-        <style jsx>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#FAF7F3',
+      }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ textAlign: 'center' }}
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid #F0E4D3',
+              borderTop: '4px solid #C08B82',
+              borderRadius: '50%',
+              margin: '0 auto 16px',
+            }}
+          />
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+            style={{ color: '#6B6B6B', fontSize: '15px' }}
+          >
+            Loading personas...
+          </motion.div>
+        </motion.div>
       </div>
     );
   }
 
+  const deletePersona = personas.find(p => p.id === deleteConfirmId);
+
   return (
-    <div style={{ minHeight: '100vh', background: '#F9FAFB' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: '#FAF7F3',
+    }}>
       <Navbar
         isAuthenticated={true}
         userName={user.name || 'User'}
@@ -274,139 +379,64 @@ export default function PersonaPage() {
         currentPage="/persona"
       />
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
-        {/* Page Header */}
-        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1F2937', marginBottom: '8px' }}>
-              🎭 Persona Studio
-            </h1>
-            <p style={{ color: '#6B7280' }}>Practice conversations with AI personas or create your own.</p>
-          </div>
+      <main style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
+        padding: '32px 24px',
+      }}>
+        {/* Hero Section */}
+        <PersonaHero
+          totalPersonas={personas.length}
+          customPersonas={customPersonasCount}
+        />
 
-          {/* Quick Actions */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => setViewMode('scenarios')}
-              style={{
-                padding: '10px 16px',
-                background: viewMode === 'scenarios' ? '#7C3AED' : 'white',
-                color: viewMode === 'scenarios' ? 'white' : '#4B5563',
-                border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                fontWeight: '500',
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              🎯 Scenarios
-            </button>
-            <button
-              onClick={() => setViewMode('history')}
-              style={{
-                padding: '10px 16px',
-                background: viewMode === 'history' ? '#7C3AED' : 'white',
-                color: viewMode === 'history' ? 'white' : '#4B5563',
-                border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                fontWeight: '500',
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              📚 History
-            </button>
-            <button
-              onClick={() => setViewMode('analytics')}
-              style={{
-                padding: '10px 16px',
-                background: viewMode === 'analytics' ? '#7C3AED' : 'white',
-                color: viewMode === 'analytics' ? 'white' : '#4B5563',
-                border: '1px solid #E5E7EB',
-                borderRadius: '10px',
-                fontWeight: '500',
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              📊 Analytics
-            </button>
-          </div>
-        </div>
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '24px',
+          }}
+        >
+          <QuickActionsBar
+            viewMode={viewMode}
+            onViewChange={setViewMode}
+          />
+        </motion.div>
 
         {/* Delete Confirmation Modal */}
-        {deleteConfirmId && (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '400px',
-              width: '90%'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
-                Delete Persona?
-              </h3>
-              <p style={{ color: '#6B7280', marginBottom: '20px' }}>
-                This will permanently delete this persona and cannot be undone.
-              </p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setDeleteConfirmId(null)}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#F3F4F6',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeletePersona(deleteConfirmId)}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#EF4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <DeleteModal
+          isOpen={!!deleteConfirmId}
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={() => deleteConfirmId && handleDeletePersona(deleteConfirmId)}
+          personaName={deletePersona?.name}
+        />
 
         {/* Main Content Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: viewMode === 'chat' ? '280px 1fr' : '1fr 1fr',
-          gap: '24px'
+          gridTemplateColumns: viewMode === 'chat' ? '320px 1fr' : '1fr 1.2fr',
+          gap: '24px',
+          alignItems: 'start',
         }}>
-          {/* Left Column - Persona List */}
-          <div>
-            <PersonaList
+          {/* Left Column */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              position: viewMode === 'chat' ? 'sticky' : 'static',
+              top: '100px',
+            }}
+          >
+            {/* Persona Grid */}
+            <PersonaGrid
               personas={personas}
               activePersonaId={activePersonaId}
               onSelect={(id) => {
@@ -415,68 +445,55 @@ export default function PersonaPage() {
               }}
               onCreateNew={() => setViewMode('create')}
               onEdit={openEditMode}
-              onDelete={confirmDelete}
-              isCompact={viewMode === 'chat'}
+              onDelete={(id) => setDeleteConfirmId(id)}
               disabled={viewMode === 'chat'}
             />
 
-            {/* Persona Templates Section */}
+            {/* Templates Card */}
             {viewMode !== 'chat' && (
-              <div style={{ marginTop: '24px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6B7280', marginBottom: '12px' }}>
-                  💡 Quick Templates
-                </h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {PERSONA_TEMPLATES.map((template) => (
-                    <button
-                      key={template.name}
-                      onClick={() => {
-                        setViewMode('create');
-                        // The PersonaCreator will handle using the template
-                      }}
-                      style={{
-                        padding: '8px 12px',
-                        background: 'white',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      {template.icon} {template.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <TemplatesCard
+                templates={PERSONA_TEMPLATES}
+                onSelectTemplate={() => setViewMode('create')}
+              />
             )}
-          </div>
+          </motion.div>
 
           {/* Right Column - Main Panel */}
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
-            border: '1px solid #E5E7EB',
-            minHeight: '500px',
-            overflow: 'hidden'
-          }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
             {viewMode === 'chat' && selectedPersona ? (
-              <PersonaChat
-                persona={selectedPersona}
-                onEndChat={handleEndChat}
-                onSaveConversation={handleSaveConversation}
-              />
+              <ContentWrapper noPadding>
+                <PersonaChat
+                  persona={selectedPersona}
+                  onEndChat={handleEndChat}
+                  onSaveConversation={handleSaveConversation}
+                />
+              </ContentWrapper>
             ) : viewMode === 'create' ? (
-              <div style={{ padding: '32px' }}>
+              <ContentWrapper
+                title="Create Persona"
+                subtitle="Design your custom AI conversation partner"
+                icon={<SparklesIcon />}
+                onClose={() => setViewMode('preview')}
+              >
                 <PersonaCreator
                   onSave={handleCreatePersona}
                   onCancel={() => setViewMode('preview')}
                 />
-              </div>
+              </ContentWrapper>
             ) : viewMode === 'edit' && editingPersona ? (
-              <div style={{ padding: '32px' }}>
+              <ContentWrapper
+                title="Edit Persona"
+                subtitle="Customize your persona settings"
+                icon={<PencilIcon />}
+                onClose={() => {
+                  setEditingPersona(null);
+                  setViewMode('preview');
+                }}
+              >
                 <PersonaCreator
                   editingPersona={editingPersona}
                   onSave={handleEditPersona}
@@ -485,177 +502,47 @@ export default function PersonaPage() {
                     setViewMode('preview');
                   }}
                 />
-              </div>
+              </ContentWrapper>
             ) : viewMode === 'history' ? (
-              <ConversationHistory
-                onLoadConversation={handleLoadConversation}
+              <ContentWrapper
+                title="Conversation History"
+                subtitle="Browse your past conversations"
+                icon={<BookIcon />}
                 onClose={() => setViewMode('preview')}
-              />
+                noPadding
+              >
+                <ConversationHistory
+                  onLoadConversation={handleLoadConversation}
+                  onClose={() => setViewMode('preview')}
+                />
+              </ContentWrapper>
             ) : viewMode === 'analytics' ? (
-              <AnalyticsDashboard
+              <ContentWrapper
+                title="Analytics Dashboard"
+                subtitle="Track your conversation practice"
+                icon={<ChartIcon />}
+                onClose={() => setViewMode('preview')}
+                noPadding
+              >
+                <AnalyticsDashboard
+                  onClose={() => setViewMode('preview')}
+                />
+              </ContentWrapper>
+            ) : viewMode === 'scenarios' ? (
+              <ScenarioGrid
+                scenarios={ROLEPLAY_SCENARIOS}
+                onStartScenario={handleStartScenario}
                 onClose={() => setViewMode('preview')}
               />
-            ) : viewMode === 'scenarios' ? (
-              <div style={{ padding: '24px' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <h3 style={{ fontWeight: '600', color: '#1F2937' }}>
-                    🎯 Practice Scenarios
-                  </h3>
-                  <button
-                    onClick={() => setViewMode('preview')}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      background: '#F3F4F6',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '18px'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  {ROLEPLAY_SCENARIOS.map((scenario) => (
-                    <div
-                      key={scenario.id}
-                      style={{
-                        padding: '16px',
-                        background: '#F9FAFB',
-                        borderRadius: '12px',
-                        border: '1px solid #E5E7EB'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <span style={{ fontSize: '28px' }}>{scenario.icon}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '4px'
-                          }}>
-                            <span style={{ fontWeight: '600', color: '#1F2937' }}>
-                              {scenario.name}
-                            </span>
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              background: scenario.difficulty === 'easy' ? '#D1FAE5' :
-                                scenario.difficulty === 'medium' ? '#FEF3C7' : '#FEE2E2',
-                              color: scenario.difficulty === 'easy' ? '#065F46' :
-                                scenario.difficulty === 'medium' ? '#92400E' : '#991B1B'
-                            }}>
-                              {scenario.difficulty}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '8px' }}>
-                            {scenario.description}
-                          </p>
-                          <button
-                            onClick={() => handleStartScenario(scenario)}
-                            style={{
-                              padding: '8px 16px',
-                              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '8px',
-                              fontSize: '13px',
-                              fontWeight: '500',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Start Practice
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             ) : (
               // Persona Preview
-              <div style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '32px',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  width: '100px',
-                  height: '100px',
-                  background: '#ECFDF5',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '48px',
-                  marginBottom: '24px'
-                }}>
-                  {selectedPersona?.icon}
-                </div>
-                <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1F2937', marginBottom: '8px' }}>
-                  {selectedPersona?.name}
-                </h3>
-                <p style={{
-                  color: '#6B7280',
-                  marginBottom: '24px',
-                  maxWidth: '320px',
-                  lineHeight: '1.5'
-                }}>
-                  {selectedPersona?.description}
-                </p>
-                {selectedPersona?.type === 'custom' && (
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginBottom: '24px'
-                  }}>
-                    <button
-                      onClick={() => openEditMode(selectedPersona)}
-                      style={{
-                        padding: '10px 20px',
-                        background: '#F3F4F6',
-                        color: '#4B5563',
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontWeight: '500',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✏️ Edit
-                    </button>
-                  </div>
-                )}
-                <button
-                  onClick={handleStartChat}
-                  style={{
-                    padding: '16px 40px',
-                    background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '14px',
-                    fontWeight: '600',
-                    fontSize: '16px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)'
-                  }}
-                >
-                  Start Conversation
-                </button>
-              </div>
+              <PersonaPreviewCard
+                persona={selectedPersona}
+                onStartChat={handleStartChat}
+                onEdit={openEditMode}
+              />
             )}
-          </div>
+          </motion.div>
         </div>
       </main>
     </div>

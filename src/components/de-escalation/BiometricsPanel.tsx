@@ -3,6 +3,37 @@
 import React from 'react';
 import { VoiceBiomarkers } from '@/types/de-escalation';
 
+// SVG Icon Components
+const ChartIcon = ({ color = '#7AAFC9', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const WarningIcon = ({ color = '#EF4444', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
+const LightbulbIcon = ({ color = '#7C3AED', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+  </svg>
+);
+
+const CheckIcon = ({ color = '#10B981', size = 12 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 interface BiometricsPanelProps {
   biomarkers: VoiceBiomarkers | null;
   isLive: boolean;
@@ -67,7 +98,7 @@ export default function BiometricsPanel({
         marginBottom: '20px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '20px' }}>📊</span>
+          <ChartIcon color="#7AAFC9" size={20} />
           <h3 style={{ fontSize: '16px', fontWeight: '600', color: textColor, margin: 0 }}>
             Voice Biomarkers
           </h3>
@@ -258,10 +289,23 @@ export default function BiometricsPanel({
                 fontSize: '11px',
                 color: mutedColor,
                 marginTop: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
               }}>
-                {biomarkers.pauseFrequency === 'healthy' && '✓ Good breathing'}
-                {biomarkers.pauseFrequency === 'normal' && '– Moderate'}
-                {biomarkers.pauseFrequency === 'low' && '! Rushed speech'}
+                {biomarkers.pauseFrequency === 'healthy' && (
+                  <>
+                    <CheckIcon color="#10B981" size={12} />
+                    <span>Good breathing</span>
+                  </>
+                )}
+                {biomarkers.pauseFrequency === 'normal' && <span>– Moderate</span>}
+                {biomarkers.pauseFrequency === 'low' && (
+                  <>
+                    <WarningIcon color="#EF4444" size={12} />
+                    <span>Rushed speech</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -277,7 +321,7 @@ export default function BiometricsPanel({
               borderRadius: '10px',
               border: '1px solid rgba(239, 68, 68, 0.3)',
             }}>
-              <span style={{ fontSize: '16px' }}>⚠️</span>
+              <WarningIcon color="#EF4444" size={16} />
               <span style={{ fontSize: '13px', color: '#EF4444', fontWeight: '500' }}>
                 Voice tremor detected - signs of anxiety
               </span>
@@ -297,8 +341,12 @@ export default function BiometricsPanel({
                 fontWeight: '600',
                 color: '#7C3AED',
                 marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}>
-                💡 Recommendations
+                <LightbulbIcon color="#7C3AED" size={16} />
+                <span>Recommendations</span>
               </div>
               <ul style={{
                 margin: 0,
@@ -321,7 +369,9 @@ export default function BiometricsPanel({
           padding: '32px 16px',
           color: mutedColor,
         }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.5 }}>📊</div>
+          <div style={{ marginBottom: '12px', opacity: 0.5, display: 'flex', justifyContent: 'center' }}>
+            <ChartIcon color="#9CA3AF" size={32} />
+          </div>
           <div style={{ fontSize: '14px' }}>
             Start a session to see your voice biomarkers
           </div>

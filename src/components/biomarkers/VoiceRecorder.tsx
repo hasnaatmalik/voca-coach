@@ -3,6 +3,57 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { READING_PROMPTS, formatDuration } from '@/lib/biomarker-utils';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  background: '#FAF7F3',
+  cardBg: '#F0E4D3',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  recording: '#E07A5F',
+  success: '#7AB89E',
+};
+
+// Icon components
+const MicIcon = ({ color = 'white', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const StopIcon = ({ color = 'white', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
+const LoadingIcon = ({ color = 'white', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+  </svg>
+);
+
+const CloseIcon = ({ color, size = 16 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const AlertIcon = ({ color, size = 16 }: { color: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
 interface BiomarkerResult {
   pitch: number;
   clarity: number;
@@ -255,44 +306,44 @@ export default function VoiceRecorder({
     <div
       style={{
         background: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: '20px',
-        padding: '24px',
-        boxShadow: '0 8px 32px rgba(124, 58, 237, 0.1)',
-        border: '1px solid rgba(124, 58, 237, 0.1)',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 8px 32px rgba(217, 162, 153, 0.15)',
+        border: `1px solid ${themeColors.border}`,
       }}
     >
       {/* Prompt Selection */}
-      <div style={{ marginBottom: '20px' }}>
+      <div style={{ marginBottom: '16px' }}>
         <label
           style={{
             display: 'block',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 600,
-            color: '#374151',
+            color: themeColors.text,
             marginBottom: '8px',
           }}
         >
           Choose a Reading Prompt
         </label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {READING_PROMPTS.map(prompt => (
             <button
               key={prompt.id}
               onClick={() => setSelectedPrompt(prompt)}
               disabled={state !== 'idle'}
               style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
+                padding: '6px 12px',
+                borderRadius: '16px',
                 border:
                   selectedPrompt.id === prompt.id
-                    ? '2px solid #7C3AED'
-                    : '1px solid #E5E7EB',
+                    ? `2px solid ${themeColors.primaryDark}`
+                    : `1px solid ${themeColors.border}`,
                 background:
                   selectedPrompt.id === prompt.id
-                    ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)'
+                    ? `${themeColors.primary}15`
                     : 'white',
-                color: selectedPrompt.id === prompt.id ? '#7C3AED' : '#6B7280',
-                fontSize: '13px',
+                color: selectedPrompt.id === prompt.id ? themeColors.primaryDark : themeColors.textMuted,
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: state !== 'idle' ? 'not-allowed' : 'pointer',
                 opacity: state !== 'idle' ? 0.5 : 1,
@@ -308,17 +359,18 @@ export default function VoiceRecorder({
       {/* Prompt Text Display */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #F3E8FF 0%, #FCE7F3 100%)',
+          background: `linear-gradient(135deg, ${themeColors.primary}15 0%, ${themeColors.secondary}20 100%)`,
           borderRadius: '12px',
-          padding: '16px',
-          marginBottom: '24px',
+          padding: '14px',
+          marginBottom: '20px',
+          border: `1px solid ${themeColors.border}`,
         }}
       >
         <p
           style={{
-            fontSize: '16px',
+            fontSize: '14px',
             lineHeight: 1.6,
-            color: '#374151',
+            color: themeColors.text,
             margin: 0,
             fontStyle: selectedPrompt.id === 'free_speech' ? 'italic' : 'normal',
           }}
@@ -327,8 +379,8 @@ export default function VoiceRecorder({
         </p>
         <p
           style={{
-            fontSize: '12px',
-            color: '#6B7280',
+            fontSize: '11px',
+            color: themeColors.textMuted,
             marginTop: '8px',
             marginBottom: 0,
           }}
@@ -345,20 +397,20 @@ export default function VoiceRecorder({
             alignItems: 'center',
             justifyContent: 'center',
             gap: '3px',
-            height: '60px',
-            marginBottom: '20px',
+            height: '50px',
+            marginBottom: '16px',
           }}
         >
           {waveformData.map((level, i) => (
             <div
               key={i}
               style={{
-                width: '6px',
-                height: `${Math.max(4, level * 50)}px`,
+                width: '5px',
+                height: `${Math.max(4, level * 45)}px`,
                 background:
                   state === 'processing'
-                    ? '#9CA3AF'
-                    : `linear-gradient(to top, #7C3AED, #EC4899)`,
+                    ? themeColors.border
+                    : `linear-gradient(to top, ${themeColors.primary}, ${themeColors.primaryDark})`,
                 borderRadius: '3px',
                 transition: 'height 0.1s',
               }}
@@ -374,15 +426,15 @@ export default function VoiceRecorder({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            height: '100px',
-            marginBottom: '20px',
+            height: '80px',
+            marginBottom: '16px',
           }}
         >
           <div
             style={{
-              fontSize: '72px',
+              fontSize: '56px',
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+              background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               animation: 'pulse 1s ease-in-out infinite',
@@ -399,7 +451,7 @@ export default function VoiceRecorder({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '16px',
+          gap: '12px',
         }}
       >
         {/* Timer Display */}
@@ -409,17 +461,17 @@ export default function VoiceRecorder({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '24px',
+              fontSize: '20px',
               fontWeight: 600,
-              color: '#EF4444',
+              color: themeColors.recording,
             }}
           >
             <span
               style={{
-                width: '12px',
-                height: '12px',
+                width: '10px',
+                height: '10px',
                 borderRadius: '50%',
-                background: '#EF4444',
+                background: themeColors.recording,
                 animation: 'blink 1s infinite',
               }}
             />
@@ -432,16 +484,16 @@ export default function VoiceRecorder({
           onClick={handleClick}
           disabled={disabled || state === 'processing' || state === 'countdown'}
           style={{
-            width: state === 'recording' ? '80px' : '100px',
-            height: state === 'recording' ? '80px' : '100px',
+            width: state === 'recording' ? '70px' : '80px',
+            height: state === 'recording' ? '70px' : '80px',
             borderRadius: '50%',
             border: 'none',
             background:
               state === 'recording'
-                ? '#EF4444'
+                ? themeColors.recording
                 : state === 'processing'
-                  ? '#9CA3AF'
-                  : 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                  ? themeColors.border
+                  : `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
             cursor:
               disabled || state === 'processing' || state === 'countdown'
                 ? 'not-allowed'
@@ -453,9 +505,9 @@ export default function VoiceRecorder({
             transition: 'all 0.3s',
             boxShadow:
               state === 'recording'
-                ? '0 0 30px rgba(239, 68, 68, 0.4)'
-                : '0 8px 24px rgba(124, 58, 237, 0.3)',
-            transform: `scale(${1 + audioLevel * 0.1})`,
+                ? `0 0 24px ${themeColors.recording}50`
+                : `0 6px 20px rgba(217, 162, 153, 0.35)`,
+            transform: `scale(${1 + audioLevel * 0.08})`,
           }}
         >
           {/* Pulse effect when recording */}
@@ -466,7 +518,7 @@ export default function VoiceRecorder({
                 width: '100%',
                 height: '100%',
                 borderRadius: '50%',
-                border: '3px solid #EF4444',
+                border: `3px solid ${themeColors.recording}`,
                 opacity: 0.5,
                 animation: 'ripple 1.5s infinite',
               }}
@@ -476,25 +528,21 @@ export default function VoiceRecorder({
           {/* Button Icon */}
           <span
             style={{
-              fontSize: state === 'processing' ? '28px' : '36px',
-              color: 'white',
               position: 'relative',
               zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {state === 'processing' ? (
-              <span
-                style={{
-                  display: 'inline-block',
-                  animation: 'spin 1s linear infinite',
-                }}
-              >
-                Analyzing...
+              <span style={{ animation: 'spin 1s linear infinite', display: 'flex' }}>
+                <LoadingIcon size={28} />
               </span>
             ) : state === 'recording' ? (
-              <span style={{ fontSize: '32px' }}>Stop</span>
+              <StopIcon size={28} />
             ) : (
-              'Record'
+              <MicIcon size={28} />
             )}
           </span>
         </button>
@@ -504,13 +552,15 @@ export default function VoiceRecorder({
           <button
             onClick={cancelRecording}
             style={{
-              padding: '8px 24px',
-              borderRadius: '20px',
-              border: '1px solid #E5E7EB',
+              padding: '6px 20px',
+              borderRadius: '16px',
+              border: `1px solid ${themeColors.border}`,
               background: 'white',
-              color: '#6B7280',
-              fontSize: '14px',
+              color: themeColors.textMuted,
+              fontSize: '12px',
+              fontWeight: 500,
               cursor: 'pointer',
+              transition: 'all 0.2s',
             }}
           >
             Cancel
@@ -519,14 +569,14 @@ export default function VoiceRecorder({
 
         {/* Duration hint */}
         {state === 'idle' && (
-          <p style={{ fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: themeColors.textMuted, textAlign: 'center', margin: 0 }}>
             Record at least {MIN_DURATION} seconds for accurate analysis
           </p>
         )}
 
         {/* Processing message */}
         {state === 'processing' && (
-          <p style={{ fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', color: themeColors.textMuted, textAlign: 'center', margin: 0 }}>
             Analyzing your voice biomarkers...
           </p>
         )}
@@ -536,29 +586,32 @@ export default function VoiceRecorder({
       {error && (
         <div
           style={{
-            marginTop: '16px',
-            padding: '12px 16px',
-            background: '#FEF2F2',
-            borderRadius: '8px',
+            marginTop: '14px',
+            padding: '10px 14px',
+            background: `${themeColors.recording}15`,
+            borderRadius: '10px',
+            border: `1px solid ${themeColors.recording}30`,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
           }}
         >
-          <span style={{ color: '#EF4444' }}>Warning</span>
-          <p style={{ margin: 0, fontSize: '14px', color: '#EF4444' }}>{error}</p>
+          <AlertIcon color={themeColors.recording} size={16} />
+          <p style={{ margin: 0, fontSize: '12px', color: themeColors.recording, flex: 1 }}>{error}</p>
           <button
             onClick={() => setError(null)}
             style={{
-              marginLeft: 'auto',
               background: 'none',
               border: 'none',
-              color: '#EF4444',
+              color: themeColors.recording,
               cursor: 'pointer',
-              fontSize: '18px',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            x
+            <CloseIcon color={themeColors.recording} size={14} />
           </button>
         </div>
       )}

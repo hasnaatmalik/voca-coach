@@ -3,6 +3,63 @@
 import { useState, useCallback, CSSProperties } from 'react';
 import type { ChatMessage } from '@/types/chat';
 
+// SVG Icon Components
+const SearchIcon = ({ color = '#6B7280', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const ArrowLeftIcon = ({ color = '#6B7280', size = 18 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+
+const ChatIcon = ({ color = '#D9A299', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const MicIcon = ({ color = '#7AB89E', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const ImageIcon = ({ color = '#7AAFC9', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
+const PaperclipIcon = ({ color = '#E4B17A', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+  </svg>
+);
+
+const LoaderIcon = ({ color = '#D9A299', size = 24 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="2" x2="12" y2="6" />
+    <line x1="12" y1="18" x2="12" y2="22" />
+    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+    <line x1="2" y1="12" x2="6" y2="12" />
+    <line x1="18" y1="12" x2="22" y2="12" />
+    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+  </svg>
+);
+
 interface MessageSearchProps {
   conversationId: string;
   onMessageSelect: (messageId: string) => void;
@@ -83,12 +140,13 @@ export default function MessageSearch({
     return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, darkMode: boolean) => {
+    const color = darkMode ? '#D1D5DB' : '#6B7280';
     switch (type) {
-      case 'voice': return '🎤';
-      case 'image': return '🖼️';
-      case 'file': return '📎';
-      default: return '💬';
+      case 'voice': return <MicIcon color={color} size={14} />;
+      case 'image': return <ImageIcon color={color} size={14} />;
+      case 'file': return <PaperclipIcon color={color} size={14} />;
+      default: return <ChatIcon color={color} size={14} />;
     }
   };
 
@@ -221,9 +279,13 @@ export default function MessageSearch({
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
-        <button style={backButtonStyle} onClick={onClose}>←</button>
+        <button style={backButtonStyle} onClick={onClose}>
+          <ArrowLeftIcon color={darkMode ? '#D1D5DB' : '#6B7280'} size={18} />
+        </button>
         <div style={inputContainerStyle}>
-          <span style={searchIconStyle}>🔍</span>
+          <span style={searchIconStyle}>
+            <SearchIcon color={darkMode ? '#9CA3AF' : '#6B7280'} size={16} />
+          </span>
           <input
             type="text"
             placeholder="Search messages..."
@@ -243,29 +305,31 @@ export default function MessageSearch({
           All
         </button>
         <button
-          style={filterButtonStyle(filter === 'text')}
+          style={{ ...filterButtonStyle(filter === 'text'), display: 'flex', alignItems: 'center', gap: '4px' }}
           onClick={() => setFilter('text')}
         >
-          💬 Text
+          <ChatIcon color={filter === 'text' ? 'white' : (darkMode ? '#D1D5DB' : '#6B7280')} size={14} /> Text
         </button>
         <button
-          style={filterButtonStyle(filter === 'voice')}
+          style={{ ...filterButtonStyle(filter === 'voice'), display: 'flex', alignItems: 'center', gap: '4px' }}
           onClick={() => setFilter('voice')}
         >
-          🎤 Voice
+          <MicIcon color={filter === 'voice' ? 'white' : (darkMode ? '#D1D5DB' : '#6B7280')} size={14} /> Voice
         </button>
         <button
-          style={filterButtonStyle(filter === 'media')}
+          style={{ ...filterButtonStyle(filter === 'media'), display: 'flex', alignItems: 'center', gap: '4px' }}
           onClick={() => setFilter('media')}
         >
-          📎 Media
+          <PaperclipIcon color={filter === 'media' ? 'white' : (darkMode ? '#D1D5DB' : '#6B7280')} size={14} /> Media
         </button>
       </div>
 
       <div style={resultsContainerStyle}>
         {loading ? (
           <div style={emptyStyle}>
-            <span style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</span>
+            <span style={{ marginBottom: '8px' }}>
+              <LoaderIcon color="#D9A299" size={24} />
+            </span>
             <span>Searching...</span>
           </div>
         ) : results.length > 0 ? (
@@ -278,8 +342,8 @@ export default function MessageSearch({
               onMouseLeave={(e) => e.currentTarget.style.background = darkMode ? '#1F2937' : '#F9FAFB'}
             >
               <div style={resultHeaderStyle}>
-                <span style={resultSenderStyle}>
-                  {getTypeIcon(result.message.type)} {result.message.senderName || 'Unknown'}
+                <span style={{ ...resultSenderStyle, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {getTypeIcon(result.message.type, darkMode)} {result.message.senderName || 'Unknown'}
                 </span>
                 <span style={resultDateStyle}>{formatDate(result.message.createdAt)}</span>
               </div>
@@ -293,13 +357,17 @@ export default function MessageSearch({
           ))
         ) : query.trim().length >= 2 ? (
           <div style={emptyStyle}>
-            <span style={{ fontSize: '32px', marginBottom: '12px' }}>🔍</span>
+            <span style={{ marginBottom: '12px' }}>
+              <SearchIcon color="#D9A299" size={32} />
+            </span>
             <span>No messages found</span>
             <span style={{ fontSize: '12px', marginTop: '4px' }}>Try different keywords</span>
           </div>
         ) : (
           <div style={emptyStyle}>
-            <span style={{ fontSize: '32px', marginBottom: '12px' }}>💬</span>
+            <span style={{ marginBottom: '12px' }}>
+              <ChatIcon color="#D9A299" size={32} />
+            </span>
             <span>Search your messages</span>
             <span style={{ fontSize: '12px', marginTop: '4px' }}>Type at least 2 characters</span>
           </div>

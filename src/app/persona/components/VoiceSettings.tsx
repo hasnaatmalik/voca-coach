@@ -1,5 +1,17 @@
 'use client';
 
+// Theme colors from globals.css - wellness theme
+const THEME = {
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  tan: '#DCC5B2',
+  rose: '#D9A299',
+  roseDark: '#C8847A',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  success: '#7AB89E',
+};
+
 interface VoiceSettingsProps {
   settings: {
     voiceStability: number;
@@ -18,15 +30,15 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ fontSize: '14px', fontWeight: '600', color: '#1F2937', marginBottom: '4px' }}>
+      <div style={{ fontSize: '14px', fontWeight: '600', color: THEME.text, marginBottom: '4px' }}>
         Voice Settings
       </div>
 
       {/* Stability */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <label style={{ fontSize: '13px', color: '#4B5563' }}>Stability</label>
-          <span style={{ fontSize: '13px', color: '#6B7280' }}>{Math.round(settings.voiceStability * 100)}%</span>
+          <label style={{ fontSize: '13px', color: THEME.text }}>Stability</label>
+          <span style={{ fontSize: '13px', color: THEME.textMuted }}>{Math.round(settings.voiceStability * 100)}%</span>
         </div>
         <input
           type="range"
@@ -39,12 +51,12 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
             width: '100%',
             height: '6px',
             borderRadius: '3px',
-            background: `linear-gradient(to right, #7C3AED ${settings.voiceStability * 100}%, #E5E7EB ${settings.voiceStability * 100}%)`,
+            background: `linear-gradient(to right, ${THEME.rose} ${settings.voiceStability * 100}%, ${THEME.beige} ${settings.voiceStability * 100}%)`,
             appearance: 'none',
             cursor: 'pointer'
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9CA3AF' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: THEME.textMuted }}>
           <span>More variable</span>
           <span>More stable</span>
         </div>
@@ -53,8 +65,8 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
       {/* Similarity */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <label style={{ fontSize: '13px', color: '#4B5563' }}>Clarity + Similarity</label>
-          <span style={{ fontSize: '13px', color: '#6B7280' }}>{Math.round(settings.voiceSimilarity * 100)}%</span>
+          <label style={{ fontSize: '13px', color: THEME.text }}>Clarity + Similarity</label>
+          <span style={{ fontSize: '13px', color: THEME.textMuted }}>{Math.round(settings.voiceSimilarity * 100)}%</span>
         </div>
         <input
           type="range"
@@ -67,12 +79,12 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
             width: '100%',
             height: '6px',
             borderRadius: '3px',
-            background: `linear-gradient(to right, #7C3AED ${settings.voiceSimilarity * 100}%, #E5E7EB ${settings.voiceSimilarity * 100}%)`,
+            background: `linear-gradient(to right, ${THEME.rose} ${settings.voiceSimilarity * 100}%, ${THEME.beige} ${settings.voiceSimilarity * 100}%)`,
             appearance: 'none',
             cursor: 'pointer'
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9CA3AF' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: THEME.textMuted }}>
           <span>Low</span>
           <span>High</span>
         </div>
@@ -81,8 +93,8 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
       {/* Style */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <label style={{ fontSize: '13px', color: '#4B5563' }}>Style Exaggeration</label>
-          <span style={{ fontSize: '13px', color: '#6B7280' }}>{Math.round(settings.voiceStyle * 100)}%</span>
+          <label style={{ fontSize: '13px', color: THEME.text }}>Style Exaggeration</label>
+          <span style={{ fontSize: '13px', color: THEME.textMuted }}>{Math.round(settings.voiceStyle * 100)}%</span>
         </div>
         <input
           type="range"
@@ -95,12 +107,12 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
             width: '100%',
             height: '6px',
             borderRadius: '3px',
-            background: `linear-gradient(to right, #7C3AED ${settings.voiceStyle * 100}%, #E5E7EB ${settings.voiceStyle * 100}%)`,
+            background: `linear-gradient(to right, ${THEME.rose} ${settings.voiceStyle * 100}%, ${THEME.beige} ${settings.voiceStyle * 100}%)`,
             appearance: 'none',
             cursor: 'pointer'
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9CA3AF' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: THEME.textMuted }}>
           <span>None</span>
           <span>Exaggerated</span>
         </div>
@@ -109,8 +121,8 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
       {/* Speech Rate */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <label style={{ fontSize: '13px', color: '#4B5563' }}>Speech Rate</label>
-          <span style={{ fontSize: '13px', color: '#6B7280' }}>{settings.speechRate.toFixed(1)}x</span>
+          <label style={{ fontSize: '13px', color: THEME.text }}>Speech Rate</label>
+          <span style={{ fontSize: '13px', color: THEME.textMuted }}>{settings.speechRate.toFixed(1)}x</span>
         </div>
         <input
           type="range"
@@ -123,12 +135,12 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
             width: '100%',
             height: '6px',
             borderRadius: '3px',
-            background: `linear-gradient(to right, #7C3AED ${((settings.speechRate - 0.5) / 1.5) * 100}%, #E5E7EB ${((settings.speechRate - 0.5) / 1.5) * 100}%)`,
+            background: `linear-gradient(to right, ${THEME.rose} ${((settings.speechRate - 0.5) / 1.5) * 100}%, ${THEME.beige} ${((settings.speechRate - 0.5) / 1.5) * 100}%)`,
             appearance: 'none',
             cursor: 'pointer'
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9CA3AF' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: THEME.textMuted }}>
           <span>0.5x (Slow)</span>
           <span>2x (Fast)</span>
         </div>
@@ -140,12 +152,13 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px',
-        background: '#F9FAFB',
-        borderRadius: '8px'
+        background: THEME.beige,
+        borderRadius: '10px',
+        border: `1px solid ${THEME.tan}`,
       }}>
         <div>
-          <div style={{ fontSize: '13px', color: '#4B5563', fontWeight: '500' }}>Speaker Boost</div>
-          <div style={{ fontSize: '11px', color: '#9CA3AF' }}>Enhance voice clarity and presence</div>
+          <div style={{ fontSize: '13px', color: THEME.text, fontWeight: '500' }}>Speaker Boost</div>
+          <div style={{ fontSize: '11px', color: THEME.textMuted }}>Enhance voice clarity and presence</div>
         </div>
         <button
           onClick={() => handleChange('voiceSpeakerBoost', !settings.voiceSpeakerBoost)}
@@ -154,7 +167,7 @@ export default function VoiceSettings({ settings, onChange }: VoiceSettingsProps
             height: '26px',
             borderRadius: '13px',
             border: 'none',
-            background: settings.voiceSpeakerBoost ? '#7C3AED' : '#D1D5DB',
+            background: settings.voiceSpeakerBoost ? THEME.rose : THEME.tan,
             cursor: 'pointer',
             position: 'relative',
             transition: 'background 0.2s'

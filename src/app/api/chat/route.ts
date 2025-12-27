@@ -26,6 +26,17 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
+          _count: {
+            select: {
+              messages: {
+                where: {
+                  senderId: { not: currentUser.userId },
+                  readAt: null,
+                  isDeleted: false,
+                },
+              },
+            },
+          },
         },
         orderBy: { updatedAt: 'desc' },
       });
@@ -38,12 +49,12 @@ export async function GET() {
       });
 
       const studentMap = new Map(students.map(s => [s.id, s]));
-      
+
       return NextResponse.json({
         conversations: conversations.map(c => ({
           ...c,
           otherUser: studentMap.get(c.studentId),
-          unreadCount: 0, // TODO: count unread
+          unreadCount: c._count.messages,
         })),
       });
     } else {
@@ -54,6 +65,17 @@ export async function GET() {
           messages: {
             orderBy: { createdAt: 'desc' },
             take: 1,
+          },
+          _count: {
+            select: {
+              messages: {
+                where: {
+                  senderId: { not: currentUser.userId },
+                  readAt: null,
+                  isDeleted: false,
+                },
+              },
+            },
           },
         },
         orderBy: { updatedAt: 'desc' },
@@ -67,12 +89,12 @@ export async function GET() {
       });
 
       const therapistMap = new Map(therapists.map(t => [t.id, t]));
-      
+
       return NextResponse.json({
         conversations: conversations.map(c => ({
           ...c,
           otherUser: therapistMap.get(c.therapistId),
-          unreadCount: 0,
+          unreadCount: c._count.messages,
         })),
       });
     }

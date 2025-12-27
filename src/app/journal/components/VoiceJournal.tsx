@@ -3,6 +3,49 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Message } from '../types';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  success: '#7AB89E',
+  recording: '#E07A5F',
+};
+
+// SVG Icon Components
+const MicIcon = ({ color = 'currentColor', size = 28 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const StopIcon = ({ color = 'currentColor', size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
+const LoaderIcon = ({ color = 'currentColor', size = 32 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+  </svg>
+);
+
+const VolumeIcon = ({ color = themeColors.success, size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
 interface VoiceJournalProps {
   onStreakUpdate?: () => void;
 }
@@ -213,15 +256,15 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
 
   const getButtonStyle = () => {
     if (isProcessing) {
-      return { background: '#6B7280', scale: 1 };
+      return { background: themeColors.secondary, scale: 1 };
     }
     if (isRecording) {
       return {
-        background: '#EF4444',
+        background: themeColors.recording,
         scale: 1 + audioLevel * 0.3,
       };
     }
-    return { background: '#7C3AED', scale: 1 };
+    return { background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`, scale: 1 };
   };
 
   const buttonStyle = getButtonStyle();
@@ -233,26 +276,37 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
       height: 'calc(100vh - 200px)',
       background: 'white',
       borderRadius: '20px',
-      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+      boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+      border: `1px solid ${themeColors.border}`,
       overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
         padding: '20px 24px',
-        borderBottom: '1px solid #E5E7EB',
-        background: 'linear-gradient(135deg, #F5F3FF 0%, #FCE7F3 100%)',
+        borderBottom: `1px solid ${themeColors.border}`,
+        background: `linear-gradient(135deg, ${themeColors.primary}15 0%, ${themeColors.secondary}20 100%)`,
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
         }}>
-          <span style={{ fontSize: '28px' }}>🎙️</span>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: `${themeColors.primary}20`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <MicIcon color={themeColors.primaryDark} size={24} />
+          </div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', margin: 0 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: themeColors.text, margin: 0 }}>
               Voice Journal
             </h2>
-            <p style={{ fontSize: '13px', color: '#6B7280', margin: '2px 0 0' }}>
+            <p style={{ fontSize: '13px', color: themeColors.textMuted, margin: '2px 0 0' }}>
               Speak freely, I&apos;ll respond with my voice
             </p>
           </div>
@@ -283,21 +337,22 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
                 lineHeight: '1.6',
                 ...(m.role === 'user'
                   ? {
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                      background: `linear-gradient(135deg, ${themeColors.primary} 0%, ${themeColors.primaryDark} 100%)`,
                       color: 'white',
                       borderBottomRightRadius: '4px',
                     }
                   : {
-                      background: '#F3F4F6',
-                      color: '#1F2937',
+                      background: themeColors.cream,
+                      color: themeColors.text,
                       borderBottomLeftRadius: '4px',
+                      border: `1px solid ${themeColors.border}`,
                     }),
               }}>
                 {m.content}
               </div>
               {m.role === 'user' && (
-                <span style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>
-                  🎙️ Voice input
+                <span style={{ fontSize: '11px', color: themeColors.textMuted, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <MicIcon color={themeColors.textMuted} size={12} /> Voice input
                 </span>
               )}
             </div>
@@ -308,14 +363,14 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              color: '#6B7280',
+              color: themeColors.textMuted,
               fontSize: '14px',
             }}>
               <div style={{
                 width: '16px',
                 height: '16px',
-                border: '2px solid #E5E7EB',
-                borderTop: '2px solid #7C3AED',
+                border: `2px solid ${themeColors.border}`,
+                borderTop: `2px solid ${themeColors.primaryDark}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }} />
@@ -328,10 +383,10 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              color: '#10B981',
+              color: themeColors.success,
               fontSize: '14px',
             }}>
-              <span>🔊</span> Speaking...
+              <VolumeIcon color={themeColors.success} size={16} /> Speaking...
             </div>
           )}
         </div>
@@ -341,12 +396,12 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
       {transcription && (
         <div style={{
           padding: '12px 24px',
-          background: '#F9FAFB',
-          borderTop: '1px solid #E5E7EB',
+          background: themeColors.cream,
+          borderTop: `1px solid ${themeColors.border}`,
           fontSize: '13px',
-          color: '#6B7280',
+          color: themeColors.textMuted,
         }}>
-          <strong>Last transcription:</strong> {transcription}
+          <strong style={{ color: themeColors.text }}>Last transcription:</strong> {transcription}
         </div>
       )}
 
@@ -356,16 +411,18 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        borderTop: '1px solid #E5E7EB',
+        borderTop: `1px solid ${themeColors.border}`,
+        background: `linear-gradient(180deg, white 0%, ${themeColors.cream} 100%)`,
       }}>
         {error && (
           <div style={{
             marginBottom: '16px',
             padding: '8px 16px',
-            background: '#FEE2E2',
-            color: '#DC2626',
+            background: `${themeColors.recording}15`,
+            color: themeColors.recording,
             borderRadius: '8px',
             fontSize: '13px',
+            border: `1px solid ${themeColors.recording}30`,
           }}>
             {error}
           </div>
@@ -382,22 +439,30 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
             border: 'none',
             background: buttonStyle.background,
             color: 'white',
-            fontSize: '32px',
             cursor: isProcessing ? 'not-allowed' : 'pointer',
             transform: `scale(${buttonStyle.scale})`,
             transition: 'transform 0.1s, background 0.3s',
             boxShadow: isRecording
-              ? '0 0 0 8px rgba(239, 68, 68, 0.2)'
-              : '0 4px 16px rgba(124, 58, 237, 0.3)',
+              ? `0 0 0 8px ${themeColors.recording}30`
+              : '0 4px 16px rgba(217, 162, 153, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {isProcessing ? '⏳' : isRecording ? '⏹' : '🎙️'}
+          {isProcessing ? (
+            <LoaderIcon color="white" size={32} />
+          ) : isRecording ? (
+            <StopIcon color="white" size={32} />
+          ) : (
+            <MicIcon color="white" size={32} />
+          )}
         </button>
 
         <p style={{
           marginTop: '16px',
           fontSize: '14px',
-          color: '#6B7280',
+          color: themeColors.textMuted,
         }}>
           {isProcessing
             ? 'Processing your voice...'
@@ -421,7 +486,7 @@ export default function VoiceJournal({ onStreakUpdate }: VoiceJournalProps) {
                 style={{
                   width: '4px',
                   height: `${Math.max(4, audioLevel * 100 * (0.5 + Math.random() * 0.5))}%`,
-                  background: '#7C3AED',
+                  background: themeColors.recording,
                   borderRadius: '2px',
                   transition: 'height 0.1s',
                 }}

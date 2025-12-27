@@ -8,6 +8,22 @@ import { useWebRTC } from '@/hooks/useWebRTC';
 import { useRecording } from '@/hooks/useRecording';
 import VideoCall from '@/components/VideoCall/VideoCall';
 
+// SVG Icon Components
+const FrownIcon = ({ color = '#9CA3AF', size = 48 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M16 16s-1.5-2-4-2-4 2-4 2" />
+    <line x1="9" y1="9" x2="9.01" y2="9" />
+    <line x1="15" y1="9" x2="15.01" y2="9" />
+  </svg>
+);
+
+const ChatIcon = ({ color = 'white', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 interface SessionData {
   id: string;
   userId: string;
@@ -271,7 +287,7 @@ export default function TherapySessionPage() {
         color: 'white',
         gap: '16px',
       }}>
-        <div style={{ fontSize: '48px' }}>😕</div>
+        <FrownIcon color="#9CA3AF" size={48} />
         <div style={{ fontSize: '18px' }}>{error || 'Session not found'}</div>
         <button
           onClick={() => router.push('/therapy/sessions')}
@@ -395,9 +411,12 @@ export default function TherapySessionPage() {
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              💬 Chat
+              <ChatIcon color="white" size={14} /> Chat
             </button>
             <button
               onClick={() => setShowEndConfirm(true)}

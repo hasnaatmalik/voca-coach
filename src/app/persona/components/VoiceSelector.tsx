@@ -2,6 +2,32 @@
 
 import { useState, useEffect, useRef } from 'react';
 
+// SVG Icon Components
+const PlayIcon = ({ color = '#6B6B6B', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+);
+
+const StopIcon = ({ color = 'white', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke="none">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+  </svg>
+);
+
+// Theme colors from globals.css - wellness theme
+const THEME = {
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+  tan: '#DCC5B2',
+  rose: '#D9A299',
+  roseDark: '#C8847A',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  success: '#7AB89E',
+  error: '#E07A7A',
+};
+
 interface VoiceLabel {
   accent?: string;
   description?: string;
@@ -90,20 +116,20 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
         <div style={{
           width: '24px',
           height: '24px',
-          border: '3px solid #E5E7EB',
-          borderTop: '3px solid #7C3AED',
+          border: `3px solid ${THEME.beige}`,
+          borderTop: `3px solid ${THEME.rose}`,
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto'
         }} />
-        <p style={{ color: '#6B7280', marginTop: '8px', fontSize: '14px' }}>Loading voices...</p>
+        <p style={{ color: THEME.textMuted, marginTop: '8px', fontSize: '14px' }}>Loading voices...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#EF4444' }}>
+      <div style={{ padding: '20px', textAlign: 'center', color: THEME.error }}>
         {error}
         <button
           onClick={fetchVoices}
@@ -111,11 +137,11 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
             display: 'block',
             margin: '12px auto 0',
             padding: '8px 16px',
-            background: '#F3F4F6',
-            border: 'none',
+            background: THEME.beige,
+            border: `1px solid ${THEME.tan}`,
             borderRadius: '8px',
             cursor: 'pointer',
-            color: '#4B5563'
+            color: THEME.text
           }}
         >
           Retry
@@ -140,22 +166,25 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
         style={{
           width: '100%',
           padding: '12px 16px',
-          border: '1px solid #E5E7EB',
+          border: `1px solid ${THEME.tan}`,
           borderRadius: '10px',
           fontSize: '14px',
           marginBottom: '12px',
-          outline: 'none'
+          outline: 'none',
+          background: THEME.cream,
+          color: THEME.text,
         }}
       />
 
       <div style={{
         maxHeight: '250px',
         overflowY: 'auto',
-        border: '1px solid #E5E7EB',
-        borderRadius: '12px'
+        border: `1px solid ${THEME.tan}`,
+        borderRadius: '12px',
+        background: THEME.cream,
       }}>
         {filteredVoices.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: '#6B7280' }}>
+          <div style={{ padding: '20px', textAlign: 'center', color: THEME.textMuted }}>
             No voices found
           </div>
         ) : (
@@ -167,16 +196,16 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
                 display: 'flex',
                 alignItems: 'center',
                 padding: '12px 16px',
-                borderBottom: '1px solid #E5E7EB',
+                borderBottom: `1px solid ${THEME.tan}`,
                 cursor: 'pointer',
-                background: selectedVoiceId === voice.voice_id ? '#ECFDF5' : 'white',
+                background: selectedVoiceId === voice.voice_id ? `${THEME.rose}15` : 'transparent',
                 transition: 'background 0.2s'
               }}
             >
               <div style={{ flex: 1 }}>
                 <div style={{
                   fontWeight: '500',
-                  color: '#1F2937',
+                  color: THEME.text,
                   fontSize: '14px',
                   display: 'flex',
                   alignItems: 'center',
@@ -185,7 +214,7 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
                   {voice.name}
                   {selectedVoiceId === voice.voice_id && (
                     <span style={{
-                      background: '#7C3AED',
+                      background: THEME.rose,
                       color: 'white',
                       fontSize: '10px',
                       padding: '2px 6px',
@@ -195,7 +224,7 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', color: THEME.textMuted, marginTop: '2px' }}>
                   {getVoiceLabels(voice)}
                 </div>
               </div>
@@ -207,18 +236,19 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
                 style={{
                   width: '36px',
                   height: '36px',
-                  background: playingVoiceId === voice.voice_id ? '#7C3AED' : '#F3F4F6',
-                  border: 'none',
+                  background: playingVoiceId === voice.voice_id ? THEME.rose : THEME.beige,
+                  border: `1px solid ${playingVoiceId === voice.voice_id ? THEME.rose : THEME.tan}`,
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '16px',
-                  color: playingVoiceId === voice.voice_id ? 'white' : '#4B5563'
+                  fontSize: '14px',
+                  color: playingVoiceId === voice.voice_id ? 'white' : THEME.textMuted,
+                  transition: 'all 0.2s',
                 }}
               >
-                {playingVoiceId === voice.voice_id ? '⏹' : '▶'}
+                {playingVoiceId === voice.voice_id ? <StopIcon color="white" size={14} /> : <PlayIcon color={THEME.textMuted} size={14} />}
               </button>
             </div>
           ))
@@ -229,6 +259,13 @@ export default function VoiceSelector({ selectedVoiceId, onSelect }: VoiceSelect
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        input:focus {
+          border-color: ${THEME.rose} !important;
+          box-shadow: 0 0 0 3px ${THEME.rose}15;
+        }
+        input::placeholder {
+          color: ${THEME.textMuted};
         }
       `}</style>
     </div>

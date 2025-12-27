@@ -1,7 +1,46 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import MicrophoneInput from './MicrophoneInput';
+import { renderIconById, ICON_DEFINITIONS } from './IconPicker';
+
+// Helper to check if a string is a valid icon ID
+const isIconId = (icon: string): boolean => {
+  return ICON_DEFINITIONS.some(def => def.id === icon);
+};
+
+// Render icon - handles both icon IDs and direct ReactNode/emojis
+const renderPersonaIcon = (icon: string | ReactNode, size: number = 28): ReactNode => {
+  if (typeof icon === 'string' && isIconId(icon)) {
+    return renderIconById(icon, size);
+  }
+  return icon;
+};
+
+// SVG Icon Components
+const VolumeIcon = ({ color = '#7C3AED', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const MuteIcon = ({ color = '#6B7280', size = 18 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <line x1="23" y1="9" x2="17" y2="15" />
+    <line x1="17" y1="9" x2="23" y2="15" />
+  </svg>
+);
+
+const MicIcon = ({ color = 'currentColor', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -12,7 +51,7 @@ interface ChatMessage {
 interface Persona {
   id: string;
   name: string;
-  icon: string;
+  icon: string | ReactNode;
   voiceId?: string;
   voiceStability?: number;
   voiceSimilarity?: number;
@@ -177,12 +216,12 @@ export default function PersonaChat({ persona, onEndChat, onSaveConversation }: 
         borderBottom: '1px solid #E5E7EB'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '28px' }}>{persona.icon}</span>
+          <span style={{ fontSize: '28px', display: 'flex', alignItems: 'center' }}>{renderPersonaIcon(persona.icon, 28)}</span>
           <div>
             <div style={{ fontWeight: '600', color: '#1F2937' }}>{persona.name}</div>
             {isPlaying && (
-              <span style={{ fontSize: '12px', color: '#7C3AED' }}>
-                🔊 Speaking...
+              <span style={{ fontSize: '12px', color: '#7C3AED', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <VolumeIcon color="#7C3AED" size={14} /> Speaking...
               </span>
             )}
           </div>
@@ -206,7 +245,7 @@ export default function PersonaChat({ persona, onEndChat, onSaveConversation }: 
               gap: '4px'
             }}
           >
-            🎤 {voiceMode ? 'Voice Mode' : 'Type Mode'}
+            <MicIcon color={voiceMode ? 'white' : '#4B5563'} size={14} /> {voiceMode ? 'Voice Mode' : 'Type Mode'}
           </button>
 
           {/* Auto-play Toggle */}
@@ -223,7 +262,7 @@ export default function PersonaChat({ persona, onEndChat, onSaveConversation }: 
               fontSize: '18px'
             }}
           >
-            {autoPlay ? '🔊' : '🔇'}
+            {autoPlay ? <VolumeIcon color="#10B981" size={18} /> : <MuteIcon color="#6B7280" size={18} />}
           </button>
 
           {/* End Chat */}

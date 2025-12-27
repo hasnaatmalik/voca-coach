@@ -317,6 +317,7 @@ model ChatConversation {
   student         User      @relation("StudentConversations", fields: [studentId], references: [id], onDelete: Cascade)
   therapist       User      @relation("TherapistConversations", fields: [therapistId], references: [id], onDelete: Cascade)
   messages        ChatMessage[]
+  sessionNotes    SessionNote[]
 
   @@unique([studentId, therapistId])
 }
@@ -356,6 +357,7 @@ model ChatMessage {
 
   conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   reactions       ChatReaction[]
+  linkedNotes     SessionNote[]
 
   @@index([conversationId, createdAt])
   @@index([senderId])
@@ -644,4 +646,26 @@ model DeEscalationAchievement {
   unlockedAt  DateTime @default(now())
 
   @@index([userId])
+}
+
+// ============================================
+// SESSION NOTES FOR THERAPIST CHAT
+// ============================================
+
+model SessionNote {
+  id              String           @id @default(cuid())
+  conversationId  String
+  therapistId     String
+  content         String
+  linkedMessageId String?          // Optional reference to a specific chat message
+  category        String?          // observation, intervention, progress, homework, risk
+  isPinned        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  linkedMessage   ChatMessage?     @relation(fields: [linkedMessageId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([therapistId])
 }

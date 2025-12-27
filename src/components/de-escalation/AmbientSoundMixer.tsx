@@ -3,6 +3,82 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AMBIENT_SOUNDS, AmbientSound } from '@/types/de-escalation';
 
+// SVG Icon Components
+const MusicIcon = ({ color = '#7AAFC9', size = 20 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M9 18V5l12-2v13" />
+    <circle cx="6" cy="18" r="3" />
+    <circle cx="18" cy="16" r="3" />
+  </svg>
+);
+
+const VolumeIcon = ({ color = '#7AB89E', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const StopIcon = ({ color = 'white', size = 14 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="4" y="4" width="16" height="16" rx="2" />
+  </svg>
+);
+
+// Map sound IDs to icons
+const getSoundIcon = (soundId: string, color: string = '#6B7280') => {
+  const icons: Record<string, React.ReactNode> = {
+    'rain': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M16 13v8" /><path d="M8 13v8" /><path d="M12 15v8" />
+        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+      </svg>
+    ),
+    'forest': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M10 10v.2A3 3 0 0 1 8.9 16v0H5v0h0a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" />
+        <path d="M7 16v6" />
+        <path d="M13 19v3" />
+        <path d="M17 22v-5c0-1.5.5-3 1.5-4 1-1 1.5-2.5 1.5-4a6 6 0 0 0-12 0c0 1.5.5 3 1.5 4 1 1 1.5 2.5 1.5 4v5" />
+      </svg>
+    ),
+    'ocean': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+        <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+        <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />
+      </svg>
+    ),
+    'white-noise': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
+        <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
+        <circle cx="12" cy="12" r="2" />
+        <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
+        <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
+      </svg>
+    ),
+    'pink-noise': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M2 10c0-3.866 3.582-7 8-7s8 3.134 8 7v4c0 3.866-3.582 7-8 7s-8-3.134-8-7v-4z" />
+        <path d="M6 8v8" /><path d="M10 6v12" /><path d="M14 8v8" />
+      </svg>
+    ),
+    'brown-noise': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M3 12h4l3-9 4 18 3-9h4" />
+      </svg>
+    ),
+    'binaural-40hz': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+        <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+        <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+      </svg>
+    ),
+  };
+  return icons[soundId] || <MusicIcon color={color} size={18} />;
+};
+
 interface AmbientSoundMixerProps {
   onVolumeChange?: (volume: number) => void;
   defaultSound?: string;
@@ -250,7 +326,7 @@ export default function AmbientSoundMixer({
           marginBottom: '10px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>🎵</span>
+            <MusicIcon color="#7AAFC9" size={16} />
             <span style={{ fontSize: '13px', fontWeight: '600', color: textColor }}>
               Ambient
             </span>
@@ -262,7 +338,7 @@ export default function AmbientSoundMixer({
             fontSize: '11px',
             color: mutedColor,
           }}>
-            <span>🔊</span>
+            <VolumeIcon color="#7AB89E" size={14} />
             <input
               type="range"
               min="0"
@@ -295,7 +371,7 @@ export default function AmbientSoundMixer({
                 gap: '4px',
               }}
             >
-              <span>{sound.icon}</span>
+              {getSoundIcon(sound.id, activeSound === sound.id && isPlaying ? 'white' : textColor)}
               {sound.name.split(' ')[0]}
             </button>
           ))}
@@ -319,7 +395,7 @@ export default function AmbientSoundMixer({
         marginBottom: '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '20px' }}>🎵</span>
+          <MusicIcon color="#7AAFC9" size={20} />
           <h3 style={{
             fontSize: '16px',
             fontWeight: '600',
@@ -416,7 +492,7 @@ export default function AmbientSoundMixer({
                   transition: 'all 0.2s ease',
                 }}
               >
-                <span style={{ fontSize: '18px' }}>{sound.icon}</span>
+                {getSoundIcon(sound.id, activeSound === sound.id && isPlaying ? 'white' : textColor)}
                 <span>{sound.name}</span>
               </button>
             ))}
@@ -456,7 +532,7 @@ export default function AmbientSoundMixer({
             gap: '8px',
           }}
         >
-          <span>⏹️</span>
+          <StopIcon color="white" size={14} />
           Stop Sound
         </button>
       )}

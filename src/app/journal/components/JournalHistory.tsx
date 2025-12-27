@@ -4,6 +4,54 @@ import { useState, useEffect, useCallback } from 'react';
 import { JournalEntry as JournalEntryType, Pagination } from '../types';
 import JournalEntry from './JournalEntry';
 
+// Theme colors
+const themeColors = {
+  primary: '#D9A299',
+  primaryDark: '#C08B82',
+  secondary: '#DCC5B2',
+  border: '#DCC5B2',
+  text: '#2D2D2D',
+  textMuted: '#6B6B6B',
+  cream: '#FAF7F3',
+  beige: '#F0E4D3',
+};
+
+// SVG Icon Components
+const BookIcon = ({ color = themeColors.primaryDark, size = 48 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    <path d="M8 7h8M8 11h6" />
+  </svg>
+);
+
+const ListIcon = ({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
+
+const CalendarIcon = ({ color = 'currentColor', size = 16 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const SearchIcon = ({ color = themeColors.textMuted, size = 18 }: { color?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
 interface JournalHistoryProps {
   onEntrySelect?: (entry: JournalEntryType) => void;
 }
@@ -91,13 +139,15 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
     <div style={{
       background: 'white',
       borderRadius: '20px',
-      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.08)',
+      boxShadow: '0 4px 16px rgba(217, 162, 153, 0.12)',
+      border: `1px solid ${themeColors.border}`,
       overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
         padding: '20px 24px',
-        borderBottom: '1px solid #E5E7EB',
+        borderBottom: `1px solid ${themeColors.border}`,
+        background: `linear-gradient(135deg, ${themeColors.primary}15 0%, ${themeColors.secondary}20 100%)`,
       }}>
         <div style={{
           display: 'flex',
@@ -106,10 +156,10 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
           marginBottom: '16px',
         }}>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1F2937', margin: 0 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: themeColors.text, margin: 0 }}>
               Journal History
             </h2>
-            <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0' }}>
+            <p style={{ fontSize: '13px', color: themeColors.textMuted, margin: '4px 0 0' }}>
               {pagination?.total || 0} entries
             </p>
           </div>
@@ -117,7 +167,7 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
           {/* View Toggle */}
           <div style={{
             display: 'flex',
-            background: '#F3F4F6',
+            background: themeColors.beige,
             borderRadius: '8px',
             padding: '4px',
           }}>
@@ -129,11 +179,15 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '13px',
-                color: viewMode === 'list' ? '#7C3AED' : '#6B7280',
+                color: viewMode === 'list' ? themeColors.primaryDark : themeColors.textMuted,
                 cursor: 'pointer',
                 fontWeight: viewMode === 'list' ? '600' : '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              <ListIcon color={viewMode === 'list' ? themeColors.primaryDark : themeColors.textMuted} size={14} />
               List
             </button>
             <button
@@ -144,11 +198,15 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '13px',
-                color: viewMode === 'calendar' ? '#7C3AED' : '#6B7280',
+                color: viewMode === 'calendar' ? themeColors.primaryDark : themeColors.textMuted,
                 cursor: 'pointer',
                 fontWeight: viewMode === 'calendar' ? '600' : '400',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              <CalendarIcon color={viewMode === 'calendar' ? themeColors.primaryDark : themeColors.textMuted} size={14} />
               Calendar
             </button>
           </div>
@@ -161,20 +219,32 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
           flexWrap: 'wrap',
         }}>
           {/* Search */}
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search entries..."
-            style={{
-              flex: 1,
-              minWidth: '200px',
-              padding: '10px 14px',
-              border: '1px solid #E5E7EB',
-              borderRadius: '8px',
-              fontSize: '14px',
-              outline: 'none',
-            }}
-          />
+          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+            <div style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+            }}>
+              <SearchIcon />
+            </div>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search entries..."
+              style={{
+                width: '100%',
+                padding: '10px 14px 10px 38px',
+                border: `1px solid ${themeColors.border}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                outline: 'none',
+                color: themeColors.text,
+                background: 'white',
+              }}
+            />
+          </div>
 
           {/* Date From */}
           <input
@@ -183,10 +253,12 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
             onChange={(e) => setDateFrom(e.target.value)}
             style={{
               padding: '10px 14px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               borderRadius: '8px',
               fontSize: '14px',
               outline: 'none',
+              color: themeColors.text,
+              background: 'white',
             }}
           />
 
@@ -197,10 +269,12 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
             onChange={(e) => setDateTo(e.target.value)}
             style={{
               padding: '10px 14px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               borderRadius: '8px',
               fontSize: '14px',
               outline: 'none',
+              color: themeColors.text,
+              background: 'white',
             }}
           />
 
@@ -210,11 +284,13 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
             onChange={(e) => setMoodFilter(e.target.value)}
             style={{
               padding: '10px 14px',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${themeColors.border}`,
               borderRadius: '8px',
               fontSize: '14px',
               outline: 'none',
               background: 'white',
+              color: themeColors.text,
+              cursor: 'pointer',
             }}
           >
             <option value="">All Moods</option>
@@ -241,8 +317,8 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
             <div style={{
               width: '40px',
               height: '40px',
-              border: '3px solid #E5E7EB',
-              borderTop: '3px solid #7C3AED',
+              border: `3px solid ${themeColors.border}`,
+              borderTop: `3px solid ${themeColors.primaryDark}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
             }} />
@@ -251,11 +327,22 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
           <div style={{
             textAlign: 'center',
             padding: '48px',
-            color: '#6B7280',
+            color: themeColors.textMuted,
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📔</div>
-            <p>No entries found</p>
-            <p style={{ fontSize: '14px' }}>Start journaling to see your history here</p>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
+              background: `${themeColors.primary}15`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}>
+              <BookIcon />
+            </div>
+            <p style={{ color: themeColors.text, fontWeight: '500', margin: '0 0 8px' }}>No entries found</p>
+            <p style={{ fontSize: '14px', margin: 0 }}>Start journaling to see your history here</p>
           </div>
         ) : viewMode === 'list' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -264,10 +351,10 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
                 <h3 style={{
                   fontSize: '14px',
                   fontWeight: '600',
-                  color: '#6B7280',
+                  color: themeColors.primaryDark,
                   marginBottom: '12px',
                   paddingBottom: '8px',
-                  borderBottom: '1px solid #F3F4F6',
+                  borderBottom: `1px solid ${themeColors.border}`,
                 }}>
                   {date}
                 </h3>
@@ -298,8 +385,10 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
                   textAlign: 'center',
                   fontSize: '12px',
                   fontWeight: '600',
-                  color: '#6B7280',
+                  color: themeColors.primaryDark,
                   padding: '8px',
+                  background: themeColors.cream,
+                  borderRadius: '6px',
                 }}
               >
                 {day}
@@ -321,12 +410,14 @@ export default function JournalHistory({ onEntrySelect }: JournalHistoryProps) {
               disabled={isLoading}
               style={{
                 padding: '12px 24px',
-                background: '#F3F4F6',
-                border: 'none',
+                background: themeColors.beige,
+                border: `1px solid ${themeColors.border}`,
                 borderRadius: '12px',
                 fontSize: '14px',
-                color: '#4B5563',
-                cursor: 'pointer',
+                color: themeColors.text,
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                fontWeight: '500',
+                transition: 'all 0.2s ease',
               }}
             >
               {isLoading ? 'Loading...' : 'Load More'}
