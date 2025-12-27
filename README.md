@@ -4,7 +4,7 @@
 
 Voca-Coach is a comprehensive therapy and communication coaching application that helps users improve their vocal delivery, emotional awareness, and conversation skills through real-time AI feedback, biomarker tracking, and practice scenarios.
 
-![Voca-Coach](./src/app/voca-coach-logo.png)
+![Voca-Coach](./public/voca-coach-icon.svg)
 
 ---
 
@@ -123,6 +123,7 @@ Robust authentication and session management.
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + Custom CSS
+- **Animation**: Framer Motion for smooth UI transitions
 - **UI/UX**: Glassmorphism design with soft gradient backgrounds
 
 ### Backend
@@ -216,7 +217,8 @@ voca-coach/
 │   ├── schema.prisma          # Database schema
 │   └── seed.ts                # Admin user seed script
 ├── public/
-│   └── voca-coach-logo.png    # App logo
+│   ├── voca-coach-logo.png    # Original logo (legacy)
+│   └── voca-coach-icon.svg    # App logo icon (SVG)
 ├── src/
 │   │   ├── app/
 │   │   │   ├── api/               # API routes

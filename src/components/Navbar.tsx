@@ -239,13 +239,12 @@ const AnimatedLogo: React.FC<{
           style={{ borderRadius: '12px' }}
         >
           <Image
-            src="/voca-coach-logo.png"
+            src="/voca-coach-icon.svg"
             alt="Voca-Coach Logo"
             width={36}
             height={36}
             style={{
-              borderRadius: '12px',
-              filter: 'sepia(1) saturate(2) hue-rotate(-25deg) brightness(0.95)',
+              borderRadius: '8px',
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;

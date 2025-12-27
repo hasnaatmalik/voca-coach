@@ -216,32 +216,24 @@ export default function AvailableTherapistsModal({ isOpen, onClose }: AvailableT
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
-                      onClick={async () => {
-                        // Create conversation and redirect to chat
-                        try {
-                          const res = await fetch('/api/chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ therapistId: therapist.id }),
-                          });
-                          if (res.ok) {
-                            window.location.href = `/chat?therapist=${therapist.id}`;
-                          }
-                        } catch (error) {
-                          console.error('Failed to start chat:', error);
-                        }
+                      onClick={() => {
+                        // Redirect to chat page, let it handle conversation creation
+                        window.location.href = `/chat?therapist=${therapist.id}`;
                       }}
                       style={{
                         flex: 1,
                         padding: '12px',
-                        background: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                        background: 'linear-gradient(135deg, #D9A299 0%, #C8847A 100%)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '12px',
                         fontWeight: '600',
                         fontSize: '14px',
                         cursor: 'pointer',
+                        transition: 'transform 0.2s ease',
                       }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
                       💬 Chat Now
                     </button>
@@ -250,8 +242,8 @@ export default function AvailableTherapistsModal({ isOpen, onClose }: AvailableT
                       style={{
                         flex: 1,
                         padding: '12px',
-                        background: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-                        color: 'white',
+                        background: 'linear-gradient(135deg, #DCC5B2 0%, #D9A299 100%)',
+                        color: '#2D2D2D',
                         borderRadius: '12px',
                         fontWeight: '600',
                         textAlign: 'center',

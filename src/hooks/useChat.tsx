@@ -357,11 +357,14 @@ export function useChat({ userId, onCrisisAlert, onNewMessage }: UseChatOptions)
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
+    console.log('[useChat] fetchConversations called');
     setIsLoading(true);
     try {
       const res = await fetch('/api/chat');
+      console.log('[useChat] fetchConversations response status:', res.status);
       if (res.ok) {
         const data = await res.json();
+        console.log('[useChat] fetchConversations data:', data);
         const convos: ChatConversation[] = data.conversations.map((c: {
           id: string;
           otherUser: { id: string; name: string; isOnline?: boolean; lastActiveAt?: string };
@@ -387,6 +390,7 @@ export function useChat({ userId, onCrisisAlert, onNewMessage }: UseChatOptions)
           updatedAt: c.updatedAt,
           createdAt: c.createdAt
         }));
+        console.log('[useChat] Setting conversations:', convos);
         setConversations(convos);
 
         // Request presence for all other users
@@ -484,6 +488,18 @@ export function useChat({ userId, onCrisisAlert, onNewMessage }: UseChatOptions)
       fetchMessages(conversationId);
     }
   }, [fetchMessages]);
+
+  // Polling fallback: Refetch messages periodically (always run for reliability)
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    const pollInterval = setInterval(() => {
+      console.log('[useChat] Polling messages');
+      fetchMessages(selectedConversationId);
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [selectedConversationId, fetchMessages]);
 
   // Send text message
   const sendMessage = useCallback((content: string, replyToId?: string) => {
@@ -629,17 +645,23 @@ export function useChat({ userId, onCrisisAlert, onNewMessage }: UseChatOptions)
 
   // Start new conversation
   const startConversation = useCallback(async (therapistId: string): Promise<string | null> => {
+    console.log('[useChat] startConversation called with therapistId:', therapistId);
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ therapistId })
       });
+      console.log('[useChat] startConversation response status:', res.status);
 
       if (res.ok) {
         const data = await res.json();
+        console.log('[useChat] startConversation response data:', data);
         await fetchConversations();
         return data.conversation.id;
+      } else {
+        const errorData = await res.json();
+        console.error('[useChat] startConversation error:', errorData);
       }
     } catch (err) {
       console.error('Failed to start conversation:', err);

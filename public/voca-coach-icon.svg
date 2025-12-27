@@ -1,0 +1,14 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D9A299;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C8847A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Speech bubble shape -->
+  <path d="M28 10C28 5.58172 24.4183 2 20 2H10C5.58172 2 2 5.58172 2 10V18C2 22.4183 5.58172 26 10 26H14L18 31L22 26H20C24.4183 26 28 22.4183 28 18V10Z" fill="url(#logoGradient)"/>
+  <!-- Sound waves inside -->
+  <path d="M12 14C12 13.4477 12.4477 13 13 13C13.5523 13 14 13.4477 14 14V16C14 16.5523 13.5523 17 13 17C12.4477 17 12 16.5523 12 16V14Z" fill="white"/>
+  <path d="M16 11C16 10.4477 16.4477 10 17 10C17.5523 10 18 10.4477 18 11V19C18 19.5523 17.5523 20 17 20C16.4477 20 16 19.5523 16 19V11Z" fill="white"/>
+  <path d="M20 13C20 12.4477 20.4477 12 21 12C21.5523 12 22 12.4477 22 13V17C22 17.5523 21.5523 18 21 18C20.4477 18 20 17.5523 20 17V13Z" fill="white"/>
+</svg>

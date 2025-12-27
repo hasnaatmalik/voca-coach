@@ -70,28 +70,54 @@ function StudentChatContent() {
   // Fetch conversations on mount
   useEffect(() => {
     if (user) {
+      console.log('[Chat] Fetching conversations for user:', user.id);
       fetchConversations();
     }
   }, [user, fetchConversations]);
 
-  // Handle therapist ID from URL
+  // Handle therapist ID from URL - improved to avoid race conditions
   useEffect(() => {
-    if (therapistId && conversations.length > 0) {
+    console.log('[Chat] Therapist param effect:', { therapistId, isLoading, conversationsCount: conversations.length });
+    if (!therapistId || isLoading) return;
+    
+    const handleTherapistParam = async () => {
+      console.log('[Chat] Handling therapist param:', therapistId);
+      // Check if conversation already exists
       const existing = conversations.find(c => c.otherUser.id === therapistId);
+      console.log('[Chat] Existing conversation:', existing);
       if (existing) {
+        console.log('[Chat] Selecting existing conversation:', existing.id);
         selectConversation(existing.id);
       } else {
-        startConversation(therapistId).then(convId => {
-          if (convId) selectConversation(convId);
-        });
+        // Create new conversation
+        console.log('[Chat] Creating new conversation with therapist:', therapistId);
+        const convId = await startConversation(therapistId);
+        console.log('[Chat] Created conversation ID:', convId);
+        if (convId) {
+          selectConversation(convId);
+        }
       }
-    }
-  }, [therapistId, conversations, selectConversation, startConversation]);
+    };
+    
+    handleTherapistParam();
+  }, [therapistId, conversations.length, isLoading, selectConversation, startConversation]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Polling fallback: Fetch new messages periodically (always run for reliability)
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    const pollInterval = setInterval(() => {
+      console.log('[Chat] Polling for new messages');
+      fetchConversations();
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [selectedConversationId, fetchConversations]);
 
   // Mark messages as read when viewing
   useEffect(() => {

@@ -8,6 +8,10 @@ const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'
 export const metadata: Metadata = {
   title: 'Voca-Coach',
   description: 'AI-powered voice wellness companion for better conversations.',
+  icons: {
+    icon: '/voca-coach-icon.svg',
+    apple: '/voca-coach-icon.svg',
+  },
 };
 
 export default function RootLayout({

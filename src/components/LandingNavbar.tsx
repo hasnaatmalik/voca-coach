@@ -160,11 +160,11 @@ const AnimatedLogo: React.FC<{
           style={{ borderRadius: '12px' }}
         >
           <Image
-            src="/voca-coach-logo.png"
+            src="/voca-coach-icon.svg"
             alt="Voca-Coach Logo"
             width={36}
             height={36}
-            style={{ borderRadius: '12px' }}
+            style={{ borderRadius: '8px' }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
