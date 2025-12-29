@@ -16,7 +16,7 @@ import type {
 import { ROOM_NAMES } from '../src/lib/socket-events';
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'voca-coach-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'voco-coach-secret-key';
 
 // In-memory presence store (for quick lookups)
 const presenceStore = new Map<string, PresenceData>();

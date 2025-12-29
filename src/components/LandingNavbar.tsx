@@ -161,7 +161,7 @@ const AnimatedLogo: React.FC<{
         >
           <Image
             src="/voca-coach-icon.svg"
-            alt="Voca-Coach Logo"
+            alt="Voco-Coach Logo"
             width={36}
             height={36}
             style={{ borderRadius: '8px' }}
@@ -174,7 +174,7 @@ const AnimatedLogo: React.FC<{
 
         {/* Wordmark with staggered letter animation */}
         <span style={{ display: 'flex', fontSize: '18px', fontWeight: '700', letterSpacing: '-0.02em' }}>
-          {'Voca-Coach'.split('').map((letter, i) => (
+          {'Voco-Coach'.split('').map((letter, i) => (
             <motion.span
               key={i}
               animate={{ color: isHovered ? colors.accent : colors.text }}

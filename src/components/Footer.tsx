@@ -430,7 +430,7 @@ const BackToTopButton: React.FC = () => {
 };
 
 const Footer: React.FC<FooterProps> = ({
-  companyName = 'Voca-Coach',
+  companyName = 'Voco-Coach',
   tagline = 'Empowering your wellness journey with personalized coaching, AI-driven insights, and a supportive community.',
   logoSrc,
   socialLinks = defaultSocialLinks,

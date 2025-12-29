@@ -811,7 +811,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
                 <line x1="12" x2="12" y1="19" y2="22"/>
               </svg>
             </div>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: colors.text }}>Voca-Coach</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: colors.text }}>Voco-Coach</span>
           </Link>
         </motion.div>
 

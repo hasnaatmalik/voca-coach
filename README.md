@@ -1,10 +1,10 @@
-# Voca-Coach
+# Voco-Coach
 
 **AI-Powered Voice & Emotional Intelligence Coaching Platform**
 
-Voca-Coach is a comprehensive therapy and communication coaching application that helps users improve their vocal delivery, emotional awareness, and conversation skills through real-time AI feedback, biomarker tracking, and practice scenarios.
+Voco-Coach is a comprehensive therapy and communication coaching application that helps users improve their vocal delivery, emotional awareness, and conversation skills through real-time AI feedback, biomarker tracking, and practice scenarios.
 
-![Voca-Coach](./public/voca-coach-icon.svg)
+![Voco-Coach](./public/voca-coach-icon.svg)
 
 ---
 
@@ -159,8 +159,8 @@ Robust authentication and session management.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/cemeiq12/voca-coach
-   cd voca-coach
+   git clone https://github.com/cemeiq12/voco-coach
+   cd voco-coach
    ```
 
 2. **Install dependencies**
@@ -196,7 +196,7 @@ Robust authentication and session management.
    npx tsx prisma/seed.ts
    ```
    Default admin credentials:
-   - Email: `admin@vocacoach.com`
+   - Email: `admin@vococoach.org`
    - Password: `admin123`
 
 6. **Run the development server**
@@ -212,7 +212,7 @@ Robust authentication and session management.
 ## 📁 Project Structure
 
 ```
-voca-coach/
+voco-coach/
 ├── prisma/
 │   ├── schema.prisma          # Database schema
 │   └── seed.ts                # Admin user seed script
@@ -287,7 +287,7 @@ voca-coach/
 
 ## 🎨 Design Philosophy
 
-Voca-Coach features a modern, therapy-oriented design with a cohesive branding system:
+Voco-Coach features a modern, therapy-oriented design with a cohesive branding system:
 
 ### Color Palette
 - **Primary Blue**: `#38B8FF` - Vibrant, energetic blue for primary actions

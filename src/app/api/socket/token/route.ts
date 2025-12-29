@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'voca-coach-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'voco-coach-secret-key';
 
 // Generate a token for socket authentication
 // This endpoint exchanges the httpOnly cookie auth for a token the client can use

@@ -231,7 +231,7 @@ export default function Home() {
         badge={{ icon: <span>✨</span>, text: 'AI-Powered Coaching' }}
         headline="Transform Your Voice, Elevate Your Impact"
         highlightedWords={['Voice', 'Impact']}
-        subheadline="Voca-Coach empowers therapists, executives, and students to master communication through AI-driven feedback, stress management, and personalized coaching."
+        subheadline="Voco-Coach empowers therapists, executives, and students to master communication through AI-driven feedback, stress management, and personalized coaching."
         primaryCTA={{ label: 'Start Free Trial', href: '/signup' }}
         visualVariant="cards"
       />
@@ -522,7 +522,7 @@ export default function Home() {
                 Built for every communicator
               </h2>
               <p style={{ fontSize: '18px', color: '#6B6B6B', maxWidth: '560px', margin: '16px auto 0', lineHeight: '1.7' }}>
-                Whether you&apos;re guiding others or finding your own voice, Voca-Coach adapts to your needs.
+                Whether you&apos;re guiding others or finding your own voice, Voco-Coach adapts to your needs.
               </p>
             </div>
           </AnimatedSection>
@@ -660,7 +660,7 @@ export default function Home() {
                 lineHeight: '1.7',
               }}
             >
-              Join thousands of professionals who have elevated their communication skills with Voca-Coach.
+              Join thousands of professionals who have elevated their communication skills with Voco-Coach.
             </p>
 
             {/* Email Signup Form */}
@@ -754,7 +754,7 @@ export default function Home() {
 
       {/* ========== FOOTER ========== */}
       <Footer
-        companyName="Voca-Coach"
+        companyName="Voco-Coach"
         tagline="Empowering your wellness journey with personalized coaching, AI-driven insights, and a supportive community."
         showNewsletter={true}
         onNewsletterSubmit={(email) => console.log('Newsletter subscription:', email)}

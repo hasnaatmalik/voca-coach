@@ -11,7 +11,7 @@ interface UseThemeReturn {
   toggleTheme: () => void;
 }
 
-const STORAGE_KEY = 'voca-coach-theme';
+const STORAGE_KEY = 'voco-coach-theme';
 
 function getSystemTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
