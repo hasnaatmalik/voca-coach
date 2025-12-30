@@ -6,9 +6,17 @@ interface ChatHeaderProps {
   name: string;
   isOnline: boolean;
   lastActiveAt?: string;
+  onVideoCall?: () => void;
+  isVideoCallEnabled?: boolean;
 }
 
-export default function ChatHeader({ name, isOnline, lastActiveAt }: ChatHeaderProps) {
+export default function ChatHeader({ 
+  name, 
+  isOnline, 
+  lastActiveAt, 
+  onVideoCall,
+  isVideoCallEnabled = true,
+}: ChatHeaderProps) {
   const formatLastSeen = (dateStr?: string) => {
     if (!dateStr) return 'Offline';
     const date = new Date(dateStr);
@@ -21,6 +29,8 @@ export default function ChatHeader({ name, isOnline, lastActiveAt }: ChatHeaderP
     if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
     return date.toLocaleDateString();
   };
+
+  const canCall = isOnline && isVideoCallEnabled && onVideoCall;
 
   return (
     <motion.div
@@ -106,6 +116,37 @@ export default function ChatHeader({ name, isOnline, lastActiveAt }: ChatHeaderP
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '8px' }}>
+        {/* Video Call Button */}
+        {onVideoCall && (
+          <motion.button
+            whileHover={canCall ? { scale: 1.05 } : {}}
+            whileTap={canCall ? { scale: 0.95 } : {}}
+            onClick={canCall ? onVideoCall : undefined}
+            disabled={!canCall}
+            style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              border: 'none',
+              background: canCall
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : '#e5e5e5',
+              color: canCall ? 'white' : '#999',
+              cursor: canCall ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: canCall ? '0 4px 15px rgba(102, 126, 234, 0.3)' : 'none',
+            }}
+            title={!isOnline ? 'User is offline' : 'Start video call'}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="23 7 16 12 23 17 23 7" />
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+            </svg>
+          </motion.button>
+        )}
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

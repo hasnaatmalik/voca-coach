@@ -5,9 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
+import { useVideoCall } from '@/hooks/useVideoCall';
 import Navbar from '@/components/Navbar';
 import MessageBubble from '@/components/chat/MessageBubble';
 import TypingIndicator from '@/components/chat/TypingIndicator';
+import { VideoCallModal } from '@/components/chat/VideoCallModal';
+import { IncomingCallModal } from '@/components/chat/IncomingCallModal';
 import {
   ConversationList,
   ChatHeader,
@@ -58,6 +61,17 @@ function StudentChatContent() {
         // Could add sound notification here
       }
     }
+  });
+
+  // Initialize video call
+  const videoCall = useVideoCall({
+    conversationId: selectedConversationId,
+    userId: user?.id || '',
+    userName: user?.name || '',
+    isTherapist: user?.isTherapist || false,
+    onCallEnded: (duration) => {
+      console.log('[VideoCall] Call ended, duration:', duration);
+    },
   });
 
   // Redirect if not authenticated
@@ -227,6 +241,31 @@ function StudentChatContent() {
         onClose={() => setShowCrisisAlert(null)}
       />
 
+      {/* Video Call Modal */}
+      <VideoCallModal
+        isOpen={videoCall.isCallActive && videoCall.status !== 'incoming'}
+        status={videoCall.status}
+        localStream={videoCall.localStream}
+        remoteStream={videoCall.remoteStream}
+        participant={videoCall.participant}
+        duration={videoCall.duration}
+        isMuted={videoCall.isMuted}
+        isVideoOff={videoCall.isVideoOff}
+        isScreenSharing={videoCall.isScreenSharing}
+        onToggleMute={videoCall.toggleMute}
+        onToggleVideo={videoCall.toggleVideo}
+        onToggleScreenShare={videoCall.toggleScreenShare}
+        onEndCall={videoCall.endCall}
+      />
+
+      {/* Incoming Call Modal */}
+      <IncomingCallModal
+        isOpen={videoCall.status === 'incoming'}
+        caller={videoCall.participant}
+        onAccept={videoCall.acceptCall}
+        onDecline={videoCall.declineCall}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -274,6 +313,12 @@ function StudentChatContent() {
                 name={selectedConversation.otherUser.name}
                 isOnline={selectedConversation.otherUser.isOnline}
                 lastActiveAt={selectedConversation.otherUser.lastActiveAt}
+                onVideoCall={() => videoCall.initiateCall(
+                  selectedConversation.otherUser.id,
+                  selectedConversation.otherUser.name,
+                  true // otherUser is therapist in student view
+                )}
+                isVideoCallEnabled={!videoCall.isCallActive}
               />
 
               {/* Messages Area */}
