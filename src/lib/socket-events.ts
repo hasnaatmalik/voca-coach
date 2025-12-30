@@ -103,6 +103,19 @@ export interface ServerToClientEvents {
   'session:recording-started': (data: { sessionId: string }) => void;
   'session:recording-stopped': (data: { sessionId: string }) => void;
 
+  // Video Call events
+  'video-call:incoming': (data: {
+    callId: string;
+    callerId: string;
+    callerName: string;
+    callerIsTherapist: boolean;
+    conversationId: string;
+  }) => void;
+  'video-call:accepted': (data: { callId: string }) => void;
+  'video-call:declined': (data: { callId: string }) => void;
+  'video-call:ended': (data: { callId: string }) => void;
+  'video-call:failed': (data: { callId: string; reason: string }) => void;
+
   // Connection
   'connect_error': (error: Error) => void;
 }
@@ -172,6 +185,30 @@ export interface ClientToServerEvents {
   'session:end': (sessionId: string) => void;
   'session:start-recording': (sessionId: string) => void;
   'session:stop-recording': (sessionId: string) => void;
+
+  // Video Call controls
+  'video-call:initiate': (data: {
+    conversationId: string;
+    callId: string;
+    callerId: string;
+    callerName: string;
+    callerIsTherapist: boolean;
+    receiverId: string;
+  }) => void;
+  'video-call:accept': (data: {
+    callId: string;
+    accepterId: string;
+    accepterName: string;
+  }) => void;
+  'video-call:decline': (data: {
+    callId: string;
+    declinerId: string;
+  }) => void;
+  'video-call:end': (data: {
+    callId: string;
+    endedBy: string;
+  }) => void;
+  'video-call:timeout': (data: { callId: string }) => void;
 }
 
 // Inter-server events (for internal use)

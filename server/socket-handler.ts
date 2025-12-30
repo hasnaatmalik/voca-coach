@@ -699,6 +699,84 @@ export function setupSocketHandlers(io: TypedIO) {
     });
 
     // =====================================
+    // VIDEO CALL EVENTS
+    // =====================================
+
+    socket.on('video-call:initiate', (data: {
+      conversationId: string;
+      callId: string;
+      callerId: string;
+      callerName: string;
+      callerIsTherapist: boolean;
+      receiverId: string;
+    }) => {
+      console.log(`[VideoCall] ${data.callerName} initiating call to ${data.receiverId}`);
+      
+      // Send incoming call notification to receiver
+      io.to(ROOM_NAMES.user(data.receiverId)).emit('video-call:incoming', {
+        callId: data.callId,
+        callerId: data.callerId,
+        callerName: data.callerName,
+        callerIsTherapist: data.callerIsTherapist,
+        conversationId: data.conversationId,
+      });
+    });
+
+    socket.on('video-call:accept', (data: {
+      callId: string;
+      accepterId: string;
+      accepterName: string;
+    }) => {
+      console.log(`[VideoCall] ${data.accepterName} accepted call ${data.callId}`);
+      
+      // Notify all users in this call session that the call was accepted
+      io.to(ROOM_NAMES.session(data.callId)).emit('video-call:accepted', {
+        callId: data.callId,
+      });
+      
+      // Also emit to the caller directly via conversation room
+      socket.broadcast.emit('video-call:accepted', {
+        callId: data.callId,
+      });
+    });
+
+    socket.on('video-call:decline', (data: {
+      callId: string;
+      declinerId: string;
+    }) => {
+      console.log(`[VideoCall] User ${data.declinerId} declined call ${data.callId}`);
+      
+      // Notify caller that the call was declined
+      socket.broadcast.emit('video-call:declined', {
+        callId: data.callId,
+      });
+    });
+
+    socket.on('video-call:end', (data: {
+      callId: string;
+      endedBy: string;
+    }) => {
+      console.log(`[VideoCall] Call ${data.callId} ended by ${data.endedBy}`);
+      
+      // Notify other participants that the call ended
+      io.to(ROOM_NAMES.session(data.callId)).emit('video-call:ended', {
+        callId: data.callId,
+      });
+      socket.broadcast.emit('video-call:ended', {
+        callId: data.callId,
+      });
+    });
+
+    socket.on('video-call:timeout', (data: { callId: string }) => {
+      console.log(`[VideoCall] Call ${data.callId} timed out`);
+      
+      // Notify all that the call was missed
+      socket.broadcast.emit('video-call:ended', {
+        callId: data.callId,
+      });
+    });
+
+    // =====================================
     // DISCONNECT
     // =====================================
 
