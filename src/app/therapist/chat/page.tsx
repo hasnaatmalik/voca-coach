@@ -4,8 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useSocket } from '@/hooks/useSocket';
+import { useVideoCall } from '@/hooks/useVideoCall';
 import RoleGuard from '@/components/RoleGuard';
 import Navbar from '@/components/Navbar';
+import { VideoCallModal } from '@/components/chat/VideoCallModal';
+import { IncomingCallModal } from '@/components/chat/IncomingCallModal';
 
 // SVG Icon Components
 const ChatIcon = ({ color = '#D9A299', size = 20 }: { color?: string; size?: number }) => (
@@ -46,6 +50,7 @@ interface Conversation {
 export default function TherapistChatPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { isConnected, isConnecting, connect } = useSocket();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,6 +58,37 @@ export default function TherapistChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Video call
+  const videoCall = useVideoCall({
+    conversationId: selectedConversation?.id || null,
+    userId: user?.id || '',
+    userName: user?.name || '',
+    isTherapist: true,
+    onCallEnded: (duration) => {
+      console.log('[VideoCall] Call ended, duration:', duration);
+    },
+  });
+
+  // Initialize socket connection for video calls
+  useEffect(() => {
+    const initSocket = async () => {
+      if (isConnected || isConnecting) return;
+
+      try {
+        const res = await fetch('/api/socket/token');
+        if (res.ok) {
+          const { token } = await res.json();
+          await connect(token);
+          console.log('[TherapistChat] Socket connected');
+        }
+      } catch (err) {
+        console.error('[TherapistChat] Failed to initialize socket:', err);
+      }
+    };
+
+    initSocket();
+  }, [connect, isConnected, isConnecting]);
 
   useEffect(() => {
     fetchConversations();
@@ -147,6 +183,30 @@ export default function TherapistChatPage() {
           />
         )}
 
+        {/* Video Call Modal */}
+        <VideoCallModal
+          isOpen={videoCall.isCallActive && videoCall.status !== 'incoming'}
+          status={videoCall.status}
+          localStream={videoCall.localStream}
+          remoteStream={videoCall.remoteStream}
+          participant={videoCall.participant}
+          duration={videoCall.duration}
+          isMuted={videoCall.isMuted}
+          isVideoOff={videoCall.isVideoOff}
+          isScreenSharing={videoCall.isScreenSharing}
+          onToggleMute={videoCall.toggleMute}
+          onToggleVideo={videoCall.toggleVideo}
+          onToggleScreenShare={videoCall.toggleScreenShare}
+          onEndCall={videoCall.endCall}
+        />
+
+        {/* Incoming Call Modal */}
+        <IncomingCallModal
+          isOpen={videoCall.status === 'incoming'}
+          caller={videoCall.participant}
+          onAccept={videoCall.acceptCall}
+          onDecline={videoCall.declineCall}
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -349,6 +409,40 @@ export default function TherapistChatPage() {
                     </h3>
                     <p style={{ fontSize: '13px', color: '#6B6B6B' }}>Student</p>
                   </div>
+
+                  {/* Video Call Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => videoCall.initiateCall(
+                      selectedConversation.otherUser?.id || '',
+                      selectedConversation.otherUser?.name || 'Unknown',
+                      false
+                    )}
+                    disabled={videoCall.isCallActive}
+                    style={{
+                      marginLeft: 'auto',
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: videoCall.isCallActive
+                        ? '#e5e5e5'
+                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: videoCall.isCallActive ? '#999' : 'white',
+                      cursor: videoCall.isCallActive ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: videoCall.isCallActive ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.3)',
+                    }}
+                    title="Start video call"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="23 7 16 12 23 17 23 7" />
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                    </svg>
+                  </motion.button>
                 </motion.div>
 
                 {/* Messages */}
