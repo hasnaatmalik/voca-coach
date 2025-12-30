@@ -19,6 +19,7 @@
     "@stripe/stripe-js": "^8.6.0",
     "@types/pdfkit": "^0.17.4",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
     "framer-motion": "^12.23.26",
     "jsonwebtoken": "^9.0.3",
     "next": "16.0.10",
