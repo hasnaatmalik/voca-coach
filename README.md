@@ -86,6 +86,19 @@ Instant messaging between students and therapists.
 - ⏰ Message timestamps
 - 👀 Read status tracking
 - 🔄 Real-time polling (3 second updates)
+- 🔌 Socket.io real-time events
+
+### 9. **Video Calling**
+Peer-to-peer video calls between students and therapists using WebRTC.
+
+- 📹 One-on-one video calls
+- 🎙️ Microphone mute/unmute controls
+- 📷 Camera on/off toggle
+- 📞 Incoming call notifications with ringtone
+- 🔔 Global call listener (receive calls on any page)
+- ⏱️ Real-time call duration display
+- 🔄 Automatic reconnection handling
+- 🌐 Works with STUN servers for NAT traversal
 
 ### 8. **Admin Panel**
 Powerful administrative tools for platform management.
@@ -130,6 +143,8 @@ Robust authentication and session management.
 - **Runtime**: Node.js
 - **Database**: SQLite with Prisma ORM
 - **Authentication**: JWT-based with bcrypt password hashing
+- **Real-time**: Socket.io for WebSocket communication
+- **Video Calls**: WebRTC with peer-to-peer connections
 
 ### AI & APIs
 - **LLM**: Google Gemini 2.0 Flash (`gemini-2.0-flash-exp`)
@@ -385,6 +400,18 @@ JWT-based authentication with:
 - `POST /api/therapist/online` - Go online
 - `DELETE /api/therapist/online` - Go offline
 - `GET /api/therapists/available` - Get all online therapists
+
+### Socket.io Events (Real-time)
+- `video-call:initiate` - Start a video call
+- `video-call:accept` - Accept incoming call
+- `video-call:decline` - Decline incoming call
+- `video-call:end` - End active call
+- `webrtc:offer` - Send WebRTC offer
+- `webrtc:answer` - Send WebRTC answer
+- `webrtc:ice-candidate` - Exchange ICE candidates
+- `chat:send` - Send chat message
+- `chat:typing` - Typing indicator
+- `presence:update` - Update online status
 
 ---
 
