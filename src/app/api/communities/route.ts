@@ -88,6 +88,12 @@ export async function POST(req: Request) {
       },
       include: {
         channels: true,
+        _count: {
+          select: {
+            members: true,
+            posts: true,
+          },
+        },
       },
     });
 

@@ -95,6 +95,11 @@ export async function POST(
             name: true,
           },
         },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
     });
 

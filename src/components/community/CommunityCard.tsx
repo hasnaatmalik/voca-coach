@@ -91,7 +91,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
             <span style={{ fontSize: '13px', fontWeight: '600', color: colors.text }}>
-              {community._count.members} members
+              {community._count?.members || 0} members
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -99,7 +99,7 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ community }) => {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
             <span style={{ fontSize: '13px', fontWeight: '600', color: colors.text }}>
-              {community._count.posts} posts
+              {community._count?.posts || 0} posts
             </span>
           </div>
         </div>
