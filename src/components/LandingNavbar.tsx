@@ -551,15 +551,28 @@ const LandingNavbar: React.FC = () => {
     { label: 'How it Works', href: '#how-it-works' },
     { label: 'Use Cases', href: '#testimonials' },
     { label: 'Pricing', href: '#pricing' },
+    { label: 'Community', href: '/communities' },
   ];
 
   // Smooth scroll to section
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
-    e.preventDefault();
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(sectionId);
+    if (sectionId.startsWith('#')) {
+      e.preventDefault();
+      const element = document.getElementById(sectionId.slice(1));
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        setActiveSection(sectionId.slice(1));
+      }
+    } else if (sectionId.startsWith('/')) {
+      // Normal navigation
+      return;
+    } else {
+      e.preventDefault();
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        setActiveSection(sectionId);
+      }
     }
   };
 

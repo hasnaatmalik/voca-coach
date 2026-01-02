@@ -1162,6 +1162,7 @@ const ModernNavbar: React.FC<ModernNavbarProps> = ({
     { href: '/therapist', label: 'Dashboard' },
     { href: '/therapist/chat', label: 'Chat' },
     { href: '/therapist/profile', label: 'My Profile' },
+    { href: '/communities', label: 'Community' },
   ];
 
   const studentNavItems = [
@@ -1170,7 +1171,8 @@ const ModernNavbar: React.FC<ModernNavbarProps> = ({
     { href: '/biomarkers', label: 'Analytics' },
     { href: '/journal', label: 'Journal' },
     { href: '/persona', label: 'Practice' },
-    { href: '/therapy/book', label: 'Therapy' }
+    { href: '/therapy/book', label: 'Therapy' },
+    { href: '/communities', label: 'Community' }
   ];
 
   const navItems = isTherapistPage ? therapistNavItems : studentNavItems;
