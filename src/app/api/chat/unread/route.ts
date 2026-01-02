@@ -32,17 +32,20 @@ export async function GET() {
       });
     }
 
-    // Count unread messages (messages not from current user that are unread)
-    for (const conv of conversations) {
-      const count = await prisma.chatMessage.count({
-        where: {
-          conversationId: conv.id,
-          senderId: { not: currentUser.userId },
-          readAt: null,
-        },
-      });
-      unreadCount += count;
+    const conversationIds = conversations.map(c => c.id);
+    
+    if (conversationIds.length === 0) {
+      return NextResponse.json({ unreadCount: 0 });
     }
+
+    const count = await prisma.chatMessage.count({
+      where: {
+        conversationId: { in: conversationIds },
+        senderId: { not: currentUser.userId },
+        readAt: null,
+      },
+    });
+    unreadCount = count;
 
     return NextResponse.json({ unreadCount });
   } catch (error) {
